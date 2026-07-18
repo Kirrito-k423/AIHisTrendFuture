@@ -102,3 +102,24 @@ test("metric charts use interactive ECharts with linear axes and sortable tables
   assert.match(html, /阶梯线/);
   assert.match(html, /按列排序/);
 });
+
+test("comparison page renders source-backed structured text fields side by side", async () => {
+  const dataSource = await readFile(new URL("../app/comparison-data.ts", import.meta.url), "utf8");
+  const comparisonSource = await readFile(new URL("../app/components/ComparisonExplorer.tsx", import.meta.url), "utf8");
+  const definitionBlock = dataSource.match(/export const structuredFieldDefinitions = \[([\s\S]*?)\] as const;/)?.[1] ?? "";
+
+  assert.equal((definitionBlock.match(/label:/g) ?? []).length, 22);
+  assert.match(dataSource, /historyEventIdByCatalogId/);
+  assert.match(dataSource, /已检查当前主来源，尚未找到可核验披露/);
+  assert.match(comparisonSource, /StructuredComparison/);
+  assert.match(comparisonSource, /数值矩阵/);
+  assert.match(comparisonSource, /结构化文字字段/);
+
+  const response = await render("/compare");
+  const html = await response.text();
+  assert.match(html, /注意力创新/);
+  assert.match(html, /训练算法 \/ 机制/);
+  assert.match(html, /DSA \+ IndexShare/);
+  assert.match(html, /已核验/);
+  assert.match(html, /未知/);
+});

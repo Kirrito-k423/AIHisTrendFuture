@@ -1783,6 +1783,360 @@ body {
   white-space: nowrap;
 }
 
+.comparison-view-switch {
+  align-items: stretch;
+  background: #eef0ef;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  min-height: 62px;
+  padding: 0 20px;
+}
+
+.comparison-view-switch > button {
+  align-content: center;
+  background: #fff;
+  border: 0;
+  border-left: 1px solid var(--line);
+  cursor: pointer;
+  display: grid;
+  gap: 3px;
+  min-width: 210px;
+  padding: 9px 15px;
+  text-align: left;
+}
+
+.comparison-view-switch > button:last-of-type {
+  border-right: 1px solid var(--line);
+}
+
+.comparison-view-switch > button span {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.comparison-view-switch > button small {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.comparison-view-switch > button.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.comparison-view-switch > button.active small {
+  color: #9fbdc2;
+}
+
+.comparison-view-switch > p {
+  align-self: center;
+  color: var(--muted);
+  font-size: 9px;
+  margin: 0 0 0 auto;
+  padding-left: 20px;
+}
+
+.structured-comparison {
+  background: #f3f5f4;
+  min-height: 560px;
+}
+
+.structured-toolbar {
+  align-items: end;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.structured-toolbar > div:first-child {
+  max-width: 780px;
+}
+
+.structured-toolbar > div:first-child > span {
+  color: var(--cyan);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: .1em;
+}
+
+.structured-toolbar h2 {
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 24px;
+  font-weight: 400;
+  margin: 5px 0;
+}
+
+.structured-toolbar p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.structured-picker {
+  align-items: stretch;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.structured-picker label {
+  align-items: center;
+  border: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  min-width: 280px;
+  padding: 7px 9px;
+}
+
+.structured-picker label span {
+  color: var(--muted);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.structured-picker select {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.structured-picker > button,
+.structured-model-actions button {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 9px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.structured-picker > button:disabled {
+  color: #a8afb2;
+  cursor: not-allowed;
+}
+
+.structured-matrix-scroll {
+  max-height: calc(100vh - 128px);
+  overflow: auto;
+}
+
+.structured-matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 10px;
+  min-width: max-content;
+  width: 100%;
+}
+
+.structured-matrix thead th {
+  background: var(--ink);
+  border-bottom: 1px solid #33454d;
+  border-right: 1px solid #33454d;
+  color: #fff;
+  min-width: 330px;
+  padding: 14px;
+  position: sticky;
+  text-align: left;
+  top: 0;
+  vertical-align: top;
+  z-index: 5;
+}
+
+.structured-matrix thead th > strong,
+.structured-matrix thead th > span,
+.structured-matrix thead th > small {
+  display: block;
+}
+
+.structured-matrix thead th > strong {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.structured-matrix thead th > span {
+  color: #91cbd3;
+  font-size: 9px;
+}
+
+.structured-matrix thead th > small {
+  color: #aebdc2;
+  font-size: 8px;
+  margin-top: 5px;
+}
+
+.structured-matrix .structured-field-col {
+  left: 0;
+  min-width: 170px;
+  position: sticky;
+  width: 170px;
+  z-index: 4;
+}
+
+.structured-matrix thead .structured-field-col {
+  color: #91cbd3;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+  z-index: 7;
+}
+
+.structured-model-actions {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.structured-model-actions em {
+  color: #91cbd3;
+  font-size: 8px;
+  font-style: normal;
+  margin-right: auto;
+}
+
+.structured-model-actions a,
+.structured-model-actions button {
+  border: 1px solid #47616a;
+  color: #b9dce1;
+  font-size: 8px;
+  padding: 4px 6px;
+}
+
+.structured-model-actions button {
+  background: transparent;
+}
+
+.structured-matrix tbody th,
+.structured-matrix tbody td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.structured-matrix tbody th {
+  background: #eef0ef;
+  color: #526068;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.structured-matrix tbody td {
+  background: #fff;
+  line-height: 1.55;
+  min-width: 330px;
+  width: 330px;
+}
+
+.structured-matrix tbody td > p {
+  font-size: 11px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.structured-matrix tbody tr:not(.structured-group-row):hover td {
+  background: #f4fafa;
+}
+
+.structured-matrix .structured-group-row th,
+.structured-matrix .structured-group-row td {
+  background: #dbe8e9;
+  color: #285a63;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: .08em;
+  padding-bottom: 7px;
+  padding-top: 7px;
+}
+
+.structured-matrix .structured-group-row td {
+  min-width: 0;
+}
+
+.structured-fact-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.structured-fact-meta > span,
+.structured-fact-meta > a,
+.structured-fact-meta > small {
+  border: 1px solid #c9d0d2;
+  color: #68737a;
+  font-size: 8px;
+  line-height: 1;
+  padding: 4px 5px;
+}
+
+.structured-fact-meta > span[data-status="已披露"] {
+  border-color: #8cc2c8;
+  color: var(--cyan);
+}
+
+.structured-fact-meta > span[data-status="推导"] {
+  border-color: #d9b488;
+  color: #a35c1d;
+}
+
+.structured-fact-meta > a {
+  color: var(--cyan);
+}
+
+.structured-matrix td details {
+  border-top: 1px dotted #c9d0d2;
+  margin-top: 8px;
+  padding-top: 6px;
+}
+
+.structured-matrix td details summary {
+  color: #68737a;
+  cursor: pointer;
+  font-size: 8px;
+}
+
+.structured-matrix td details small {
+  color: #526068;
+  display: block;
+  font-size: 9px;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+.structured-matrix td.structured-unknown > p {
+  color: #98a1a5;
+}
+
+.structured-empty {
+  align-content: center;
+  color: var(--muted);
+  display: grid;
+  min-height: 400px;
+  padding: 30px;
+  text-align: center;
+}
+
+.structured-empty strong {
+  color: var(--ink);
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.structured-empty p {
+  font-size: 10px;
+}
+
 .model-matrix-wrap {
   background: #fff;
   min-height: 520px;
@@ -2206,6 +2560,42 @@ body {
 
   .comparison-controls .matrix-search {
     min-width: 230px;
+  }
+
+  .comparison-view-switch {
+    overflow-x: auto;
+    padding: 0;
+  }
+
+  .comparison-view-switch > button {
+    min-width: 190px;
+  }
+
+  .comparison-view-switch > p {
+    display: none;
+  }
+
+  .structured-toolbar {
+    align-items: stretch;
+    display: grid;
+    gap: 14px;
+    padding: 15px;
+  }
+
+  .structured-picker label {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .structured-matrix thead th,
+  .structured-matrix tbody td {
+    min-width: 285px;
+    width: 285px;
+  }
+
+  .structured-matrix .structured-field-col {
+    min-width: 135px;
+    width: 135px;
   }
 
   .focus-chip {

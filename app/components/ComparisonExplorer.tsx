@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   comparisonModels,
   formatMetricValue,
   metricDefinitions,
   metricKeys,
+  structuredFieldDefinitions,
   type ComparisonModel,
   type MetricKey,
 } from "../comparison-data";
@@ -15,6 +16,9 @@ const SNAPSHOT_DATE = "2026-07-18";
 
 type SortKey = "name" | "releaseDate" | MetricKey;
 type SortDirection = "asc" | "desc";
+type ComparisonView = "numeric" | "structured";
+
+const DEFAULT_STRUCTURED_MODELS = ["kimi-k3", "glm-52-max", "minimax-m3", "deepseek-v4-pro"];
 
 function isMetricKey(key: SortKey): key is MetricKey {
   return metricKeys.includes(key as MetricKey);
@@ -113,13 +117,116 @@ function SortableHeader({
   );
 }
 
+function StructuredComparison({
+  models,
+  availableModels,
+  onAdd,
+  onRemove,
+  onClear,
+}: {
+  models: ComparisonModel[];
+  availableModels: ComparisonModel[];
+  onAdd: (id: string) => void;
+  onRemove: (id: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <section className="structured-comparison" aria-label="模型结构化文字字段比较">
+      <header className="structured-toolbar">
+        <div>
+          <span>STRUCTURED EVIDENCE MATRIX</span>
+          <h2>把模型设计与训练细节并排阅读</h2>
+          <p>每列一个模型，每行一个固定字段；未知不会被隐藏，状态、来源与推导口径保留在单元格内。</p>
+        </div>
+        <div className="structured-picker">
+          <label>
+            <span>加入模型</span>
+            <select value="" onChange={(event) => { if (event.target.value) onAdd(event.target.value); }}>
+              <option value="">选择模型…</option>
+              {availableModels.map((model) => <option value={model.id} key={model.id}>{model.name} · {model.organization}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={onClear} disabled={!models.length}>清空</button>
+        </div>
+      </header>
+
+      {models.length ? (
+        <div className="structured-matrix-scroll">
+          <table className="structured-matrix">
+            <thead>
+              <tr>
+                <th className="structured-field-col">结构化字段</th>
+                {models.map((model) => {
+                  const disclosedCount = structuredFieldDefinitions.filter(({ label }) => model.structuredFacts[label].status !== "未知").length;
+                  return (
+                    <th key={model.id}>
+                      <strong>{model.name}</strong>
+                      <span>{model.organization}</span>
+                      <small>{model.releaseDate} · {accessLabel(model.access)}</small>
+                      <div className="structured-model-actions">
+                        <em>已核验 {disclosedCount}/{structuredFieldDefinitions.length}</em>
+                        <a href={model.primarySourceUrl} target="_blank" rel="noreferrer">主来源 ↗</a>
+                        <button type="button" onClick={() => onRemove(model.id)}>移除</button>
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {structuredFieldDefinitions.map((field, index) => {
+                const beginsGroup = index === 0 || structuredFieldDefinitions[index - 1].group !== field.group;
+                return (
+                  <Fragment key={field.label}>
+                    {beginsGroup ? (
+                      <tr className="structured-group-row">
+                        <th>{field.group}</th>
+                        <td colSpan={models.length}>{structuredFieldDefinitions.filter((item) => item.group === field.group).length} 项统一字段</td>
+                      </tr>
+                    ) : null}
+                    <tr>
+                      <th className="structured-field-col">{field.label}</th>
+                      {models.map((model) => {
+                        const fact = model.structuredFacts[field.label];
+                        return (
+                          <td key={model.id} className={fact.status === "未知" ? "structured-unknown" : ""}>
+                            <p>{fact.value}</p>
+                            <div className="structured-fact-meta">
+                              <span data-status={fact.status}>{fact.status}</span>
+                              {fact.sources.slice(0, 2).map((source, sourceIndex) => (
+                                <a href={source.url} target="_blank" rel="noreferrer" title={source.title} key={`${source.url}-${sourceIndex}`}>来源 {sourceIndex + 1} ↗</a>
+                              ))}
+                              {fact.sources.length > 2 ? <small>+{fact.sources.length - 2}</small> : null}
+                            </div>
+                            {fact.method ? <details><summary>计算 / 判断口径</summary><small>{fact.method}</small></details> : null}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="structured-empty">
+          <strong>还没有选择模型</strong>
+          <p>从上方加入模型，或切回“数值矩阵”勾选多行，再回来逐字段对照。</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function ComparisonExplorer() {
   const [query, setQuery] = useState("");
   const [organization, setOrganization] = useState("全部机构");
   const [access, setAccess] = useState("全部权限");
   const [modality, setModality] = useState("全部模态");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(DEFAULT_STRUCTURED_MODELS));
   const [onlySelected, setOnlySelected] = useState(false);
+  const [view, setView] = useState<ComparisonView>("structured");
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({ key: "releaseDate", direction: "desc" });
 
   const organizations = useMemo(
@@ -135,7 +242,8 @@ export function ComparisonExplorer() {
     const needle = query.trim().toLowerCase();
     return comparisonModels
       .filter((model) => {
-        const matchesQuery = !needle || [model.name, model.organization, model.architecture, model.modality]
+        const structuredText = Object.values(model.structuredFacts).map((fact) => fact.value).join(" ");
+        const matchesQuery = !needle || [model.name, model.organization, model.architecture, model.modality, structuredText]
           .join(" ").toLowerCase().includes(needle);
         const matchesOrg = organization === "全部机构" || model.organization === organization;
         const matchesAccess = access === "全部权限" || model.access === access;
@@ -145,6 +253,14 @@ export function ComparisonExplorer() {
       })
       .sort((a, b) => compareModels(a, b, sort.key, sort.direction));
   }, [access, modality, onlySelected, organization, query, selected, sort]);
+
+  const selectedModels = useMemo(() => Array.from(selected)
+    .map((id) => comparisonModels.find((model) => model.id === id))
+    .filter((model): model is ComparisonModel => Boolean(model)), [selected]);
+
+  const availableStructuredModels = useMemo(() => comparisonModels
+    .filter((model) => !selected.has(model.id))
+    .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate)), [selected]);
 
   function toggleModel(id: string) {
     setSelected((current) => {
@@ -169,12 +285,12 @@ export function ComparisonExplorer() {
         <div>
           <p className="kicker"><span>MODEL DATABASE</span>2022—2026 / SOURCE BACKED</p>
           <h1>模型横向比较</h1>
-          <p>一行一个模型，一列一个可比指标。任何数字都能点击进入该指标的时间演进和绝对值排行；未披露字段保持“未知”。</p>
+          <p>数值指标可以排序和进入时间图；模型类型、注意力、MoE、训练数据、阶段、低精度与 Infra 等文字字段，也能按同一结构并排比较。未披露字段保持“未知”。</p>
         </div>
         <dl>
           <div><dt>模型</dt><dd>{comparisonModels.length}</dd></div>
           <div><dt>机构</dt><dd>{organizations.length - 1}</dd></div>
-          <div><dt>字段</dt><dd>{metricKeys.length}</dd></div>
+          <div><dt>字段</dt><dd>{metricKeys.length} + {structuredFieldDefinitions.length}</dd></div>
         </dl>
       </section>
 
@@ -197,11 +313,24 @@ export function ComparisonExplorer() {
         <label><span>模态</span><select value={modality} onChange={(event) => setModality(event.target.value)}>{modalities.map((item) => <option key={item}>{item}</option>)}</select></label>
         <button type="button" className={onlySelected ? "active" : ""} disabled={!selected.size} onClick={() => setOnlySelected((value) => !value)}>仅看已选 {selected.size || ""}</button>
         <button type="button" onClick={() => { setSelected(new Set()); setOnlySelected(false); }}>清空</button>
-        <span className="sort-summary">排序：{sort.key === "name" ? "模型" : sort.key === "releaseDate" ? "发布日期" : metricDefinitions[sort.key].shortTitle} {sort.direction === "asc" ? "↑" : "↓"}</span>
+        {view === "numeric"
+          ? <span className="sort-summary">排序：{sort.key === "name" ? "模型" : sort.key === "releaseDate" ? "发布日期" : metricDefinitions[sort.key].shortTitle} {sort.direction === "asc" ? "↑" : "↓"}</span>
+          : <span className="sort-summary">并排模型：{selected.size}</span>}
       </section>
 
-      <section className="model-matrix-wrap" aria-label="模型横向比较矩阵">
-        <table className="model-matrix">
+      <section className="comparison-view-switch" aria-label="比较内容类型">
+        <button type="button" className={view === "numeric" ? "active" : ""} onClick={() => setView("numeric")}>
+          <span>数值矩阵</span><small>{metricKeys.length} 项 · 可排序 / 可视化</small>
+        </button>
+        <button type="button" className={view === "structured" ? "active" : ""} onClick={() => setView("structured")}>
+          <span>结构化文字字段</span><small>{structuredFieldDefinitions.length} 项 · 架构 / 训练 / Infra</small>
+        </button>
+        <p>勾选模型后，两种视图共用同一组选择。</p>
+      </section>
+
+      {view === "numeric" ? (
+        <section className="model-matrix-wrap" aria-label="模型数值横向比较矩阵">
+          <table className="model-matrix">
           <thead>
             <tr>
               <th className="select-col">选择</th>
@@ -226,11 +355,20 @@ export function ComparisonExplorer() {
               </tr>
             ))}
           </tbody>
-        </table>
-        {!visibleModels.length ? <p className="table-empty">当前筛选下没有模型。</p> : null}
-      </section>
+          </table>
+          {!visibleModels.length ? <p className="table-empty">当前筛选下没有模型。</p> : null}
+        </section>
+      ) : (
+        <StructuredComparison
+          models={selectedModels}
+          availableModels={availableStructuredModels}
+          onAdd={(id) => setSelected((current) => new Set([...current, id]))}
+          onRemove={(id) => setSelected((current) => { const next = new Set(current); next.delete(id); return next; })}
+          onClear={() => { setSelected(new Set()); setOnlySelected(false); }}
+        />
+      )}
 
-      <footer className="site-footer"><p><span className="status-dot" /> 数据快照：{SNAPSHOT_DATE}</p><p>点击数字进入指标页 · UNKNOWN ≠ EMPTY</p></footer>
+      <footer className="site-footer"><p><span className="status-dot" /> 数据快照：{SNAPSHOT_DATE}</p><p>数值与文字字段共享证据 · UNKNOWN ≠ EMPTY</p></footer>
     </main>
   );
 }

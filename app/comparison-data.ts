@@ -1,4 +1,6 @@
-import { representativeModelCatalog } from "./model-catalog";
+import { historyData } from "./data";
+import { representativeModelCatalog, type RawModelCatalogEntry } from "./model-catalog";
+import type { FactStatus } from "./types";
 
 export const metricKeys = [
   "aaIntelligence",
@@ -13,6 +15,45 @@ export const metricKeys = [
 ] as const;
 
 export type MetricKey = (typeof metricKeys)[number];
+
+export const structuredFieldDefinitions = [
+  { label: "发布日期", group: "基础信息" },
+  { label: "总参数规模", group: "规模与权重" },
+  { label: "每 token 激活参数", group: "规模与权重" },
+  { label: "公开权重大小", group: "规模与权重" },
+  { label: "权重 / 训练精度", group: "规模与权重" },
+  { label: "模型类型", group: "架构设计" },
+  { label: "注意力创新", group: "架构设计" },
+  { label: "MoE / 稠密", group: "架构设计" },
+  { label: "其他架构创新", group: "架构设计" },
+  { label: "训练硬件", group: "训练系统" },
+  { label: "训练机器规模", group: "训练系统" },
+  { label: "训练数据量", group: "训练系统" },
+  { label: "训练数据构成", group: "训练系统" },
+  { label: "训练阶段", group: "训练过程" },
+  { label: "各阶段时间", group: "训练过程" },
+  { label: "总训练时长", group: "训练过程" },
+  { label: "训练算法 / 机制", group: "训练过程" },
+  { label: "低精度训练", group: "训练过程" },
+  { label: "AI Infra 创新", group: "训练过程" },
+  { label: "Artificial Analysis 指标", group: "外部测量" },
+  { label: "榜单上下文 / 口径", group: "外部测量" },
+  { label: "榜单中位速度", group: "外部测量" },
+] as const;
+
+export type StructuredFieldLabel = (typeof structuredFieldDefinitions)[number]["label"];
+
+export interface ComparisonSource {
+  title: string;
+  url: string;
+}
+
+export interface StructuredComparisonFact {
+  value: string;
+  status: FactStatus;
+  sources: ComparisonSource[];
+  method?: string;
+}
 
 export interface MetricValue {
   value: number;
@@ -33,6 +74,7 @@ export interface ComparisonModel {
   architecture: string;
   primarySourceUrl: string;
   metrics: Partial<Record<MetricKey, MetricValue>>;
+  structuredFacts: Record<StructuredFieldLabel, StructuredComparisonFact>;
   notes?: string[];
 }
 
@@ -171,6 +213,91 @@ function dynamicMetric(value: number | null, sourceUrl: string | null, note: str
   };
 }
 
+const historyEventIdByCatalogId: Partial<Record<string, string>> = {
+  "deepseek-v3-1226": "deepseek-v3-2024-12",
+  "qwen3-235b-a22b": "qwen3-235b-a22b",
+  "kimi-k2": "kimi-k2",
+  "qwen36-35b-a3b": "qwen3-6-35b-a3b",
+  "kimi-k26": "kimi-k2-6",
+  "deepseek-v4-pro": "deepseek-v4-pro",
+  "minimax-m3": "minimax-m3",
+  "glm-52-max": "glm-5-2",
+  "kimi-k3": "kimi-k3",
+};
+
+const historyModelEvents = historyData.lanes
+  .filter((lane) => lane.id === "llm-training" || lane.id === "multimodal-training")
+  .flatMap((lane) => lane.events);
+
+function rawSource(raw: RawModelCatalogEntry): ComparisonSource[] {
+  return [{ title: "模型主来源", url: raw.primarySourceUrl }];
+}
+
+function aaSources(raw: RawModelCatalogEntry): ComparisonSource[] {
+  return raw.aaUrl ? [{ title: "Artificial Analysis", url: raw.aaUrl }] : [];
+}
+
+function unknownFact(raw: RawModelCatalogEntry): StructuredComparisonFact {
+  return {
+    value: "未知",
+    status: "未知",
+    sources: rawSource(raw),
+    method: "已检查当前主来源，尚未找到可核验披露。",
+  };
+}
+
+function fallbackStructuredFact(raw: RawModelCatalogEntry, label: StructuredFieldLabel): StructuredComparisonFact {
+  const disclosed = (value: string, sources = rawSource(raw)): StructuredComparisonFact => ({ value, status: "已披露", sources });
+  const derived = (value: string, sources = rawSource(raw), method?: string): StructuredComparisonFact => ({ value, status: "推导", sources, method });
+  if (label === "发布日期") return disclosed(raw.releaseDate);
+  if (label === "总参数规模" && raw.totalParamsB !== null) return disclosed(formatMetricValue("totalParamsB", raw.totalParamsB));
+  if (label === "每 token 激活参数" && raw.activeParamsB !== null) {
+    return raw.activeParamsB === raw.totalParamsB
+      ? derived(formatMetricValue("activeParamsB", raw.activeParamsB), rawSource(raw), "稠密模型按总参数作为每 token 激活参数。")
+      : disclosed(formatMetricValue("activeParamsB", raw.activeParamsB));
+  }
+  if (label === "公开权重大小" && raw.weightSizeGB !== null) return disclosed(formatMetricValue("weightSizeGB", raw.weightSizeGB));
+  if (label === "模型类型") {
+    const architecture = architectureOverrides[raw.id];
+    if (architecture) return derived(architecture, rawSource(raw), "由官方披露的结构摘要归一化为可比较标签。可展开历史节点查看完整表述。");
+  }
+  if (label === "训练数据量" && raw.trainingTokensT !== null) return disclosed(formatMetricValue("trainingTokensT", raw.trainingTokensT));
+  if (label === "Artificial Analysis 指标" && (raw.aaIntelligence !== null || raw.aaAgentic !== null)) {
+    const values = [
+      raw.aaIntelligence !== null ? `Intelligence ${raw.aaIntelligence}` : null,
+      raw.aaAgentic !== null ? `Agentic ${raw.aaAgentic}` : null,
+    ].filter(Boolean);
+    return disclosed(values.join("；"), aaSources(raw));
+  }
+  if (label === "榜单上下文 / 口径" && raw.aaUrl) {
+    return disclosed("Artificial Analysis 2026-07-18 动态快照；历史模型可能为 estimated", aaSources(raw));
+  }
+  if (label === "榜单中位速度" && raw.outputTokensPerSecond !== null) {
+    return disclosed(formatMetricValue("outputTokensPerSecond", raw.outputTokensPerSecond), aaSources(raw));
+  }
+  return unknownFact(raw);
+}
+
+function structuredFactsFor(raw: RawModelCatalogEntry): Record<StructuredFieldLabel, StructuredComparisonFact> {
+  const eventId = historyEventIdByCatalogId[raw.id];
+  const event = eventId ? historyModelEvents.find((item) => item.id === eventId) : undefined;
+  const eventSources = new Map(event?.sources.map((item) => [item.id, { title: item.title, url: item.url }]) ?? []);
+
+  return Object.fromEntries(structuredFieldDefinitions.map(({ label }) => {
+    const fact = event?.facts.find((item) => item.label === label);
+    if (!fact) return [label, fallbackStructuredFact(raw, label)];
+    const sources = fact.sourceIds
+      .map((sourceId) => eventSources.get(sourceId))
+      .filter((item): item is ComparisonSource => Boolean(item));
+    return [label, {
+      value: fact.value,
+      status: fact.status,
+      sources: sources.length ? sources : rawSource(raw),
+      method: fact.method,
+    } satisfies StructuredComparisonFact];
+  })) as Record<StructuredFieldLabel, StructuredComparisonFact>;
+}
+
 export const comparisonModels: ComparisonModel[] = representativeModelCatalog.map((raw) => ({
   id: raw.id,
   name: raw.name,
@@ -182,6 +309,7 @@ export const comparisonModels: ComparisonModel[] = representativeModelCatalog.ma
   architecture: architectureOverrides[raw.id]
     ?? (raw.totalParamsB !== null && raw.activeParamsB !== null && raw.activeParamsB < raw.totalParamsB ? "Sparse MoE" : raw.totalParamsB !== null ? "Dense / 架构见主来源" : "未披露"),
   primarySourceUrl: raw.primarySourceUrl,
+  structuredFacts: structuredFactsFor(raw),
   metrics: {
     aaIntelligence: dynamicMetric(raw.aaIntelligence, raw.aaUrl, "Artificial Analysis v4.1 动态快照；历史模型可能为 estimated"),
     aaAgentic: dynamicMetric(raw.aaAgentic, raw.aaUrl, "Artificial Analysis Agentic Index 动态快照"),
