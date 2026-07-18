@@ -115,6 +115,20 @@ function EvidencePanel({ event, onClose }: { event: TimelineEvent; onClose: () =
           <small>未知字段保留；不使用推测值填充。</small>
         </div>
 
+        {event.breakthroughs?.length ? (
+          <section className="panel-section breakthrough-section">
+            <div className="section-heading">
+              <span>开创 / 关键方案</span>
+              <b>{event.breakthroughs.length} 项</b>
+            </div>
+            <ol>
+              {event.breakthroughs.map((item, index) => (
+                <li key={item}><i>{String(index + 1).padStart(2, "0")}</i><span>{item}</span></li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+
         {event.basisIds?.length ? (
           <section className="panel-section lineage-section">
             <div className="section-heading">
@@ -288,6 +302,7 @@ export function TimelineExplorer({ data }: { data: TimelinePageData }) {
   const visibleEvents = visibleLanes.flatMap((lane) => lane.events);
   const sourceCount = visibleEvents.reduce((sum, event) => sum + event.sources.length, 0);
   const newestEvent = [...visibleEvents].sort((a, b) => b.date.localeCompare(a.date))[0];
+  const laneLevels = (lane: TimelineLane) => data.page === "history" && lane.id === "llm-training" ? 4 : 2;
 
   return (
     <main className={`atlas page-${data.page}`}>
@@ -356,7 +371,7 @@ export function TimelineExplorer({ data }: { data: TimelinePageData }) {
           <div className="lane-labels" aria-hidden="true">
             <div className="axis-label"><span>分类 / 时间</span><small>点击节点查看证据</small></div>
             {visibleLanes.map((lane) => (
-              <div className={`lane-label color-${lane.color}`} key={lane.id}>
+              <div className={`lane-label color-${lane.color}`} key={lane.id} style={{ height: `${14 + laneLevels(lane) * 88}px` }}>
                 <p>{lane.group}</p><h2>{lane.title}</h2><span>{lane.description}</span><small>{lane.events.length} 个节点</small>
               </div>
             ))}
@@ -372,14 +387,14 @@ export function TimelineExplorer({ data }: { data: TimelinePageData }) {
                 {activeTicks.map((tick) => <i key={tick} style={{ left: `${toPercent(tick, activeStart, activeEnd)}%` }} />)}
               </div>
               {visibleLanes.map((lane) => (
-                <div className={`timeline-lane color-${lane.color}`} key={lane.id}>
-                  <div className="lane-baseline" />
+                <div className={`timeline-lane color-${lane.color}`} key={lane.id} style={{ height: `${14 + laneLevels(lane) * 88}px` }}>
+                  <div className="lane-baseline" style={{ top: `${7 + laneLevels(lane) * 44}px` }} />
                   {lane.events.map((event, eventIndex) => (
                     <button
                       type="button"
                       className={`event-marker tier-${event.tier ?? "baseline"} ${selected?.id === event.id ? "selected" : ""}`}
                       key={event.id}
-                      style={{ left: `${toPercent(event.date, activeStart, activeEnd)}%`, top: `${12 + (eventIndex % 2) * 88}px` }}
+                      style={{ left: `${toPercent(event.date, activeStart, activeEnd)}%`, top: `${12 + (eventIndex % laneLevels(lane)) * 88}px` }}
                       onClick={() => setSelected(event)}
                       aria-label={`查看 ${event.title} 的详细证据`}
                     >

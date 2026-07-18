@@ -54,7 +54,15 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 17);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 21);
+  assert.match(source, /const kimiK25 = modelEvent/);
+  assert.match(source, /const glm5 = modelEvent/);
+  assert.match(source, /const minimaxM25 = modelEvent/);
+  assert.match(source, /const qwen35 = modelEvent/);
+  assert.match(source, /Agent Swarm/);
+  assert.match(source, /Muon Split/);
+  assert.match(source, /Prefix Tree Merging/);
+  assert.match(source, /Gated DeltaNet/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
   assert.match(source, /注意力创新/);
@@ -108,7 +116,7 @@ test("comparison page renders source-backed structured text fields side by side"
   const comparisonSource = await readFile(new URL("../app/components/ComparisonExplorer.tsx", import.meta.url), "utf8");
   const definitionBlock = dataSource.match(/export const structuredFieldDefinitions = \[([\s\S]*?)\] as const;/)?.[1] ?? "";
 
-  assert.equal((definitionBlock.match(/label:/g) ?? []).length, 22);
+  assert.equal((definitionBlock.match(/label:/g) ?? []).length, 23);
   assert.match(dataSource, /historyEventIdByCatalogId/);
   assert.match(dataSource, /已检查当前主来源，尚未找到可核验披露/);
   assert.match(comparisonSource, /StructuredComparison/);
@@ -118,8 +126,12 @@ test("comparison page renders source-backed structured text fields side by side"
   const response = await render("/compare");
   const html = await response.text();
   assert.match(html, /注意力创新/);
+  assert.match(html, /开创 \/ 关键方案/);
   assert.match(html, /训练算法 \/ 机制/);
-  assert.match(html, /DSA \+ IndexShare/);
+  assert.match(html, /Agent Swarm/);
+  assert.match(html, /Muon Split/);
+  assert.match(html, /Prefix Tree Merging/);
+  assert.match(html, /Gated DeltaNet/);
   assert.match(html, /已核验/);
   assert.match(html, /未知/);
 });

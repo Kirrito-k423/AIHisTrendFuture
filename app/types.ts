@@ -6,7 +6,7 @@ export interface Source {
   title: string;
   publisher: string;
   url: string;
-  type: "官方博客" | "论文" | "技术报告" | "模型卡" | "代码仓" | "第三方测量" | "数据集";
+  type: "官方博客" | "论文" | "技术报告" | "模型卡" | "代码仓" | "第三方测量" | "数据集" | "讲座整理";
   accessedAt: string;
 }
 
@@ -31,6 +31,7 @@ export interface TimelineEvent {
   facts: Fact[];
   sources: Source[];
   basisIds?: string[];
+  breakthroughs?: string[];
   revisionNotes?: string[];
   tier?: "frontier" | "watch" | "baseline";
 }

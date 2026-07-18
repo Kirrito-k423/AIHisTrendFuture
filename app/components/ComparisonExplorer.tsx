@@ -19,7 +19,7 @@ type SortKey = "name" | "releaseDate" | MetricKey;
 type SortDirection = "asc" | "desc";
 type ComparisonView = "numeric" | "structured";
 
-const DEFAULT_STRUCTURED_MODELS = ["kimi-k3", "glm-52-max", "minimax-m3", "deepseek-v4-pro"];
+const DEFAULT_STRUCTURED_MODELS = ["kimi-k25", "glm-5", "minimax-m25", "qwen35-397b-a17b"];
 
 function isMetricKey(key: SortKey): key is MetricKey {
   return metricKeys.includes(key as MetricKey);

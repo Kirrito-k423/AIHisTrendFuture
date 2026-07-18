@@ -31,6 +31,7 @@ export const structuredFieldDefinitions = [
   { label: "注意力创新", group: "架构设计" },
   { label: "MoE / 稠密", group: "架构设计" },
   { label: "其他架构创新", group: "架构设计" },
+  { label: "开创 / 关键方案", group: "架构设计" },
   { label: "训练硬件", group: "训练系统" },
   { label: "训练机器规模", group: "训练系统" },
   { label: "训练数据量", group: "训练系统" },
@@ -184,19 +185,22 @@ const architectureOverrides: Record<string, string> = {
   "deepseek-r1-0528": "DeepSeekMoE + MLA · Reasoning",
   "deepseek-v4-pro": "MoE + CSA/HCA + mHC",
   "kimi-k2": "Sparse MoE + MLA",
+  "kimi-k25": "Native Multimodal MoE + MLA · Agent Swarm",
   "kimi-k26": "Multimodal MoE + MLA",
   "kimi-k3": "Stable LatentMoE + KDA",
   "glm-45": "Sparse MoE",
+  "glm-5": "MoE + MLA / DSA + Shared MTP · Asynchronous Agent RL",
   "glm-52-max": "MoE + DSA + IndexShare",
   "llama-4-maverick": "Multimodal MoE",
   "mixtral-8x7b-instruct": "Sparse MoE",
   "qwen3-235b-a22b": "MoE + GQA",
+  "qwen35-397b-a17b": "Native Multimodal MoE + Gated DeltaNet / Full Attention",
   "qwen36-35b-a3b": "MoE + Gated DeltaNet / Full Attention",
   "minimax-text-01": "Lightning Attention + MoE",
   "minimax-m1-80k": "Lightning Attention + MoE · Reasoning",
   "minimax-m2": "Sparse MoE",
   "minimax-m21": "Sparse MoE",
-  "minimax-m25": "Sparse MoE",
+  "minimax-m25": "Full Attention + Sparse MoE + 3×MTP · Forge",
   "minimax-m3": "MoE + MiniMax Sparse Attention",
 };
 
@@ -223,6 +227,10 @@ const historyEventIdByCatalogId: Partial<Record<string, string>> = {
   "deepseek-v3-1226": "deepseek-v3-2024-12",
   "qwen3-235b-a22b": "qwen3-235b-a22b",
   "kimi-k2": "kimi-k2",
+  "kimi-k25": "kimi-k2-5",
+  "qwen35-397b-a17b": "qwen3-5-397b-a17b",
+  "minimax-m25": "minimax-m2-5",
+  "glm-5": "glm-5",
   "qwen36-35b-a3b": "qwen3-6-35b-a3b",
   "kimi-k26": "kimi-k2-6",
   "deepseek-v4-pro": "deepseek-v4-pro",
@@ -301,6 +309,17 @@ function structuredFactsFor(raw: RawModelCatalogEntry): Record<StructuredFieldLa
   const eventSources = new Map(event?.sources.map((item) => [item.id, { title: item.title, url: item.url }]) ?? []);
 
   return Object.fromEntries(structuredFieldDefinitions.map(({ label }) => {
+    if (label === "开创 / 关键方案" && event?.breakthroughs?.length) {
+      const sources = event.sources
+        .filter((item) => item.type !== "第三方测量")
+        .map((item) => ({ title: item.title, url: item.url }));
+      return [label, {
+        value: event.breakthroughs.map((item, index) => `${index + 1}. ${item}`).join("\n"),
+        status: "已披露",
+        sources: sources.length ? sources : rawSource(raw),
+        method: "只列官方明确提出、首次规模化组合或该版本的关键实现；继承与采用的技术在节点修订说明中单独标界。",
+      } satisfies StructuredComparisonFact];
+    }
     const fact = event?.facts.find((item) => item.label === label);
     if (!fact) return [label, fallbackStructuredFact(raw, label)];
     const sources = fact.sourceIds

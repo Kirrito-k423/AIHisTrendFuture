@@ -1269,6 +1269,38 @@ a {
   font-style: normal;
 }
 
+.breakthrough-section {
+  background: linear-gradient(135deg, rgba(33, 126, 139, .13), rgba(255, 255, 255, .015));
+}
+
+.breakthrough-section ol {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breakthrough-section li {
+  align-items: start;
+  border-top: 1px solid rgba(107, 192, 202, .19);
+  color: #dce6e4;
+  display: grid;
+  font-size: 10px;
+  gap: 10px;
+  grid-template-columns: 24px 1fr;
+  line-height: 1.6;
+  padding-top: 9px;
+}
+
+.breakthrough-section li i {
+  color: #6bc0ca;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+  font-style: normal;
+  padding-top: 2px;
+}
+
 .revision-list {
   color: #aeb8bd;
   font-size: 10px;
