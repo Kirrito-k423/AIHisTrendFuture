@@ -9,8 +9,9 @@
 - **历史**：LLM/VLM 训练、多模态生成/Omni 训练、极致推理性能、推理技术论文。
 - **趋势（1–2 年）**：稀疏化、训练规模与数据质量、低精度训练、内存层级、电力约束、单位智能成本。
 - **未来（5–10 年）**：芯片与机架、异构推理、能源园区、长时程 Agent、人类平均智能、AI 科学家与治理外壳。
-- **39 个时间节点**，其中 14 个开放权重模型和 1 个“权重待发布”模型使用同一套固定调研字段；任何未查到的项目都显式保留为“未知”。
-- **当前快照**：Kimi K3（API 已上线、权重待发布）、GLM‑5.2、DeepSeek‑V4‑Pro、Kimi K2.6、Cosmos3‑Super 与 LTX‑2.3；旧模型只作为架构和性能基线。
+- **41 个时间节点**，其中 16 个开放权重模型和 1 个“权重待发布”模型使用同一套固定调研字段；任何未查到的项目都显式保留为“未知”。
+- **当前快照**：Kimi K3（API 已上线、权重待发布）、GLM‑5.2、MiniMax‑M3、DeepSeek‑V4‑Pro、Kimi K2.6、Qwen3.6、Cosmos3‑Super 与 LTX‑2.3；旧模型作为架构和性能基线。
+- **模型对比**：覆盖从 2022‑11 ChatGPT 到 2026‑07 的 50+ 代表模型。矩阵中的数字可以直接进入指标页，查看按发布日期的时间演进、绝对值排行和逐点来源。
 
 ## 证据规则
 
@@ -41,7 +42,11 @@ npm test
 ```text
 app/
   components/TimelineExplorer.tsx  # 时间图谱与证据抽屉
+  components/ComparisonExplorer.tsx # 模型横向比较矩阵
+  components/MetricExplorer.tsx     # 指标时间演进与绝对值图
   data.ts                          # 事件、字段、来源与推导链
+  model-catalog.ts                 # ChatGPT 以来的代表模型目录
+  comparison-data.ts              # 可比较数值与来源契约
   history/ trends/ future/         # 三个独立页面
   types.ts                         # 可追溯数据契约
 public/og.png                      # 社交分享图

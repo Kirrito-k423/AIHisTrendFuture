@@ -5,11 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Fact, TimelineEvent, TimelineLane, TimelinePageData } from "../types";
 
 const SNAPSHOT_DATE = "2026-07-18";
-const pageOrder = ["history", "trends", "future"] as const;
+const pageOrder = ["history", "trends", "future", "compare"] as const;
 const pageMeta = {
   history: { label: "历史", href: "/history", index: "01" },
   trends: { label: "趋势", href: "/trends", index: "02" },
   future: { label: "未来", href: "/future", index: "03" },
+  compare: { label: "模型对比", href: "/compare", index: "04" },
 };
 
 function toPercent(date: string, startDate: string, endDate: string) {

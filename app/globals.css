@@ -1607,3 +1607,491 @@ body {
     padding-left: 12px;
   }
 }
+
+/* Model comparison and metric analysis surfaces */
+.comparison-summary,
+.metric-page-heading {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 20px 24px;
+}
+
+.comparison-summary > div,
+.metric-page-heading > div {
+  display: grid;
+  gap: 8px;
+}
+
+.comparison-summary h1,
+.metric-page-heading h1 {
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 400;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.comparison-summary p,
+.metric-page-heading p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 920px;
+}
+
+.comparison-summary dl,
+.metric-page-heading dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, auto));
+  margin: 0;
+}
+
+.comparison-summary dl div,
+.metric-page-heading dl div {
+  border-left: 1px solid var(--line);
+  padding: 4px 18px;
+}
+
+.comparison-summary dt,
+.metric-page-heading dt {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.comparison-summary dd,
+.metric-page-heading dd {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 8px 0 0;
+}
+
+.metric-shortcuts {
+  background: #f1f3f2;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(9, minmax(130px, 1fr));
+  overflow-x: auto;
+}
+
+.metric-shortcuts a {
+  background: #fff;
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 5px;
+  min-width: 140px;
+  padding: 12px 14px;
+}
+
+.metric-shortcuts a:hover {
+  background: #eaf4f5;
+}
+
+.metric-shortcuts span {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.metric-shortcuts small {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.comparison-controls,
+.metric-controls {
+  align-items: stretch;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  min-height: 54px;
+  overflow-x: auto;
+  padding: 0 20px;
+}
+
+.comparison-controls label,
+.metric-controls label {
+  align-items: center;
+  border-left: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  min-width: 165px;
+  padding: 0 12px;
+}
+
+.comparison-controls label > span,
+.metric-controls label > span {
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.comparison-controls input,
+.comparison-controls select,
+.metric-controls select {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.comparison-controls .matrix-search {
+  min-width: 300px;
+}
+
+.comparison-controls > button {
+  background: #fff;
+  border: 0;
+  border-left: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0 15px;
+  white-space: nowrap;
+}
+
+.comparison-controls > button.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.comparison-controls > button:disabled {
+  color: #a4aaad;
+  cursor: not-allowed;
+}
+
+.model-matrix-wrap {
+  background: #fff;
+  min-height: 520px;
+  overflow: auto;
+}
+
+.model-matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 10px;
+  min-width: 2260px;
+  width: 100%;
+}
+
+.model-matrix th {
+  background: #eef0ef;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid rgba(17, 28, 36, .07);
+  color: #4e5c63;
+  font-size: 9px;
+  letter-spacing: .04em;
+  padding: 9px 10px;
+  position: sticky;
+  text-align: left;
+  top: 0;
+  vertical-align: bottom;
+  z-index: 3;
+}
+
+.model-matrix th small {
+  display: block;
+  font-weight: 400;
+  margin-top: 4px;
+}
+
+.model-matrix td {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid rgba(17, 28, 36, .05);
+  max-width: 190px;
+  padding: 9px 10px;
+  vertical-align: top;
+}
+
+.model-matrix tr:hover td,
+.model-matrix tr.selected-row td {
+  background: #f0f8f8;
+}
+
+.model-matrix .select-col {
+  left: 0;
+  min-width: 55px;
+  position: sticky;
+  text-align: center;
+  width: 55px;
+  z-index: 2;
+}
+
+.model-matrix .model-col {
+  left: 55px;
+  min-width: 190px;
+  position: sticky;
+  z-index: 2;
+}
+
+.model-matrix th.model-col,
+.model-matrix th.select-col {
+  z-index: 5;
+}
+
+.model-matrix td strong,
+.model-matrix td small {
+  display: block;
+}
+
+.model-matrix td small {
+  color: var(--muted);
+  line-height: 1.35;
+  margin-top: 4px;
+}
+
+.metric-cell-link {
+  border-bottom: 1px dotted var(--cyan);
+  color: var(--ink);
+  display: inline-grid;
+  gap: 2px;
+  padding-bottom: 2px;
+}
+
+.metric-cell-link strong {
+  color: var(--cyan);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+}
+
+.metric-cell-link small {
+  font-size: 8px;
+}
+
+.matrix-unknown {
+  color: #9aa1a3;
+}
+
+.source-button {
+  border: 1px solid var(--line);
+  display: inline-block;
+  font-size: 9px;
+  padding: 5px 7px;
+  white-space: nowrap;
+}
+
+.metric-page-heading {
+  padding-bottom: 18px;
+  padding-top: 18px;
+}
+
+.metric-page-heading h1 {
+  font-size: clamp(24px, 2.5vw, 38px);
+}
+
+.focus-chip {
+  align-items: center;
+  background: #eaf4f5;
+  border-left: 1px solid #c3dfe2;
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.focus-chip span {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.focus-chip strong {
+  color: var(--cyan);
+  font-size: 10px;
+}
+
+.focus-chip button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 9px;
+}
+
+.metric-chart-grid {
+  background: #ecefed;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+}
+
+.chart-panel {
+  background: #fff;
+  min-width: 0;
+  padding: 18px 18px 10px;
+}
+
+.chart-panel > header,
+.metric-evidence-table > header {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.chart-panel header span,
+.metric-evidence-table header span {
+  color: var(--cyan);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: .09em;
+}
+
+.chart-panel h2,
+.metric-evidence-table h2 {
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 20px;
+  font-weight: 400;
+  margin: 4px 0 0;
+}
+
+.chart-panel header small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.canvas-wrap {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.canvas-wrap canvas {
+  display: block;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  min-height: 22px;
+  padding: 7px 20px 0 74px;
+}
+
+.chart-legend span {
+  align-items: center;
+  display: inline-flex;
+  font-size: 8px;
+  gap: 5px;
+}
+
+.chart-legend i {
+  border-radius: 50%;
+  height: 7px;
+  width: 7px;
+}
+
+.metric-evidence-table {
+  background: #fff;
+  border-top: 1px solid var(--line);
+  padding: 18px 20px 24px;
+}
+
+.metric-evidence-table > header a {
+  border: 1px solid var(--ink);
+  font-size: 9px;
+  padding: 7px 9px;
+}
+
+.metric-table-scroll {
+  overflow: auto;
+}
+
+.metric-evidence-table table {
+  border-collapse: collapse;
+  font-size: 10px;
+  min-width: 1050px;
+  width: 100%;
+}
+
+.metric-evidence-table th {
+  background: #eef0ef;
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: .07em;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.metric-evidence-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 9px 10px;
+  vertical-align: top;
+}
+
+.metric-evidence-table td small {
+  color: var(--muted);
+  display: block;
+  margin-top: 4px;
+  max-width: 320px;
+}
+
+.metric-evidence-table tr.focused-row td {
+  background: #eaf4f5;
+}
+
+.metric-evidence-table td a {
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .metric-chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .comparison-header .page-switch {
+    display: none;
+  }
+
+  .comparison-header {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-header nav a {
+    flex: 1;
+    justify-content: center;
+    padding: 0 7px;
+  }
+
+  .comparison-summary,
+  .metric-page-heading {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .comparison-summary dl,
+  .metric-page-heading dl {
+    display: none;
+  }
+
+  .comparison-controls,
+  .metric-controls {
+    padding: 0;
+  }
+
+  .comparison-controls .matrix-search {
+    min-width: 230px;
+  }
+
+  .focus-chip {
+    display: none;
+  }
+
+  .chart-panel {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}

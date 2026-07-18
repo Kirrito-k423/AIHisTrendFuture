@@ -26,11 +26,13 @@ async function render(pathname) {
   );
 }
 
-test("server-renders all three evidence timeline pages", async () => {
+test("server-renders timeline, comparison, and metric pages", async () => {
   const cases = [
     ["/history", "deepseek-v3", "gpt-oss-120b"],
     ["/trends", "trend-sparse-default", "trend-cost-per-intelligence"],
     ["/future", "future-rack-scale-computer", "future-human-average-bundle"],
+    ["/compare", "chatgpt-gpt35", "minimax-m3"],
+    ["/metrics/totalParamsB", "总参数规模", "DeepSeek V4 Pro"],
   ];
 
   for (const [pathname, firstEvent, lastEvent] of cases) {
@@ -52,7 +54,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 15);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 17);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
   assert.match(source, /注意力创新/);
@@ -65,4 +67,14 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /value\.startsWith\("未知"\) \? "未知"/);
   assert.match(source, /: "未知"/);
   assert.match(source, /https:\/\//);
+});
+
+test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async () => {
+  const source = await readFile(new URL("../app/model-catalog.ts", import.meta.url), "utf8");
+  assert.ok((source.match(/id: /g) ?? []).length >= 50);
+  assert.match(source, /2022-11-30/);
+  assert.match(source, /Qwen3\.7/);
+  assert.match(source, /MiniMax‑M3/);
+  assert.match(source, /aaIntelligence/);
+  assert.match(source, /primarySourceUrl/);
 });
