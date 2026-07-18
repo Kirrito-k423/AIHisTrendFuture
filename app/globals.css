@@ -875,6 +875,7 @@ a {
 
 .timeline-lane {
   border-bottom: 1px solid var(--line);
+  isolation: isolate;
   position: relative;
 }
 
@@ -927,10 +928,17 @@ a {
 }
 
 .event-marker:hover,
+.event-marker:focus-visible,
 .event-marker.selected {
   border-color: var(--lane-color);
-  box-shadow: 0 10px 24px rgba(17, 28, 36, 0.12);
-  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 16px 34px rgba(17, 28, 36, 0.22);
+  transform: translateX(-50%) translateY(-4px) scale(1.025);
+  z-index: 40;
+}
+
+.event-marker:focus-visible {
+  outline: 2px solid var(--lane-color);
+  outline-offset: 3px;
 }
 
 .event-date {

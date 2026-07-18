@@ -48,6 +48,12 @@ test("server-renders timeline, comparison, and metric pages", async () => {
   }
 });
 
+test("timeline markers rise above overlapping cards on hover and keyboard focus", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.timeline-lane\s*\{[\s\S]*?isolation:\s*isolate/);
+  assert.match(css, /\.event-marker:hover,[\s\S]*?\.event-marker:focus-visible,[\s\S]*?z-index:\s*40/);
+});
+
 test("keeps the fixed research schema and explicit unknown values", async () => {
   const source = await readFile(
     new URL("../app/data.ts", import.meta.url),
