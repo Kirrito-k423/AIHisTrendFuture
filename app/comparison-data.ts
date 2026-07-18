@@ -1,5 +1,10 @@
 import { historyData } from "./data";
 import { representativeModelCatalog, type RawModelCatalogEntry } from "./model-catalog";
+import {
+  getParameterInferenceMethod,
+  parameterEstimateByModelId,
+  type ParameterEstimate,
+} from "./parameter-inference";
 import type { FactStatus } from "./types";
 
 export const metricKeys = [
@@ -73,6 +78,7 @@ export interface ComparisonModel {
   modality: "LLM" | "VLM" | "Image" | "Video" | "Omni";
   architecture: string;
   primarySourceUrl: string;
+  parameterEstimate?: ParameterEstimate;
   metrics: Partial<Record<MetricKey, MetricValue>>;
   structuredFacts: Record<StructuredFieldLabel, StructuredComparisonFact>;
   notes?: string[];
@@ -112,7 +118,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     title: "总参数规模",
     shortTitle: "总参数",
     unit: "B",
-    description: "模型全部参数，统一换算为十亿参数。闭源模型未披露时保持未知。",
+    description: "模型全部参数，统一换算为十亿参数。只有官方值进入图表；论文推算以 ≥ 或区间显示，不作为精确点排序。",
     better: "context",
     scale: "linear",
   },
@@ -250,7 +256,18 @@ function fallbackStructuredFact(raw: RawModelCatalogEntry, label: StructuredFiel
   const disclosed = (value: string, sources = rawSource(raw)): StructuredComparisonFact => ({ value, status: "已披露", sources });
   const derived = (value: string, sources = rawSource(raw), method?: string): StructuredComparisonFact => ({ value, status: "推导", sources, method });
   if (label === "发布日期") return disclosed(raw.releaseDate);
-  if (label === "总参数规模" && raw.totalParamsB !== null) return disclosed(formatMetricValue("totalParamsB", raw.totalParamsB));
+  if (label === "总参数规模") {
+    if (raw.totalParamsB !== null) return disclosed(formatMetricValue("totalParamsB", raw.totalParamsB));
+    const estimate = parameterEstimateByModelId[raw.id];
+    if (estimate) {
+      const method = getParameterInferenceMethod(estimate.methodId);
+      return derived(
+        `${estimate.display} · ${estimate.kind === "lower-bound" ? "保守下界" : "有效知识容量"}`,
+        [{ title: method?.paper ?? "参数推算论文", url: estimate.sourceUrl }],
+        `论文评估对象：${estimate.evaluatedModel}；版本日期：${estimate.observedAt}。${estimate.calculation} 置信说明：${estimate.confidence} 适用边界：${estimate.caveat}`,
+      );
+    }
+  }
   if (label === "每 token 激活参数" && raw.activeParamsB !== null) {
     return raw.activeParamsB === raw.totalParamsB
       ? derived(formatMetricValue("activeParamsB", raw.activeParamsB), rawSource(raw), "稠密模型按总参数作为每 token 激活参数。")
@@ -309,6 +326,7 @@ export const comparisonModels: ComparisonModel[] = representativeModelCatalog.ma
   architecture: architectureOverrides[raw.id]
     ?? (raw.totalParamsB !== null && raw.activeParamsB !== null && raw.activeParamsB < raw.totalParamsB ? "Sparse MoE" : raw.totalParamsB !== null ? "Dense / 架构见主来源" : "未披露"),
   primarySourceUrl: raw.primarySourceUrl,
+  parameterEstimate: parameterEstimateByModelId[raw.id],
   structuredFacts: structuredFactsFor(raw),
   metrics: {
     aaIntelligence: dynamicMetric(raw.aaIntelligence, raw.aaUrl, "Artificial Analysis v4.1 动态快照；历史模型可能为 estimated"),

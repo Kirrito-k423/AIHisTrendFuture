@@ -11,6 +11,7 @@ import {
   type ComparisonModel,
   type MetricKey,
 } from "../comparison-data";
+import { parameterInferenceMethods } from "../parameter-inference";
 
 const SNAPSHOT_DATE = "2026-07-18";
 
@@ -74,6 +75,20 @@ function ComparisonHeader() {
 
 function MetricCell({ model, metric }: { model: ComparisonModel; metric: MetricKey }) {
   const point = model.metrics[metric];
+  if (!point && metric === "totalParamsB" && model.parameterEstimate) {
+    return (
+      <a
+        className="metric-cell-link metric-estimate-link"
+        href={model.parameterEstimate.sourceUrl}
+        target="_blank"
+        rel="noreferrer"
+        title={`评估对象：${model.parameterEstimate.evaluatedModel}；${model.parameterEstimate.observedAt}。${model.parameterEstimate.calculation} ${model.parameterEstimate.caveat}`}
+      >
+        <strong>{model.parameterEstimate.display}</strong>
+        <small>论文推算 · 不入图 ↗</small>
+      </a>
+    );
+  }
   if (!point) return <span className="matrix-unknown">未知</span>;
 
   return (
@@ -85,6 +100,71 @@ function MetricCell({ model, metric }: { model: ComparisonModel; metric: MetricK
       <strong>{formatMetricValue(metric, point.value)}</strong>
       <small>{point.derived ? "推导" : "已披露"} ↗</small>
     </Link>
+  );
+}
+
+function ParameterInferenceGuide() {
+  const estimatedModels = comparisonModels.filter((model) => model.parameterEstimate);
+
+  return (
+    <details className="parameter-inference-guide">
+      <summary>
+        <span>
+          <small>CLOSED MODEL PARAMETER INFERENCE</small>
+          <strong>闭源参数估算方法</strong>
+          <em>下界、容量区间、结构恢复与训练先验分开表达</em>
+        </span>
+        <b>{parameterInferenceMethods.length} 种方法 · {estimatedModels.length} 个模型已接入</b>
+      </summary>
+      <div className="parameter-guide-body">
+        <section className="parameter-rules" aria-label="闭源参数推算展示规则">
+          <span>本页规则</span>
+          <ol>
+            <li><strong>官方披露优先：</strong>只有官方总参数进入数值图和排序。</li>
+            <li><strong>下界写 ≥：</strong>表示论文只证明模型至少达到该规模。</li>
+            <li><strong>容量写 ≈ + 区间：</strong>IKP 是有效知识容量，不冒充物理总参数。</li>
+            <li><strong>证据不足仍写未知：</strong>不拿媒体传闻或 benchmark 分数硬回归。</li>
+          </ol>
+        </section>
+
+        <section className="parameter-estimate-strip" aria-label="已接入的闭源模型参数估计">
+          <header><span>已接入估计</span><small>点击模型直达原论文；完整计算口径也出现在“总参数规模”结构化单元格。</small></header>
+          <div>
+            {estimatedModels.map((model) => {
+              const estimate = model.parameterEstimate!;
+              return (
+                <a href={estimate.sourceUrl} target="_blank" rel="noreferrer" key={model.id}>
+                  <small>{estimate.kind === "lower-bound" ? "保守下界" : "有效知识容量"}</small>
+                  <strong>{model.name}</strong>
+                  <b>{estimate.display}</b>
+                  <span>{estimate.evaluatedModel} · {estimate.observedAt}</span>
+                  <span>{estimate.confidence}</span>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="parameter-method-grid" aria-label="闭源参数推算算法">
+          {parameterInferenceMethods.map((method, index) => (
+            <article key={method.id}>
+              <header>
+                <span>{String(index + 1).padStart(2, "0")} · {method.output}</span>
+                <h3>{method.name}</h3>
+              </header>
+              <code>{method.formula}</code>
+              <dl>
+                <div><dt>观测输入</dt><dd>{method.observations}</dd></div>
+                <div><dt>论文校准</dt><dd>{method.validation}</dd></div>
+                <div><dt>适用</dt><dd>{method.useWhen}</dd></div>
+                <div><dt>不能推出</dt><dd>{method.limitation}</dd></div>
+              </dl>
+              <a href={method.sourceUrl} target="_blank" rel="noreferrer">{method.paper} ↗</a>
+            </article>
+          ))}
+        </section>
+      </div>
+    </details>
   );
 }
 
@@ -293,6 +373,8 @@ export function ComparisonExplorer() {
           <div><dt>字段</dt><dd>{metricKeys.length} + {structuredFieldDefinitions.length}</dd></div>
         </dl>
       </section>
+
+      <ParameterInferenceGuide />
 
       <section className="metric-shortcuts" aria-label="指标分析入口">
         {metricKeys.map((key) => (

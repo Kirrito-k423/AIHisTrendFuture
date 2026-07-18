@@ -123,3 +123,30 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /已核验/);
   assert.match(html, /未知/);
 });
+
+test("closed-model parameter estimates keep methods, uncertainty, and charts separate", async () => {
+  const inferenceSource = await readFile(new URL("../app/parameter-inference.ts", import.meta.url), "utf8");
+  const comparisonSource = await readFile(new URL("../app/components/ComparisonExplorer.tsx", import.meta.url), "utf8");
+  const dataSource = await readFile(new URL("../app/comparison-data.ts", import.meta.url), "utf8");
+
+  assert.equal((inferenceSource.match(/sourceUrl: "https:\/\/arxiv\.org\/abs\//g) ?? []).length, 9);
+  assert.match(inferenceSource, /θ̂\(z\) = 41\.18/);
+  assert.match(inferenceSource, /accuracy ≈ a · log\(N\) \+ b/);
+  assert.match(inferenceSource, /NightVision/);
+  assert.match(inferenceSource, /Nopt ∝ C\^0\.49~0\.50/);
+  assert.match(inferenceSource, /"chatgpt-gpt35"/);
+  assert.match(inferenceSource, /"gemini-25-pro"/);
+  assert.match(inferenceSource, /display: "≥9B"/);
+  assert.match(inferenceSource, /display: "≈3\.0T/);
+  assert.match(comparisonSource, /论文推算 · 不入图/);
+  assert.doesNotMatch(dataSource, /totalParamsB: structuralMetric\(parameterEstimate/);
+
+  const response = await render("/compare");
+  const html = await response.text();
+  assert.match(html, /闭源参数估算方法/);
+  assert.match(html, /5(?:<!-- -->)? 种方法 · (?:<!-- -->)?4(?:<!-- -->)? 个模型已接入/);
+  assert.match(html, /官方披露优先/);
+  assert.match(html, /不拿媒体传闻/);
+  assert.match(html, /≈3\.0T（约 1\.0–9\.0T）/);
+  assert.match(html, /保守下界/);
+});
