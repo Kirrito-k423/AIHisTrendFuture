@@ -1,0 +1,1240 @@
+import type { Fact, Source, TimelineEvent, TimelinePageData } from "./types";
+
+const ACCESSED = "2026-07-18";
+
+function source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: ACCESSED };
+}
+
+function fact(
+  label: string,
+  value: string,
+  sourceIds: string[],
+  status?: Fact["status"],
+  method?: string,
+): Fact {
+  const resolvedStatus =
+    status ?? (value.startsWith("未知") ? "未知" : "已披露");
+  return { label, value, status: resolvedStatus, sourceIds, method };
+}
+
+interface ModelRecord {
+  id: string;
+  date: string;
+  title: string;
+  organization: string;
+  eyebrow: string;
+  summary: string;
+  confidence: TimelineEvent["confidence"];
+  tags: string[];
+  officialSourceIds: string[];
+  aaSourceId?: string;
+  sources: Source[];
+  totalParameters: string;
+  activeParameters: string;
+  activeDerived?: boolean;
+  weightSize: string;
+  precision: string;
+  architecture: string;
+  attention: string;
+  moe: string;
+  otherArchitecture: string;
+  hardware: string;
+  hardwareCount: string;
+  dataScale: string;
+  dataDetails: string;
+  stages: string;
+  stageDurations: string;
+  totalDuration: string;
+  algorithms: string;
+  lowPrecision: string;
+  infra: string;
+  aaIndex: string;
+  aaContext: string;
+  aaSpeed: string;
+  score: string;
+  notes?: string[];
+}
+
+function modelEvent(record: ModelRecord): TimelineEvent {
+  const o = record.officialSourceIds;
+  const aa = record.aaSourceId ? [record.aaSourceId] : [];
+  return {
+    id: record.id,
+    date: record.date,
+    title: record.title,
+    organization: record.organization,
+    eyebrow: record.eyebrow,
+    summary: record.summary,
+    confidence: record.confidence,
+    tags: record.tags,
+    score: record.score,
+    facts: [
+      fact("发布日期", record.date, o),
+      fact("总参数规模", record.totalParameters, o),
+      fact(
+        "每 token 激活参数",
+        record.activeParameters,
+        o,
+        record.activeDerived ? "推导" : undefined,
+        record.activeDerived ? "稠密架构没有专家路由；据公开结构推定激活参数约等于总参数。" : undefined,
+      ),
+      fact("公开权重大小", record.weightSize, o),
+      fact("权重 / 训练精度", record.precision, o),
+      fact("模型类型", record.architecture, o),
+      fact("注意力创新", record.attention, o),
+      fact("MoE / 稠密", record.moe, o),
+      fact("其他架构创新", record.otherArchitecture, o),
+      fact("训练硬件", record.hardware, o),
+      fact("训练机器规模", record.hardwareCount, o),
+      fact("训练数据量", record.dataScale, o),
+      fact("训练数据构成", record.dataDetails, o),
+      fact("训练阶段", record.stages, o),
+      fact("各阶段时间", record.stageDurations, o),
+      fact("总训练时长", record.totalDuration, o),
+      fact("训练算法 / 机制", record.algorithms, o),
+      fact("低精度训练", record.lowPrecision, o),
+      fact("AI Infra 创新", record.infra, o),
+      fact("Artificial Analysis 指标", record.aaIndex, aa),
+      fact("榜单上下文 / 口径", record.aaContext, aa),
+      fact("榜单中位速度", record.aaSpeed, aa),
+    ],
+    sources: record.sources,
+    revisionNotes: record.notes,
+  };
+}
+
+const deepseekV3 = modelEvent({
+  id: "deepseek-v3-2024-12",
+  date: "2024-12-26",
+  title: "DeepSeek‑V3",
+  organization: "DeepSeek‑AI",
+  eyebrow: "LLM / 稀疏 MoE / 开放权重",
+  summary:
+    "671B 总参数、37B 激活的 DeepSeekMoE 模型，把 MLA、无辅助损失负载均衡、MTP 与细粒度 FP8 训练整合到一次公开的大规模训练中。",
+  confidence: "高",
+  tags: ["LLM", "MoE", "MLA", "MTP", "FP8", "H800"],
+  officialSourceIds: ["dsv3-report", "dsv3-repo", "dsv3-blog"],
+  aaSourceId: "dsv3-aa",
+  sources: [
+    source("dsv3-report", "DeepSeek‑V3 Technical Report", "DeepSeek‑AI", "https://arxiv.org/abs/2412.19437", "技术报告"),
+    source("dsv3-repo", "deepseek-ai/DeepSeek-V3", "DeepSeek‑AI", "https://github.com/deepseek-ai/DeepSeek-V3", "代码仓"),
+    source("dsv3-blog", "Introducing DeepSeek‑V3", "DeepSeek", "https://api-docs.deepseek.com/news/news1226/", "官方博客"),
+    source("dsv3-aa", "DeepSeek V3 模型评测页", "Artificial Analysis", "https://artificialanalysis.ai/models/deepseek-v3", "第三方测量"),
+  ],
+  totalParameters: "671B（主模型）",
+  activeParameters: "37B / token（更精确口径 36.7B）",
+  weightSize: "约 689 GB；仓库还包含可在常规推理丢弃的 MTP 模块",
+  precision: "公开权重 FP8 E4M3；训练为细粒度 FP8 mixed precision，敏感部分 BF16 / FP32",
+  architecture: "Decoder-only 自回归 Transformer",
+  attention: "MLA 以低秩联合压缩 K/V，显著缩小 KV cache；Query 同样低秩压缩，并采用解耦 RoPE",
+  moe: "DeepSeekMoE；256 路由专家 + 1 共享专家，top‑8，每 token 最多跨 4 节点",
+  otherArchitecture: "无辅助损失负载均衡；深度为 1 的 Multi‑Token Prediction 模块",
+  hardware: "NVIDIA H800",
+  hardwareCount: "2,048 张",
+  dataScale: "14.8T 预训练 tokens",
+  dataDetails: "提高数学与代码样本比重，扩展多语言；文档级 packing；FIM 比率 0.1；精确来源与语言占比未知",
+  stages: "预训练 → 32K/128K YaRN 长上下文扩展 → 1.5M 样本 SFT → 规则/模型奖励 + GRPO",
+  stageDurations: "预训练 2.664M、长上下文 119K、SFT+RL 5K H800 GPU-hours",
+  totalDuration: "2.788M H800 GPU-hours；正式训练在 2,048 GPU 集群上少于两个月",
+  algorithms: "AdamW、MTP、FIM、aux-loss-free balancing、YaRN、推理蒸馏、rejection sampling、GRPO",
+  lowPrecision: "主要 GEMM 使用 FP8 E4M3；activation 1×128 tile scaling，weight 128×128 block scaling；关键算子保留高精度",
+  infra: "DualPipe；16-way PP、64-way EP、ZeRO‑1；拓扑感知 all-to-all；warp specialization；推理 prefill/decode 分离与冗余专家",
+  aaIndex: "Intelligence Index v4.1：14（首发版本页面）",
+  aaContext: "128K",
+  aaSpeed: "未知：该首发模型页面显示 N/A",
+  score: "AA 14",
+  notes: [
+    "限定为 2024‑12 首发版本，不混入 V3‑0324、V3.1 或 V3.2。",
+    "671B 是主模型总参数；仓库约 685B 的显示口径包含 MTP 模块。",
+  ],
+});
+
+const qwen3 = modelEvent({
+  id: "qwen3-235b-a22b",
+  date: "2025-04-29",
+  title: "Qwen3‑235B‑A22B",
+  organization: "Qwen Team / Alibaba Cloud",
+  eyebrow: "LLM / 混合思考 / 开放权重",
+  summary:
+    "235B 总参数、22B 激活的旗舰 Qwen3，把思考与非思考模式统一进一个模型；约 36T token 预训练后经历四阶段后训练。",
+  confidence: "高",
+  tags: ["LLM", "MoE", "GQA", "QK-Norm", "GRPO", "36T tokens"],
+  officialSourceIds: ["qwen3-report", "qwen3-blog", "qwen3-card"],
+  aaSourceId: "qwen3-aa",
+  sources: [
+    source("qwen3-report", "Qwen3 Technical Report", "Qwen Team", "https://arxiv.org/abs/2505.09388", "技术报告"),
+    source("qwen3-blog", "Qwen3: Think Deeper, Act Faster", "Qwen Team", "https://qwenlm.github.io/blog/qwen3/", "官方博客"),
+    source("qwen3-card", "Qwen3‑235B‑A22B Model Card", "Qwen", "https://huggingface.co/Qwen/Qwen3-235B-A22B", "模型卡"),
+    source("qwen3-aa", "Qwen3 235B A22B (Reasoning)", "Artificial Analysis", "https://artificialanalysis.ai/models/qwen3-235b-a22b-instruct-reasoning", "第三方测量"),
+  ],
+  totalParameters: "235B",
+  activeParameters: "22B / token",
+  weightSize: "470.192 GB（118 个 BF16 safetensors 分片之和）",
+  precision: "公开权重 BF16；训练低精度格式未知",
+  architecture: "94 层 decoder-only causal language model",
+  attention: "GQA：64 Q heads / 4 KV heads；QK-Norm；无 QKV bias；RoPE + ABF + YaRN + Dual Chunk Attention",
+  moe: "128 个细粒度专家，top‑8，无共享专家；global-batch load-balancing loss",
+  otherArchitecture: "SwiGLU、RMSNorm；原生 32K，上下文可借 YaRN 扩到 131K；/think 与 /no_think 统一控制",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "约 36T 预训练 tokens",
+  dataDetails: "119 种语言/方言；网页、书籍、代码、STEM、推理与合成数据；数万亿 PDF OCR 与模型合成高质量 tokens",
+  stages: "通用 30T+ → 推理约 5T → 长上下文数千亿 → Long-CoT cold start → 170-step reasoning RL → 模式融合 → general RL",
+  stageDurations: "未知：官方未披露任一阶段墙钟时间",
+  totalDuration: "未知",
+  algorithms: "阶段化 scaling law、数据混合优化、SFT、rejection sampling、GRPO、rule-based rewards、off-policy RL",
+  lowPrecision: "未知",
+  infra: "未知",
+  aaIndex: "Intelligence Index v4.1：13（estimated，Reasoning 模式）",
+  aaContext: "榜单 33K；官方原生 32,768，YaRN 扩展 131,072",
+  aaSpeed: "58.6 tokens/s（跨供应商中位）",
+  score: "AA 13",
+  notes: ["榜单的 33K 是 API 测量口径，不能替代官方 32K/131K 的架构规格。"],
+});
+
+const kimiK2 = modelEvent({
+  id: "kimi-k2",
+  date: "2025-07-11",
+  title: "Kimi K2",
+  organization: "Moonshot AI",
+  eyebrow: "LLM / 超稀疏 MoE / Agentic",
+  summary:
+    "1.04T 总参数、32.6B 激活的超稀疏 MoE；使用 MuonClip 完成 15.5T token 稳定预训练，并围绕工具调用与软件工程构建大规模后训练基础设施。",
+  confidence: "高",
+  tags: ["LLM", "1T", "MoE", "MLA", "MuonClip", "Agent"],
+  officialSourceIds: ["kimi-report", "kimi-page", "kimi-card", "kimi-repo"],
+  aaSourceId: "kimi-aa",
+  sources: [
+    source("kimi-report", "Kimi K2: Open Agentic Intelligence", "Moonshot AI", "https://arxiv.org/abs/2507.20534", "技术报告"),
+    source("kimi-page", "Kimi K2 Official Project Page", "Moonshot AI", "https://moonshotai.github.io/Kimi-K2/", "官方博客"),
+    source("kimi-card", "Kimi‑K2‑Base Model Card", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K2-Base", "模型卡"),
+    source("kimi-repo", "MoonshotAI/Kimi-K2", "Moonshot AI", "https://github.com/MoonshotAI/Kimi-K2", "代码仓"),
+    source("kimi-aa", "Kimi K2 模型评测页", "Artificial Analysis", "https://artificialanalysis.ai/models/kimi-k2", "第三方测量"),
+  ],
+  totalParameters: "1.04T（官方模型卡常四舍五入为 1T）",
+  activeParameters: "32.6B / token",
+  weightSize: "1,029.19 GB（首发 Instruct 的 61 个分片）",
+  precision: "首发权重 block‑FP8；训练参数 BF16、梯度缓冲 FP32；部分激活以 FP8 存储但不作 FP8 计算",
+  architecture: "61 层 decoder-only Transformer，hidden 7168",
+  attention: "MLA；64 attention heads；YaRN 扩展到 128K",
+  moe: "384 路由专家 top‑8 + 1 共享专家；仅首层 dense；专家稀疏度 48",
+  otherArchitecture: "163,840 词表；SwiGLU；MuonClip 的 QK‑Clip 控制注意力 logit 尺度",
+  hardware: "NVIDIA H800；8 GPU/节点，NVLink/NVSwitch + RoCE",
+  hardwareCount: "未知；官方只披露可按 32 节点倍数扩展",
+  dataScale: "15.5T 预训练 tokens",
+  dataDetails: "Web Text、Code、Mathematics、Knowledge；知识多风格改写与忠实度校验；工具训练含 20,000+ 合成工具与数万条多轮样本",
+  stages: "主预训练 → 末段退火与 128K 激活 → Muon SFT → RLVR + Self‑Critique Rubric Reward 联合强化学习",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "MuonClip、WSD、YaRN、rubric 数据合成、rejection sampling、RLVR、Self‑Critique Rubric Reward",
+  lowPrecision: "MoE up-projection/SwiGLU 输入以 FP8‑E4M3 存储、FP32 scale；计算不使用 FP8",
+  infra: "16-way PP × 16-way EP × ZeRO‑1；CPU activation offload；分布式 checkpoint engine；1T 参数更新 <30s；K8s 10,000+ 并发沙箱",
+  aaIndex: "Intelligence Index v4.1：19（estimated）",
+  aaContext: "128K",
+  aaSpeed: "36.0 tokens/s（跨供应商中位）",
+  score: "AA 19",
+  notes: ["仅对应 2025‑07 首发非思考版，不混入 K2 Thinking 或后续 K2.x。"],
+});
+
+const gptOss = modelEvent({
+  id: "gpt-oss-120b",
+  date: "2025-08-05",
+  title: "gpt‑oss‑120b",
+  organization: "OpenAI",
+  eyebrow: "LLM / 开放权重 / 推理模型",
+  summary:
+    "OpenAI 的 Apache‑2.0 开放权重推理模型；精确 116.83B 总参数、5.13B 激活，原生 MXFP4 检查点可在单张 80GB GPU 运行。",
+  confidence: "高",
+  tags: ["LLM", "MoE", "MXFP4", "Local Attention", "RL", "OpenAI"],
+  officialSourceIds: ["oss-blog", "oss-card", "oss-repo"],
+  aaSourceId: "oss-aa",
+  sources: [
+    source("oss-blog", "Introducing gpt‑oss", "OpenAI", "https://openai.com/index/introducing-gpt-oss/", "官方博客"),
+    source("oss-card", "gpt‑oss Model Card", "OpenAI", "https://openai.com/index/gpt-oss-model-card/", "模型卡"),
+    source("oss-repo", "openai/gpt-oss", "OpenAI", "https://github.com/openai/gpt-oss", "代码仓"),
+    source("oss-aa", "gpt‑oss‑120b (high)", "Artificial Analysis", "https://artificialanalysis.ai/models/gpt-oss-120b", "第三方测量"),
+  ],
+  totalParameters: "116.83B（120b 为近似产品名）",
+  activeParameters: "5.13B / token",
+  weightSize: "60.8 GiB（约 65.3 GB）",
+  precision: "90%+ MoE 权重为 MXFP4（4.25 bit/parameter），其余 BF16；预训练算术精度未知",
+  architecture: "36 层自回归 MoE Transformer",
+  attention: "局部 128-token 滑窗与全局注意力交替；64 Q / 8 KV GQA；RoPE + YaRN；可学习 softmax denominator bias",
+  moe: "128 experts，top‑4；标准线性 router",
+  otherArchitecture: "RMSNorm、SwiGLU、o200k_harmony；low/medium/high 推理强度与工具调用",
+  hardware: "NVIDIA H100",
+  hardwareCount: "未知",
+  dataScale: "数万亿 tokens；精确值未知",
+  dataDetails: "主要英语纯文本，偏重 STEM、编程与通识；知识截止 2024‑06；采用 CBRN 过滤；完整来源与配比未知",
+  stages: "预训练 → 大规模蒸馏/监督微调 → 高计算 CoT RL + deliberative alignment + instruction hierarchy",
+  stageDurations: "未知",
+  totalDuration: "约 2.1M H100 GPU-hours；GPU 数量与墙钟时间未知",
+  algorithms: "蒸馏、SFT、o3 风格高计算 CoT RL、deliberative alignment、instruction hierarchy、工具使用训练",
+  lowPrecision: "预训练精度未知；MoE 权重量化为 MXFP4 后继续后训练并以该版本评测",
+  infra: "PyTorch + Triton + FlashAttention；MXFP4 MoE kernel 与局部/全局 attention 使 117B 模型落入单张 80GB GPU",
+  aaIndex: "Intelligence Index v4.1：24（high reasoning）",
+  aaContext: "131K（官方精确 131,072）",
+  aaSpeed: "273.1 tokens/s（跨供应商中位）",
+  score: "AA 24",
+  notes: ["MXFP4 是发布与后训练/评测口径，不能表述为预训练使用 FP4。"],
+});
+
+const fluxDev = modelEvent({
+  id: "flux-1-dev",
+  date: "2024-08-01",
+  title: "FLUX.1 [dev]",
+  organization: "Black Forest Labs",
+  eyebrow: "图像生成 / Rectified Flow / 开放权重",
+  summary:
+    "12B 稠密 rectified-flow Transformer，以双流多模态块与单流 parallel DiT 组成混合架构，并从 FLUX.1 [pro] 直接 guidance distillation。",
+  confidence: "中",
+  tags: ["T2I", "DiT", "Rectified Flow", "Guidance Distillation", "Dense"],
+  officialSourceIds: ["flux-blog", "flux-card", "flux-code"],
+  aaSourceId: "flux-aa",
+  sources: [
+    source("flux-blog", "Announcing Black Forest Labs", "Black Forest Labs", "https://bfl.ai/blog/24-08-01-bfl", "官方博客"),
+    source("flux-card", "FLUX.1‑dev Model Card", "Black Forest Labs", "https://github.com/black-forest-labs/flux/blob/main/model_cards/FLUX.1-dev.md", "模型卡"),
+    source("flux-code", "Official FLUX Inference Repository", "Black Forest Labs", "https://github.com/black-forest-labs/flux", "代码仓"),
+    source("flux-aa", "Text to Image Leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/image/leaderboard/text-to-image", "第三方测量"),
+  ],
+  totalParameters: "12B",
+  activeParameters: "约 12B",
+  activeDerived: true,
+  weightSize: "23.8 GB（核心 Transformer；不含文本编码器与 VAE）",
+  precision: "公开检查点 BF16；训练精度未知",
+  architecture: "12B rectified-flow Transformer；multimodal + parallel diffusion Transformer blocks",
+  attention: "双流块中图像/文本保留独立权重并联合注意；随后合并单流；RoPE、QK-Norm、并行 attention/MLP",
+  moe: "Dense",
+  otherArchitecture: "Flow matching；guidance-strength embedding；约 0.1–2.0 megapixels 多宽高比",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；BFL 仅在家族层面披露 billions of tokens",
+  dataDetails: "专属训练集未知；家族披露为专有文本/图像、第三方授权、合成与内部生成数据，并做去重与安全过滤",
+  stages: "基础 rectified-flow 模型训练 → 从 FLUX.1 [pro] 做 guidance distillation",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Flow matching、rectified flow、guidance distillation；优化器与采样配方未知",
+  lowPrecision: "未知",
+  infra: "仅披露 RoPE 与 parallel attention 的硬件效率设计；集群、并行与吞吐未知",
+  aaIndex: "Image Arena Quality Elo：1,025（开放权重标记）",
+  aaContext: "Text‑to‑Image / 盲测用户偏好 / Elo-like 相对分",
+  aaSpeed: "不适用；该榜单使用生成时间而非 tokens/s，当前记录未知",
+  score: "Elo 1025",
+  notes: ["不混入 FLUX.1 [pro]、[schnell]、Krea [dev] 或 Fill/Depth 等衍生模型。"],
+});
+
+const hunyuanVideo = modelEvent({
+  id: "hunyuanvideo-2024-12",
+  date: "2024-12-03",
+  title: "HunyuanVideo",
+  organization: "Tencent Hunyuan",
+  eyebrow: "视频生成 / 3D VAE / 开放权重",
+  summary:
+    "约 13B 稠密视频 DiT，在因果 3D VAE 潜空间中统一生成图像与视频；20 层双流到 40 层单流架构与全注意力成为开放视频模型的重要样板。",
+  confidence: "高",
+  tags: ["T2V", "DiT", "3D VAE", "Flow Matching", "Full Attention"],
+  officialSourceIds: ["hy-report", "hy-repo", "hy-card"],
+  aaSourceId: "hy-aa",
+  sources: [
+    source("hy-report", "HunyuanVideo Technical Report", "Tencent Hunyuan", "https://arxiv.org/abs/2412.03603", "技术报告"),
+    source("hy-repo", "Tencent-Hunyuan/HunyuanVideo", "Tencent Hunyuan", "https://github.com/Tencent-Hunyuan/HunyuanVideo", "代码仓"),
+    source("hy-card", "tencent/HunyuanVideo", "Tencent", "https://huggingface.co/tencent/HunyuanVideo", "模型卡"),
+    source("hy-aa", "Text to Video Open Weights Leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/video/leaderboard/text-to-video/open-weights", "第三方测量"),
+  ],
+  totalParameters: "约 13B",
+  activeParameters: "约 13B",
+  activeDerived: true,
+  weightSize: "约 26.6 GB（25.6GB BF16 DiT + 986MB FP32 VAE，不含外部文本编码器）",
+  precision: "标准 DiT BF16、3D VAE FP32；另有约 13.2GB FP8 DiT",
+  architecture: "Flow Matching latent video DiT；统一图像/视频 Full Attention",
+  attention: "前 20 双流块 + 后 40 单流块；3D RoPE；Decoder-only MLLM 经双向 refiner，CLIP-L 提供全局条件",
+  moe: "Dense",
+  otherArchitecture: "因果 3D VAE 在时间/空间/通道压缩 4×/8×/16×；图像按单帧视频处理",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "图像池数十亿；视频精确量与 token 量未知",
+  dataDetails: "互联网规模图像/视频，多级清洗与结构化 caption；分 256p/360p/540p/720p；最终 SFT 含人工审核子集",
+  stages: "3D VAE → 两阶段图像预训练 → 低分辨率短/长视频 → 高分辨率长视频 → 专项微调 → CFG 蒸馏",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Flow Matching、logit-normal timestep、图像-视频课程学习、多尺度 bucket、高质量微调、CFG 蒸馏",
+  lowPrecision: "未知",
+  infra: "AngelPTM + XingMai；TP/SP/CP/DP/ZeroCache 5D 并行；Ring Attention；FusedAttention、重计算、CPU offload、故障替换；99.5% 稳定性",
+  aaIndex: "Video Arena Elo：1,001（Open Weights / No Audio）",
+  aaContext: "Text‑to‑Video；全球盲测偏好池，不与带音频模型混合",
+  aaSpeed: "不适用；生成时长指标未纳入该快照",
+  score: "Elo 1001",
+});
+
+const wan21 = modelEvent({
+  id: "wan2.1-t2v-14b",
+  date: "2025-02-22",
+  title: "Wan2.1‑T2V‑14B",
+  organization: "Alibaba Wan Team",
+  eyebrow: "视频生成 / Flow Matching / 开放权重",
+  summary:
+    "14B 稠密文本生视频模型，采用全时空 attention、umT5 与自研因果 Wan‑VAE，可原生生成 480P/720P、约 5 秒、16fps 视频。",
+  confidence: "中",
+  tags: ["T2V", "DiT", "Wan-VAE", "Ring Attention", "FP8 Inference"],
+  officialSourceIds: ["wan-report", "wan-repo", "wan-card"],
+  aaSourceId: "wan-aa",
+  sources: [
+    source("wan-report", "Wan: Open and Advanced Large-Scale Video Generative Models", "Wan Team", "https://arxiv.org/abs/2503.20314", "技术报告"),
+    source("wan-repo", "Wan-Video/Wan2.1", "Alibaba Wan Team", "https://github.com/Wan-Video/Wan2.1", "代码仓"),
+    source("wan-card", "Wan2.1‑T2V‑14B Model Card", "Wan‑AI", "https://huggingface.co/Wan-AI/Wan2.1-T2V-14B", "模型卡"),
+    source("wan-aa", "Wan 2.1 14B Quality Analysis", "Artificial Analysis", "https://artificialanalysis.ai/video/models/wan-2-1-14b", "第三方测量"),
+  ],
+  totalParameters: "14B",
+  activeParameters: "约 14B",
+  activeDerived: true,
+  weightSize: "57.154 GB 核心 F32 DiT；完整仓库约 69.1GB",
+  precision: "核心权重 F32，官方运行 bf16；训练 bf16 mixed precision；FP8/INT8 属推理优化",
+  architecture: "40 层稠密 Flow Matching DiT；hidden 5120，40 heads",
+  attention: "视频 latent 的非因果全时空 self-attention；umT5 cross-attention；3D RoPE；Q/K RMSNorm",
+  moe: "Dense",
+  otherArchitecture: "127M 3D causal Wan‑VAE，4×8×8 时空压缩；chunk cache 支持任意视频长度",
+  hardware: "未知",
+  hardwareCount: "未知；论文中的 128 GPU 仅为并行策略示例",
+  dataScale: "约 10^12 量级 tokens；精确值未知",
+  dataDetails: "去重后数十亿图像与视频；多级质量/运动/OCR过滤；后训练精选数百万图像与简单/复杂运动视频",
+  stages: "VAE 图像→低清视频→高质 GAN 微调；DiT 256px 图像→192p 视频→480p→720p；最终高质量后训练",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Rectified Flow、AdamW、渐进式分辨率 curriculum、冻结 T5/VAE、后训练继续联合训练",
+  lowPrecision: "bf16 mixed precision；FP8 GEMM 与 8-bit FlashAttention 仅在推理侧",
+  infra: "FSDP；Ring + Ulysses 2D Context Parallelism；activation offload；动态并行切换；集群慢机检测与自愈；推理 cache 1.62×",
+  aaIndex: "Video Arena Quality Elo：1,017.85（动态快照）",
+  aaContext: "Text‑to‑Video / Open Weights；Elo 会滚动变化",
+  aaSpeed: "不适用；生成时长未纳入该字段",
+  score: "Elo 1018",
+});
+
+const qwenOmni = modelEvent({
+  id: "qwen2.5-omni-7b",
+  date: "2025-03-26",
+  title: "Qwen2.5‑Omni‑7B",
+  organization: "Qwen Team / Alibaba",
+  eyebrow: "Omni / Any-to-Any / 开放权重",
+  summary:
+    "端到端接收文本、图像、音频和视频，并流式生成文本与自然语音；Thinker–Talker–Token2Wav 与统一绝对时间轴共同解决 Omni 对齐与首包延迟。",
+  confidence: "中",
+  tags: ["Omni", "Thinker-Talker", "TMRoPE", "Streaming", "Audio"],
+  officialSourceIds: ["omni-report", "omni-blog", "omni-repo", "omni-card"],
+  sources: [
+    source("omni-report", "Qwen2.5‑Omni Technical Report", "Qwen Team", "https://arxiv.org/abs/2503.20215", "技术报告"),
+    source("omni-blog", "Qwen2.5 Omni: See, Hear, Talk, Write, Do It All!", "Qwen Team", "https://qwenlm.github.io/blog/qwen2.5-omni/", "官方博客"),
+    source("omni-repo", "QwenLM/Qwen2.5‑Omni", "Qwen Team", "https://github.com/QwenLM/Qwen2.5-Omni", "代码仓"),
+    source("omni-card", "Qwen2.5‑Omni‑7B Model Card", "Qwen", "https://huggingface.co/Qwen/Qwen2.5-Omni-7B", "模型卡"),
+  ],
+  totalParameters: "10.732B 完整 checkpoint；名称 7B 指 Thinker 文本主干约 7.07B",
+  activeParameters: "约 10.732B（完整 dense 栈；纯文本可禁用 Talker/Token2Wav）",
+  activeDerived: true,
+  weightSize: "22.37 GB",
+  precision: "Thinker/Talker BF16；Token2Wav DiT FP32；训练低精度方案未知",
+  architecture: "Any-to-Any Transformer：Thinker + 双轨自回归 Talker + 流式 Token2Wav",
+  attention: "TMRoPE 将时间/高/宽共享到绝对时间轴；音视频 block-wise attention；Thinker GQA；视觉窗口+少量全局 attention",
+  moe: "Dense",
+  otherArchitecture: "Talker 生成语音 codec token；Token2Wav 用 flow-matching DiT 生成 mel，再由 BigVGAN 重建 24kHz 波形",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "image-text、video-text、video-audio、audio-text 与纯文本；Talker 使用口语对话、偏好与多说话人指令；规模/配比未知",
+  stages: "编码器对齐 → 全参数联合预训练 → 32K 长序列 → Thinker 多模态 SFT → Talker ICL → DPO → 多说话人 SFT",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "冻结对齐、统一多模态 AR、长上下文、ChatML SFT、next-token speech、音色解耦、DPO",
+  lowPrecision: "未知",
+  infra: "2 秒 block-wise 流输入、chunked prefill；音视频统一 25 position/s；Talker 流式 codec；滑窗 DiT + BigVGAN 降低首音频包延迟",
+  aaIndex: "未知：未找到可直接比较的 Artificial Analysis Omni 指标",
+  aaContext: "未知",
+  aaSpeed: "未知",
+  score: "AA 未收录",
+});
+
+const bagel = modelEvent({
+  id: "bagel-7b-mot",
+  date: "2025-05-20",
+  title: "BAGEL‑7B‑MoT",
+  organization: "ByteDance Seed",
+  eyebrow: "统一多模态 / MoT / 理解 + 生成",
+  summary:
+    "约 14B 总参数、7B 激活的统一理解与生成模型；双 Transformer 专家共享多模态 self-attention，并联合优化 next-token 与 rectified-flow 目标。",
+  confidence: "高",
+  tags: ["Unified", "MoT", "Rectified Flow", "Next Token", "FlexAttention"],
+  officialSourceIds: ["bagel-report", "bagel-repo", "bagel-card"],
+  aaSourceId: "bagel-aa",
+  sources: [
+    source("bagel-report", "Emerging Properties in Unified Multimodal Pretraining", "ByteDance Seed", "https://arxiv.org/abs/2505.14683", "论文"),
+    source("bagel-repo", "ByteDance-Seed/Bagel", "ByteDance Seed", "https://github.com/ByteDance-Seed/Bagel", "代码仓"),
+    source("bagel-card", "BAGEL‑7B‑MoT Model Card", "ByteDance Seed", "https://huggingface.co/ByteDance-Seed/BAGEL-7B-MoT", "模型卡"),
+    source("bagel-aa", "Text to Image Leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/image/leaderboard/text-to-image", "第三方测量"),
+  ],
+  totalParameters: "约 14B",
+  activeParameters: "约 7B / token path",
+  weightSize: "约 29.6 GB（含 EMA 与 FLUX VAE）",
+  precision: "BF16",
+  architecture: "Decoder-only Integrated Transformer；Qwen2.5 初始化的双专家 Mixture-of-Transformer-Experts",
+  attention: "文本因果、视觉分段双向；所有模态共享多模态 self-attention；diffusion forcing；QK-Norm；FlexAttention 广义掩码",
+  moe: "硬路由 MoT：理解专家处理文本/ViT，生成专家处理 VAE token；不是概率 top-k FFN MoE",
+  otherArchitecture: "SigLIP2 + NaViT 理解；FLUX VAE 生成；文本交叉熵 + 视觉 rectified-flow MSE 联合训练",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "约 5.1776T seen tokens（四阶段合计）",
+  dataDetails: "数据池约 5.1T：文本、5亿理解图文、16亿生成图文、视频/网页交错；另有约 500K reasoning-augmented 样本",
+  stages: "4.9B alignment → 2.5T pre-training → 约 2.6T continued training → 72.7B SFT",
+  stageDurations: "未知；公开 steps 为 5K / 200K / 100K / 15K",
+  totalDuration: "未知",
+  algorithms: "CE + rectified-flow MSE、AdamW、EMA、CFG dropout、diffusion forcing、原生分辨率、动态混合、长序列 packing",
+  lowPrecision: "CUDA autocast BF16；主权重 safetensors BF16",
+  infra: "PyTorch FlexAttention；FSDP HYBRID_SHARD、activation checkpointing、EMA 分布式维护、FlashAttention；32K–45K rank packing",
+  aaIndex: "Image Arena Quality Elo：895",
+  aaContext: "仅衡量 text‑to‑image，不代表理解、编辑或统一能力",
+  aaSpeed: "不适用",
+  score: "Elo 895",
+});
+
+const cerebras405Sources = [
+  source("c405-blog", "Llama 3.1 405B now runs at 969 tokens/s", "Cerebras", "https://www.cerebras.ai/blog/llama-405b-inference", "官方博客"),
+];
+const cerebras405: TimelineEvent = {
+  id: "cerebras-llama31-405b-969",
+  date: "2024-11-18",
+  title: "Llama 3.1 405B · 969 tok/s",
+  organization: "Cerebras",
+  eyebrow: "极致性能 / Wafer‑Scale",
+  summary: "Cerebras 在客户工作负载中以 16-bit 权重运行 Llama 3.1 405B，报告 969 output tok/s、240ms TTFT 与完整 128K 上下文。",
+  confidence: "中",
+  score: "969 tok/s",
+  tags: ["WSE-3", "Llama 3.1 405B", "16-bit", "Latency"],
+  facts: [
+    fact("硬件", "Cerebras CS‑3 / WSE‑3；该次 405B 部署的系统数量未知", ["c405-blog"]),
+    fact("硬件规模", "未知", ["c405-blog"]),
+    fact("模型", "Meta Llama 3.1 405B，128K context", ["c405-blog"]),
+    fact("权重精度", "原生 16-bit", ["c405-blog"]),
+    fact("核心技术", "Wafer‑Scale Engine 片上 SRAM 与 21 PB/s 级聚合带宽；跨系统按层切分", ["c405-blog"]),
+    fact("输出速度", "969 output tokens/s（1,000-token prompt 的客户工作负载）", ["c405-blog"]),
+    fact("长上下文速度", "539 tokens/s（100K input）", ["c405-blog"]),
+    fact("首 token 延迟", "240 ms", ["c405-blog"]),
+    fact("吞吐口径", "单请求输出速度；不是离线批量 aggregate throughput", ["c405-blog"]),
+    fact("精度影响", "厂商称使用原始 16-bit 权重；未给出该 405B 部署的独立精度复测表", ["c405-blog"]),
+  ],
+  sources: cerebras405Sources,
+};
+
+const b200Sources = [
+  source("b200-blog", "Blackwell Sets New LLM Inference Records in MLPerf v4.1", "NVIDIA", "https://developer.nvidia.com/blog/nvidia-blackwell-platform-sets-new-llm-inference-records-in-mlperf-inference-v4-1/", "官方博客"),
+];
+const b200Mlperf: TimelineEvent = {
+  id: "b200-llama2-70b-mlperf",
+  date: "2024-08-28",
+  title: "B200 · 10,756 tok/s",
+  organization: "NVIDIA / MLPerf",
+  eyebrow: "极致性能 / GPU / Aggregate",
+  summary: "单张 NVIDIA B200 在 MLPerf v4.1 Llama 2 70B closed-division server 场景达到 10,756 tok/s；这是系统聚合吞吐，不等于单用户生成速度。",
+  confidence: "高",
+  score: "10.8K tok/s",
+  tags: ["B200", "FP4", "TensorRT-LLM", "MLPerf", "Aggregate"],
+  facts: [
+    fact("硬件", "1× NVIDIA B200 GPU", ["b200-blog"]),
+    fact("硬件规模", "单 GPU", ["b200-blog"]),
+    fact("模型", "Llama 2 70B", ["b200-blog"]),
+    fact("权重精度", "FP4，使用 Blackwell Transformer Engine 与 TensorRT Model Optimizer", ["b200-blog"]),
+    fact("核心技术", "第二代 Transformer Engine、FP4 Tensor Cores、TensorRT‑LLM", ["b200-blog"]),
+    fact("输出吞吐", "Server 10,756 tok/s；Offline 11,264 tok/s", ["b200-blog"]),
+    fact("单用户速度", "未知：MLPerf 该表报告 aggregate throughput", ["b200-blog"]),
+    fact("TTFT / ITL", "受 MLPerf 场景约束，但该博客表未给出单独数值", ["b200-blog"]),
+    fact("精度影响", "Closed division 达到规定精度阈值；量化无需重训", ["b200-blog"]),
+    fact("对比基线", "每 GPU server throughput 约为 H100 提交的 4×", ["b200-blog"]),
+  ],
+  sources: b200Sources,
+};
+
+const ossFastSources = [
+  source("oss-fast", "gpt‑oss‑120B at 3,000 tokens/sec", "Cerebras", "https://www.cerebras.ai/blog/cerebras-launches-openai-s-gpt-oss-120b-at-a-blistering-3-000-tokens-sec", "官方博客"),
+  source("oss-openai", "Introducing gpt‑oss", "OpenAI", "https://openai.com/index/introducing-gpt-oss/", "官方博客"),
+];
+const gptOssFast: TimelineEvent = {
+  id: "cerebras-gpt-oss-3000",
+  date: "2025-08-05",
+  title: "gpt‑oss‑120b · 3,000 tok/s",
+  organization: "Cerebras + OpenAI",
+  eyebrow: "极致性能 / Open Model",
+  summary: "Cerebras 在 gpt‑oss‑120b 发布日提供 3,000 tok/s、完整 128K streaming API，把 117B/5.1B-active 的开放 MoE 推到实时交互速度。",
+  confidence: "中",
+  score: "3K tok/s",
+  tags: ["gpt-oss", "WSE", "MoE", "128K", "Streaming"],
+  facts: [
+    fact("硬件", "Cerebras Wafer‑Scale 推理系统；具体 CS‑3 数量未知", ["oss-fast"]),
+    fact("硬件规模", "未知", ["oss-fast"]),
+    fact("模型", "OpenAI gpt‑oss‑120b，116.83B total / 5.13B active", ["oss-fast", "oss-openai"]),
+    fact("权重精度", "OpenAI 原生 checkpoint 为 MXFP4+BF16；Cerebras 运行时内部精度口径未单独披露", ["oss-openai"]),
+    fact("核心技术", "WSE 高片上带宽 + 稀疏 MoE；完整 128K streaming", ["oss-fast"]),
+    fact("输出速度", "3,000 tokens/s（厂商发布值）", ["oss-fast"]),
+    fact("TTFT", "未知", ["oss-fast"]),
+    fact("吞吐口径", "面向开发者 API 的 output speed；并发条件与 prompt/output 长度未知", ["oss-fast"]),
+    fact("精度影响", "未知：该公告未给出量化前后同配置精度对照", ["oss-fast"]),
+    fact("可用性", "支持 full 128K context 与 streaming API", ["oss-fast"]),
+  ],
+  sources: ossFastSources,
+};
+
+const prioritySources = [
+  source("priority-openai", "Priority Processing for API Customers", "OpenAI", "https://openai.com/api-priority-processing/", "官方博客"),
+];
+const openAiPriority: TimelineEvent = {
+  id: "openai-priority-2026",
+  date: "2026-07-09",
+  title: "OpenAI Priority Processing",
+  organization: "OpenAI",
+  eyebrow: "极致性能 / 商业 SLA",
+  summary: "Priority 服务把“高速”变成可购买的延迟 SLA：GPT‑5.6 Sol/Terra/Luna 分别承诺 99% 请求输出速度高于 50/70/100 tok/s。",
+  confidence: "高",
+  score: ">100 tok/s",
+  tags: ["OpenAI", "Priority", "SLA", "Latency", "GPT-5.6"],
+  facts: [
+    fact("硬件", "未知", ["priority-openai"]),
+    fact("硬件规模", "未知", ["priority-openai"]),
+    fact("模型", "GPT‑5.6 Sol / Terra / Luna", ["priority-openai"]),
+    fact("权重精度", "未知", ["priority-openai"]),
+    fact("核心技术", "service_tier=priority 的资源调度与容量保障；底层推理技术未披露", ["priority-openai"]),
+    fact("速度 SLA", "99% > 50 / 70 / 100 tokens/s（Sol / Terra / Luna）", ["priority-openai"]),
+    fact("可用性 SLA", "99.9%", ["priority-openai"]),
+    fact("吞吐口径", "在线生成速度 SLA，不是批量 aggregate throughput", ["priority-openai"]),
+    fact("精度影响", "同一模型服务层级；页面未报告由高速服务导致的精度变化", ["priority-openai"]),
+    fact("长上下文限制", "页面注明该 SLA/价格排除 long context", ["priority-openai"]),
+  ],
+  sources: prioritySources,
+};
+
+const specInferSources = [
+  source("specinfer-paper", "SpecInfer: Tree-based Speculative Inference", "CMU / Stanford / Microsoft", "https://arxiv.org/abs/2305.09781", "论文"),
+  source("specinfer-code", "FlexFlow SpecInfer", "FlexFlow", "https://github.com/flexflow/FlexFlow", "代码仓"),
+];
+const specInfer: TimelineEvent = {
+  id: "paper-specinfer",
+  date: "2023-05-16",
+  title: "SpecInfer",
+  organization: "CMU / Stanford / Microsoft",
+  eyebrow: "论文 / Tree Speculation",
+  summary: "用小模型构造候选 token tree，再由目标 LLM 一次并行验证整个树；在分布式与 offloading 场景都保持目标模型生成质量。",
+  confidence: "高",
+  score: "1.5–3.5×",
+  tags: ["Speculative", "Token Tree", "Lossless", "Distributed"],
+  facts: [
+    fact("目标模型", "论文覆盖生成式 LLM；各表具体模型需见论文，摘要未给统一单一口径", ["specinfer-paper"]),
+    fact("硬件", "分布式 GPU 与 offloading 场景；摘要未给统一设备规模", ["specinfer-paper"]),
+    fact("方法", "小 speculative models 生成 token tree；目标 LLM 以 tree-based parallel decoding 一次验证", ["specinfer-paper"]),
+    fact("加速效果", "分布式 1.5–2.8×；offloading 2.6–3.5×", ["specinfer-paper"]),
+    fact("吞吐影响", "论文报告端到端 serving 加速；统一 req/s 数值未知", ["specinfer-paper"]),
+    fact("精度影响", "理论与实验口径均保持目标模型生成性能", ["specinfer-paper"]),
+    fact("额外训练", "需要一个或多个较小 speculative model", ["specinfer-paper"]),
+    fact("额外显存", "需要 draft model 与 tree verification 结构；精确开销依配置而变", ["specinfer-paper"]),
+  ],
+  sources: specInferSources,
+};
+
+const mtpPaperSources = [
+  source("mtp-report", "DeepSeek‑V3 Technical Report", "DeepSeek‑AI", "https://arxiv.org/abs/2412.19437", "技术报告"),
+];
+const deepseekMtp: TimelineEvent = {
+  id: "paper-deepseek-mtp",
+  date: "2024-12-27",
+  title: "DeepSeek Multi‑Token Prediction",
+  organization: "DeepSeek‑AI",
+  eyebrow: "论文 / MTP",
+  summary: "训练时增加一个共享 embedding/head 的浅层 MTP 模块，联合预测未来多个 token；它既改善主模型训练信号，也能在部署时作为 speculative head。",
+  confidence: "高",
+  score: "速度未知",
+  tags: ["MTP", "Speculative", "Shared Head", "DeepSeek"],
+  facts: [
+    fact("目标模型", "DeepSeek‑V3 671B / 37B active", ["mtp-report"]),
+    fact("硬件", "训练在 H800；MTP 推理基准硬件未知", ["mtp-report"]),
+    fact("方法", "深度 1 的 sequential MTP module；共享 embedding/output head，额外预测下下 token", ["mtp-report"]),
+    fact("加速效果", "未知：报告确认可用于 speculative decoding，但未给端到端速度倍数", ["mtp-report"]),
+    fact("训练收益", "报告称 MTP 同时改善模型性能；不同基准增益见技术报告消融", ["mtp-report"]),
+    fact("精度影响", "主模型常规推理可丢弃 MTP；作为 speculative head 时需目标模型验证", ["mtp-report"]),
+    fact("额外训练", "与主模型联合训练", ["mtp-report"]),
+    fact("额外参数", "checkpoint 约多 14B MTP 相关参数；常规部署可不加载", ["mtp-report"]),
+  ],
+  sources: mtpPaperSources,
+};
+
+const eagleSources = [
+  source("eagle-paper", "EAGLE‑3: Training-Time Test", "SafeAI Lab", "https://arxiv.org/abs/2503.01840", "论文"),
+  source("eagle-code", "SafeAILab/EAGLE", "SafeAI Lab", "https://github.com/SafeAILab/EAGLE", "代码仓"),
+];
+const eagle3: TimelineEvent = {
+  id: "paper-eagle-3",
+  date: "2025-03-03",
+  title: "EAGLE‑3",
+  organization: "SafeAI Lab",
+  eyebrow: "论文 / Feature Fusion Speculation",
+  summary: "从 feature prediction 转为 direct token prediction，并融合目标模型多层特征；通过 training-time test 让 draft model 真正受益于数据规模。",
+  confidence: "高",
+  score: "up to 6.5×",
+  tags: ["EAGLE", "Speculative", "Feature Fusion", "SGLang"],
+  facts: [
+    fact("目标模型", "Chat 与 reasoning models，跨 5 类任务；具体组合见论文", ["eagle-paper"]),
+    fact("硬件", "未知：摘要未给统一硬件口径", ["eagle-paper"]),
+    fact("方法", "direct token prediction + multi-layer feature fusion + training-time test", ["eagle-paper"]),
+    fact("加速效果", "最高 6.5×；相对 EAGLE‑2 约提升 1.4×", ["eagle-paper"]),
+    fact("吞吐影响", "SGLang、batch=64 时 throughput 1.38×", ["eagle-paper"]),
+    fact("精度影响", "speculative verification 保持目标分布；论文将方法定位为 lossless acceleration", ["eagle-paper"]),
+    fact("额外训练", "需要训练 EAGLE‑3 draft model；可通过扩大训练数据改善", ["eagle-paper"]),
+    fact("局限", "收益依接受率、batch size、目标模型和任务而变，最高值不可直接外推", ["eagle-paper"]),
+  ],
+  sources: eagleSources,
+};
+
+const dsparkSources = [
+  source("dspark-paper", "DSpark: Confidence-Scheduled Speculative Decoding", "DeepSeek‑AI", "https://arxiv.org/abs/2607.05147", "论文"),
+];
+const dspark: TimelineEvent = {
+  id: "paper-dspark",
+  date: "2026-07-06",
+  title: "DSpark",
+  organization: "DeepSeek‑AI",
+  eyebrow: "论文 / Production Speculation",
+  summary: "把半自回归 draft architecture 与按置信度/负载动态裁剪 verification length 结合，直接优化高并发服务中的验证浪费。",
+  confidence: "高",
+  score: "+60–85%",
+  tags: ["DSpark", "Semi-AR", "Scheduling", "DeepSeek V4", "Production"],
+  facts: [
+    fact("目标模型", "DeepSeek‑V4 serving system；离线评测还覆盖多领域模型/任务", ["dspark-paper"]),
+    fact("硬件", "生产系统硬件与规模未知", ["dspark-paper"]),
+    fact("方法", "parallel backbone + 轻量 sequential module；confidence-scheduled verification 结合 engine throughput profile", ["dspark-paper"]),
+    fact("加速效果", "相对生产 MTP‑1，在 matched throughput 下单用户生成速度 +60% 至 +85%", ["dspark-paper"]),
+    fact("吞吐影响", "在严格 interactivity 约束下避免 verification 造成的严重 throughput degradation；绝对 req/s 未公开", ["dspark-paper"]),
+    fact("精度影响", "未知：摘要未给精度差值；验证机制旨在维持目标模型分布", ["dspark-paper"], "推导", "基于 speculative verification 的机制推断，不替代论文中的精确证明与实验。"),
+    fact("额外训练", "需要训练 semi-autoregressive drafter", ["dspark-paper"]),
+    fact("生产证据", "已部署到 DeepSeek‑V4 live user traffic", ["dspark-paper"]),
+  ],
+  sources: dsparkSources,
+};
+
+export const historyData: TimelinePageData = {
+  page: "history",
+  kicker: "Observed / Verified",
+  title: "AI 技术历史图谱",
+  intro: "横向阅读发布时间，纵向比较训练与推理路径。节点只展示名称与时间；点击后，所有已披露、推导和未知字段才进入证据面板。",
+  windowLabel: "2023—2026 / EVIDENCE SNAPSHOT",
+  startDate: "2023-01-01",
+  endDate: "2026-12-31",
+  tickDates: ["2023-01-01", "2024-01-01", "2025-01-01", "2026-01-01", "2026-12-01"],
+  lanes: [
+    {
+      id: "llm-training",
+      group: "模型训练 / 01",
+      title: "LLM / VLM 训练",
+      description: "开放权重模型的结构、数据、算力与训练机制",
+      color: "cyan",
+      events: [deepseekV3, qwen3, kimiK2, gptOss],
+    },
+    {
+      id: "multimodal-training",
+      group: "模型训练 / 02",
+      title: "生成 / Omni 训练",
+      description: "DiT、视频、语音与统一理解生成模型",
+      color: "violet",
+      events: [fluxDev, hunyuanVideo, wan21, qwenOmni, bagel],
+    },
+    {
+      id: "extreme-inference",
+      group: "模型推理 / 01",
+      title: "极致性能",
+      description: "严格区分单用户速度、在线 SLA 与批量吞吐",
+      color: "amber",
+      events: [b200Mlperf, cerebras405, gptOssFast, openAiPriority],
+    },
+    {
+      id: "inference-papers",
+      group: "模型推理 / 02",
+      title: "推理技术论文",
+      description: "MTP、EAGLE、DSpark 与树式推测解码",
+      color: "green",
+      events: [specInfer, deepseekMtp, eagle3, dspark],
+    },
+  ],
+};
+
+const nvidiaFp4Source = source(
+  "nvfp4-train",
+  "Train Models Faster with JAX and MaxText Using NVFP4",
+  "NVIDIA",
+  "https://developer.nvidia.com/blog/train-models-faster-with-jax-and-maxtext-using-nvfp4-on-nvidia-blackwell/",
+  "官方博客",
+);
+const rubinSource = source(
+  "rubin-platform",
+  "NVIDIA Rubin Platform",
+  "NVIDIA",
+  "https://nvidianews.nvidia.com/news/rubin-platform-ai-supercomputer",
+  "官方博客",
+);
+const ieaSource = source(
+  "iea-energy-ai",
+  "Key Questions on Energy and AI — Executive Summary",
+  "International Energy Agency",
+  "https://www.iea.org/reports/key-questions-on-energy-and-ai/executive-summary",
+  "技术报告",
+);
+const epoch2030Source = source(
+  "epoch-2030",
+  "What will AI look like in 2030?",
+  "Epoch AI",
+  "https://epoch.ai/publications/what-will-ai-look-like-in-2030",
+  "技术报告",
+);
+const aaCostSource = source(
+  "aa-gpt56-cost",
+  "GPT‑5.6 benchmarks across Intelligence, Speed and Cost",
+  "Artificial Analysis",
+  "https://artificialanalysis.ai/articles/gpt-5-6-has-landed",
+  "第三方测量",
+);
+const glm52Source = source(
+  "glm52-blog",
+  "GLM‑5.2: Built for Long-Horizon Tasks",
+  "Z.ai",
+  "https://z.ai/blog/glm-5.2",
+  "官方博客",
+);
+
+function forecastEvent(input: {
+  id: string;
+  date: string;
+  title: string;
+  organization: string;
+  eyebrow: string;
+  summary: string;
+  confidence: TimelineEvent["confidence"];
+  score: string;
+  tags: string[];
+  sources: Source[];
+  basisIds: string[];
+  conclusion: string;
+  window: string;
+  evidence: string;
+  method: string;
+  assumptions: string;
+  indicators: string;
+  invalidation: string;
+  uncertainty: string;
+  revisionNotes: string[];
+}): TimelineEvent {
+  const sourceIds = input.sources.map((item) => item.id);
+  return {
+    id: input.id,
+    date: input.date,
+    title: input.title,
+    organization: input.organization,
+    eyebrow: input.eyebrow,
+    summary: input.summary,
+    confidence: input.confidence,
+    score: input.score,
+    tags: input.tags,
+    facts: [
+      fact("趋势结论", input.conclusion, sourceIds, "推导", input.method),
+      fact("预计窗口", input.window, sourceIds, "推导"),
+      fact("历史证据", input.evidence, sourceIds),
+      fact("推导方法", input.method, sourceIds, "推导"),
+      fact("关键假设", input.assumptions, sourceIds, "推导"),
+      fact("领先指标", input.indicators, sourceIds, "推导"),
+      fact("反证 / 失效条件", input.invalidation, sourceIds, "推导"),
+      fact("量化不确定性", input.uncertainty, sourceIds, "推导"),
+      fact("直接依赖的历史节点", input.basisIds.join("、"), sourceIds, "推导"),
+    ],
+    sources: input.sources,
+    basisIds: input.basisIds,
+    revisionNotes: input.revisionNotes,
+  };
+}
+
+const sparseDefault = forecastEvent({
+  id: "trend-sparse-default",
+  date: "2027-03-01",
+  title: "稀疏成为默认架构",
+  organization: "Evidence synthesis",
+  eyebrow: "1–2 年趋势 / Architecture",
+  summary: "MoE 不再只是扩大参数的工具；attention、KV、draft verification 与专家通信会被一起稀疏化并联合优化。",
+  confidence: "高",
+  score: "高置信",
+  tags: ["MoE", "Sparse Attention", "IndexShare", "Speculation"],
+  sources: [glm52Source, deepseekV3.sources[0], qwen3.sources[0], dspark.sources[0]],
+  basisIds: [deepseekV3.id, qwen3.id, kimiK2.id, dspark.id],
+  conclusion: "到 2027–2028，领先开放模型大概率同时采用稀疏 FFN、稀疏/共享 attention index 与负载感知 speculative decoding。",
+  window: "2027 Q1—2028 Q2",
+  evidence: "DeepSeek‑V3/Kimi K2/Qwen3 已把激活参数压到总参数的 3%–10%；GLM‑5.2 IndexShare 报告 1M context 下 per-token FLOPs 下降 2.9×；DSpark 把 verification 也纳入负载调度。",
+  method: "把已量产的三类稀疏化（expert、attention、draft verification）视为相互独立的成本杠杆；当同一模型族已经同时出现两类，推断下一代会做系统级合并。",
+  assumptions: "稀疏 kernel、all-to-all 与负载均衡继续进步；质量不会因路由或 indexer 误差显著下降。",
+  indicators: "active/total 参数比继续下降；官方报告开始同时披露 attention sparsity、expert sparsity 和 accepted length。",
+  invalidation: "稠密小模型在相同训练/推理成本下持续胜出，或稀疏通信开销抵消理论 FLOPs 优势。",
+  uncertainty: "具体稀疏比例未知；高置信结论仅是方向，不是统一架构规格。",
+  revisionNotes: [
+    "2025‑07：Kimi K2 的 1.04T/32.6B 进一步强化超稀疏 MoE 判断。",
+    "2026‑06：GLM‑5.2 IndexShare 把稀疏从 FFN 扩展到 attention index，扩大趋势范围。",
+    "2026‑07：DSpark 生产数据使判断进一步延伸到 verification scheduling。",
+  ],
+});
+
+const verifierTraining = forecastEvent({
+  id: "trend-verifier-training",
+  date: "2027-06-01",
+  title: "数据从语料转向可验证轨迹",
+  organization: "Evidence synthesis",
+  eyebrow: "1–2 年趋势 / Data",
+  summary: "原始网页 token 仍重要，但性能差异会越来越来自合成教材、工具环境、可执行 verifier 与长轨迹强化学习。",
+  confidence: "高",
+  score: "高置信",
+  tags: ["Synthetic Data", "Verifier", "RL", "Agents", "Sandboxes"],
+  sources: [qwen3.sources[0], kimiK2.sources[0], bagel.sources[0]],
+  basisIds: [qwen3.id, kimiK2.id, bagel.id],
+  conclusion: "2027–2028 的训练披露重点将从“多少 T token”转为“多少可验证任务、环境并发、轨迹质量与 reward coverage”。",
+  window: "2027 Q2—2028 Q4",
+  evidence: "Qwen3 使用 query-verifier pairs 与多阶段 RL；Kimi K2 构建 20,000+ 工具和 10,000+ 并发沙箱；BAGEL 用交错视频/网页与 reasoning-augmented 样本获得统一能力。",
+  method: "比较三类模型中原始 token 增长与后训练机制的新信息量：新增能力主要可追溯到 verifier、tool trajectory 和 multimodal interleaving。",
+  assumptions: "合成数据的错误可被 verifier、人工审查或环境执行有效过滤；真实任务分布没有被训练环境过度简化。",
+  indicators: "发布报告开始披露并发沙箱、rollout tokens、verifier pass rate、轨迹长度和 reward hacking 审计。",
+  invalidation: "合成数据出现明显 model collapse，或封闭环境提升无法迁移到真实 agent 任务。",
+  uncertainty: "训练机构可能不披露数据来源；数量增长不等同于信息增益。",
+  revisionNotes: ["2025‑05：BAGEL 的交错序列显示多模态数据结构本身可诱发新能力。", "2025‑07：Kimi K2 将环境并发与 checkpoint 更新速度纳入训练系统核心。"],
+});
+
+const fp4Training = forecastEvent({
+  id: "trend-fp4-training",
+  date: "2027-09-01",
+  title: "FP4 进入规模训练主路径",
+  organization: "NVIDIA + open model evidence",
+  eyebrow: "1–2 年趋势 / Precision",
+  summary: "FP8 已从实验变为默认选项；NVFP4 等微块缩放格式会从 checkpoint/inference 继续进入大规模预训练的主要 GEMM。",
+  confidence: "高",
+  score: "1.73× signal",
+  tags: ["NVFP4", "FP8", "Training", "Blackwell", "Rubin"],
+  sources: [nvidiaFp4Source, rubinSource, deepseekV3.sources[0], gptOss.sources[1]],
+  basisIds: [deepseekV3.id, gptOss.id, wan21.id],
+  conclusion: "到 2027 年，4-bit floating-point mixed precision 将进入部分前沿预训练主路径，但 attention 与 master state 仍保留更高精度。",
+  window: "2027 Q2—2028 Q2",
+  evidence: "DeepSeek‑V3 已证明 FP8 大规模稳定训练；NVIDIA 2026 NVFP4 recipe 在 8B/1T 实验中相对 FP8 报告最高 1.73×，并明确 attention 保持更高精度；Rubin 宣称 MoE 训练 GPU 数下降 4×。",
+  method: "沿 DeepSeek‑V3 的 FP8 production evidence 与硬件原生 FP4 throughput 曲线外推一代；只把已被 1T-token 实验验证的算子范围纳入。",
+  assumptions: "随机 Hadamard、微块 scale、stochastic rounding 等 recipe 可扩到更大模型而不改变 scaling law。",
+  indicators: "MLPerf Training 大规模提交使用 FP4；公开报告明确区分 FP4 compute、FP8 attention、FP32 master state。",
+  invalidation: "FP4 需要显著额外 tokens 才能追回 loss，或大规模分布式误差放大导致 rollback。",
+  uncertainty: "“进入主路径”不代表全模型 FP4；预计只覆盖对量化不敏感的 GEMM。",
+  revisionNotes: ["2024‑12：DeepSeek‑V3 将 FP8 从硬件能力变成公开 production recipe。", "2026‑06：NVIDIA 1T-token NVFP4 实验把趋势从 inference 扩展到 pre-training。"],
+});
+
+const memoryHierarchy = forecastEvent({
+  id: "trend-memory-hierarchy",
+  date: "2028-02-01",
+  title: "推理系统转向分层内存",
+  organization: "NVIDIA / model infra synthesis",
+  eyebrow: "1–2 年趋势 / Infra",
+  summary: "长上下文与 agent 轨迹把瓶颈从算力推向 KV/状态搬运；GPU HBM、网络内存、SSD 与 context memory service 会被统一调度。",
+  confidence: "中",
+  score: "中置信",
+  tags: ["KV Cache", "Disaggregation", "Context Memory", "Long Context"],
+  sources: [rubinSource, glm52Source, cerebras405Sources[0]],
+  basisIds: [deepseekV3.id, cerebras405.id, openAiPriority.id],
+  conclusion: "2028 前，前沿 serving stack 会把 KV cache / agent state 作为独立资源池调度，prefill、decode、context storage 的物理分离成为常见架构。",
+  window: "2027 Q4—2028 Q4",
+  evidence: "DeepSeek‑V3 已分离 prefill/decode；GLM‑5.2 在 1M context 面临 KV cache 未随 FLOPs 等比下降；Rubin 发布 context memory storage platform。",
+  method: "把长上下文模型的每 token FLOPs 与 KV bytes 分别外推；当 attention 稀疏后，KV 搬运占比继续上升，因此需要独立内存层级。",
+  assumptions: "agent workload 的热/冷上下文可预测；网络与存储延迟可被预取和 batch 隐藏。",
+  indicators: "服务商开始公布 KV cache hit rate、context offload bandwidth、prefill/decode/context 三种独立价格。",
+  invalidation: "模型内化长期记忆、极端 KV 压缩或短上下文 agent 设计让外部状态需求下降。",
+  uncertainty: "不同 workload 的状态复用差异极大，部署比例未知。",
+  revisionNotes: ["2026‑01：Rubin 把 inference context memory 明确成独立平台组件。", "2026‑06：GLM‑5.2 显示稀疏 attention 仍未解决 KV footprint。"],
+});
+
+const powerConstraint = forecastEvent({
+  id: "trend-power-constraint",
+  date: "2027-12-01",
+  title: "电力交付成为首要排期",
+  organization: "IEA + Epoch AI",
+  eyebrow: "1–2 年趋势 / Energy",
+  summary: "模型计划将倒逼电网接入、变压器、储能和冷却排期；“有多少 GPU”越来越取决于“何时能获得稳定 MW”。",
+  confidence: "高",
+  score: "4× rack density",
+  tags: ["Power", "Grid", "Storage", "Cooling", "Rack Density"],
+  sources: [ieaSource, epoch2030Source],
+  basisIds: [deepseekV3.id, kimiK2.id, b200Mlperf.id],
+  conclusion: "2027–2028，大型训练/推理集群的关键路径从芯片采购延伸到并网、变压器、储能与液冷，电力可用日期会进入模型发布时间规划。",
+  window: "2027 Q1—2028 Q4",
+  evidence: "IEA：2025→2030 数据中心用电约 485→950 TWh，AI-focused 用电约增至 3×；2027 rack peak power density 预计在 2025 基础上再增 4×。",
+  method: "采用 IEA central projection，不用上行情景；用 rack density 的已发布近端预测判断供应链与并网会先于全球电量成为局部瓶颈。",
+  assumptions: "AI 投资继续增长；效率提升带来的单任务节能被更高使用量与 agent workload 抵消。",
+  indicators: "模型实验公开 MW、PUE、训练中断/移峰策略；数据中心项目更多使用 onsite generation 与储能。",
+  invalidation: "资本开支显著回落，或模型/硬件效率提升使总需求在 2027 前见顶。",
+  uncertainty: "全球平均不代表区域并网；项目可能因审批而非电量本身延迟。",
+  revisionNotes: ["2026‑04：IEA 更新维持 2030 约 950 TWh 中央路径，同时强调近端设备/并网瓶颈。"],
+});
+
+const costPerIntelligence = forecastEvent({
+  id: "trend-cost-per-intelligence",
+  date: "2028-06-01",
+  title: "单位智能成本继续坍缩",
+  organization: "Artificial Analysis + hardware evidence",
+  eyebrow: "1–2 年趋势 / Economics",
+  summary: "同一智能水平会被更小 active parameters、更低精度、更快 decode 与按任务路由共同压价；成本下降速度将快于榜单分数上升。",
+  confidence: "高",
+  score: "↓ 50–80% signal",
+  tags: ["Cost per Task", "Routing", "MoE", "FP4", "Speed"],
+  sources: [aaCostSource, rubinSource, ossFastSources[0], openAiPriority.sources[0]],
+  basisIds: [gptOss.id, gptOssFast.id, openAiPriority.id, b200Mlperf.id],
+  conclusion: "到 2028，相同能力区间的 cost-per-task 还将下降一个数量级级别的可能性高于原始 token 单价等比下降。",
+  window: "2027 Q1—2028 Q4",
+  evidence: "GPT‑5.6 Terra/Luna 在接近 Sol 的智能区间将 cost/task 降约 50%/80%；Rubin 宣称 token cost 最高降 10×；gpt‑oss‑120b 已达到 3,000 tok/s 厂商速度。",
+  method: "同时跟踪 cost-per-task（包含输出 token 数）而非单纯 $/M token；把模型路由、稀疏 active compute、硬件 cost/token 视为乘法项。",
+  assumptions: "竞争继续把硬件效率传导到 API 价格；推理输出 token 数不会抵消所有单 token 降本。",
+  indicators: "同一 Intelligence Index 分段的最低 cost/task；每个成功 agent task 的总 tokens、重试次数与 wall time。",
+  invalidation: "推理长度、工具调用与 agent 重试增长快于单 token 成本下降，导致有效任务成本上升。",
+  uncertainty: "“一个数量级”是区间判断；能力基准与任务权重更新会改变绝对值。",
+  revisionNotes: ["2025‑08：gpt‑oss 把 117B 模型下沉到单 80GB GPU。", "2026‑07：GPT‑5.6 家族显示同实验室内部按能力/成本分层已经系统化。"],
+});
+
+export const trendsData: TimelinePageData = {
+  page: "trends",
+  kicker: "Inferred / Revisable",
+  title: "未来两年趋势",
+  intro: "每个判断都绑定历史节点、外部预测、假设与反证条件。它不是静态结论：当新模型改变证据权重，修订记录也会保留下来。",
+  windowLabel: "2026 H2—2028 / 1–2 YEAR SIGNALS",
+  startDate: "2026-07-01",
+  endDate: "2028-12-31",
+  tickDates: ["2026-07-01", "2027-01-01", "2027-07-01", "2028-01-01", "2028-07-01", "2028-12-01"],
+  lanes: [
+    { id: "trend-architecture", group: "趋势 / 01", title: "模型架构", description: "稀疏化、统一模型与可验证后训练", color: "cyan", events: [sparseDefault, verifierTraining] },
+    { id: "trend-compute", group: "趋势 / 02", title: "算力与参数", description: "低精度计算与分层内存成为系统主线", color: "violet", events: [fp4Training, memoryHierarchy] },
+    { id: "trend-energy", group: "趋势 / 03", title: "电力与设施", description: "从 GPU 数量转向可交付 MW 与散热密度", color: "amber", events: [powerConstraint] },
+    { id: "trend-economics", group: "趋势 / 04", title: "单位智能成本", description: "按任务而不是按 token 衡量效率", color: "green", events: [costPerIntelligence] },
+  ],
+};
+
+const metrSource = source(
+  "metr-horizon",
+  "Task-Completion Time Horizons of Frontier AI Models",
+  "METR",
+  "https://metr.org/time-horizons/",
+  "数据集",
+);
+const ieaSupplySource = source(
+  "iea-supply",
+  "Energy supply for AI",
+  "International Energy Agency",
+  "https://www.iea.org/reports/energy-and-ai/energy-supply-for-ai",
+  "技术报告",
+);
+const aaMethodSource = source(
+  "aa-methodology",
+  "Artificial Analysis Intelligence Benchmarking Methodology",
+  "Artificial Analysis",
+  "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
+  "第三方测量",
+);
+
+const rackScaleFuture = forecastEvent({
+  id: "future-rack-scale-computer",
+  date: "2031-01-01",
+  title: "机架 / POD 成为一颗“芯片”",
+  organization: "Hardware horizon",
+  eyebrow: "5–10 年展望 / Chips",
+  summary: "CPU、GPU、交换、DPU、光互联与 context storage 的联合设计会把编程与采购单位从单芯片抬升到 rack/POD。",
+  confidence: "高",
+  score: "结构性",
+  tags: ["Rack Scale", "Photonics", "DPU", "Context Memory", "Co-design"],
+  sources: [rubinSource, cerebras405Sources[0]],
+  basisIds: [b200Mlperf.id, cerebras405.id, memoryHierarchy.id],
+  conclusion: "2031 前后，前沿 AI 系统的最小可比较单元更可能是完整 rack/POD，而不是 GPU 型号；模型架构会直接针对整机网络与内存层级设计。",
+  window: "2029—2032",
+  evidence: "Rubin 已以 6 类芯片和 POD-scale design 发布，并引入 co-packaged photonics 与 context memory；Cerebras 证明非 GPU 的 wafer-scale 路径可用高片上带宽换取单流速度。",
+  method: "沿系统 co-design 的公开产品路径外推两代，并把模型中 MLA、MoE all-to-all、KV disaggregation 对系统边界的要求作为结构约束。",
+  assumptions: "光互联良率、网络可靠性和编译器能让跨芯粒/跨机架通信接近可编程资源，而非隐藏开销。",
+  indicators: "性能报告以 agent tasks/POD、tokens/MW、KV TB/s 为主；编译器公开跨 GPU/DPU/storage placement。",
+  invalidation: "单芯片 HBM/compute 增长重新快于模型状态与通信需求，或小模型占据大多数高价值工作负载。",
+  uncertainty: "高置信的是系统边界上移；具体是 NVL、Ethernet POD、wafer 还是 custom ASIC 未定。",
+  revisionNotes: ["2026‑01：Rubin 正式把 CPU/GPU/switch/DPU/network/storage 作为一套 AI supercomputer 发布。"],
+});
+
+const heterogeneousInference = forecastEvent({
+  id: "future-heterogeneous-inference",
+  date: "2033-01-01",
+  title: "推理由异构流水线完成",
+  organization: "Systems horizon",
+  eyebrow: "5–10 年展望 / Chips",
+  summary: "Prefill、decode、retrieval、draft、verification、memory 与 tool execution 将落到不同计算/存储芯片，调度器把它们拼成一次推理。",
+  confidence: "中",
+  score: "中置信",
+  tags: ["Heterogeneous", "Prefill", "Decode", "Speculation", "Memory"],
+  sources: [rubinSource, dspark.sources[0], deepseekV3.sources[0]],
+  basisIds: [deepseekV3.id, dspark.id, memoryHierarchy.id],
+  conclusion: "到 2033，高端推理将像数据库查询计划：一次回答由异构设备分别承担 prefill、decode、draft、verification、memory lookup 与 tool execution。",
+  window: "2031—2035",
+  evidence: "DeepSeek‑V3 已拆分 prefill/decode；DSpark 把 draft/verification 调度显式化；Rubin 把 DPU 与 context memory 纳入硬件平台。",
+  method: "把当前软件阶段的资源特征分类：prefill 计算密集、decode 带宽密集、draft 小模型密集、KV/storage 容量密集；长期成本压力倾向于各自专用化。",
+  assumptions: "跨设备传输、容错和调度开销低于专用化收益；请求有足够规模形成稳定 batch。",
+  indicators: "API 开始分项计费 prefill/decode/context/tool；硬件供应商推出 draft/verification 或 KV 专用单元。",
+  invalidation: "统一 GPU 的通用性和规模经济持续碾压专用单元，或模型架构消除显著阶段差异。",
+  uncertainty: "专用芯片数量与边界高度不确定；也可能以软件虚拟设备呈现。",
+  revisionNotes: ["2026‑07：DSpark 显示 production serving 的 Pareto frontier 已取决于 verification scheduling，而不只是单 kernel。"],
+});
+
+const hybridPowerFuture = forecastEvent({
+  id: "future-hybrid-power-campus",
+  date: "2032-01-01",
+  title: "算力园区成为能源系统",
+  organization: "IEA energy horizon",
+  eyebrow: "5–10 年展望 / Energy",
+  summary: "大型 AI 园区将同时运营可再生能源、储能、燃气/地热与核电合同，并按电网状态移动训练与推理负载。",
+  confidence: "高",
+  score: "45GW SMR signal",
+  tags: ["SMR", "Renewables", "Storage", "Grid", "Load Shifting"],
+  sources: [ieaSource, ieaSupplySource],
+  basisIds: [powerConstraint.id, fp4Training.id],
+  conclusion: "2032 左右，GW 级算力园区会像工业能源用户一样参与发电、储能和电网服务；训练调度器将接受碳强度与电价信号。",
+  window: "2030—2034",
+  evidence: "IEA 预计首批 SMR 约 2030 上线；科技公司关联的 SMR conditional offtake pipeline 已从 2024 年 25GW 增至 2026 年 45GW；AI 负载具有大幅快速波动。",
+  method: "采用 IEA base case 的供给结构，把当前 PPA/储能/onsite generation 从采购手段外推为日常调度变量。",
+  assumptions: "SMR/地热项目按期交付；模型训练可暂停/迁移而不造成过高恢复成本；监管允许园区参与电力市场。",
+  indicators: "训练报告披露 carbon-aware scheduling；园区公开储能时长、可中断负载和 onsite generation 比例。",
+  invalidation: "SMR 商业化继续推迟，或电网扩建速度足以让园区无需自建调节能力。",
+  uncertainty: "地区差异极大；部分市场会先依赖燃气而非低碳 firm power。",
+  revisionNotes: ["2026‑04：IEA 把 AI power swings 与储能需求明确关联，并上调 SMR offtake pipeline 观察值。"],
+});
+
+const electricityRangeFuture = forecastEvent({
+  id: "future-electricity-range",
+  date: "2035-01-01",
+  title: "全球数据中心 0.7–1.7 PWh",
+  organization: "IEA scenario range",
+  eyebrow: "5–10 年展望 / Energy",
+  summary: "2035 的关键不是一个点预测，而是 700–1,700 TWh 的情景区间；采用率与效率的乘积比单颗芯片 TDP 更重要。",
+  confidence: "高",
+  score: "700–1700 TWh",
+  tags: ["Electricity", "Scenario", "Efficiency", "Adoption", "2035"],
+  sources: [ieaSource, ieaSupplySource],
+  basisIds: [powerConstraint.id, costPerIntelligence.id],
+  conclusion: "2035 全球数据中心用电更合理的表达是 700–1,700 TWh 情景带，而不是单点；AI 效率提升与使用量反弹将共同决定位置。",
+  window: "2035",
+  evidence: "IEA 2025/2026 Base Case 约 1,200 TWh；Headwinds/High Efficiency/Lift-Off 等情景形成约 700–1,700 TWh 范围。",
+  method: "直接采用 IEA sensitivity range，不另做线性外推；把模型/硬件效率、AI adoption 与能源瓶颈视为三个独立变量。",
+  assumptions: "IEA 情景边界覆盖主要技术与采用率路径；非数据中心端侧推理未大规模转移统计口径。",
+  indicators: "年度 AI-focused data center TWh、accelerated server stock、每任务 Wh 与总体 task volume。",
+  invalidation: "端侧计算成为主流使数据中心统计失真，或全新计算范式带来远超情景的能效变化。",
+  uncertainty: "区间本身就是不确定性表达；各地区电源结构与碳排差异更大。",
+  revisionNotes: ["2026‑04：IEA 更新仍维持 2030 约翻倍，但强调供应链瓶颈降低近端上行情景概率。"],
+});
+
+const longHorizonAgents = forecastEvent({
+  id: "future-long-horizon-agents",
+  date: "2031-06-01",
+  title: "多日任务进入可用区间",
+  organization: "METR + model evidence",
+  eyebrow: "5–10 年展望 / Intelligence",
+  summary: "“智能”会更多以可独立完成多长的人类任务来衡量；多日软件、研究与运营任务可能进入 50% 成功率区间，但可靠性仍是核心约束。",
+  confidence: "中",
+  score: "50% horizon",
+  tags: ["Agents", "Time Horizon", "Reliability", "Software", "Research"],
+  sources: [metrSource, epoch2030Source, kimiK2.sources[0]],
+  basisIds: [kimiK2.id, verifierTraining.id, costPerIntelligence.id],
+  conclusion: "若 METR 的指数型 time-horizon 趋势持续，2031 左右公共前沿 agent 可能以约 50% 成功率完成需要人类专家多日投入的清晰软件任务。",
+  window: "2029—2033",
+  evidence: "METR 持续测量人类专家任务时长对应的 50%/80% 成功率，并在 2026 更新中仍观察到长期增长；Kimi K2 已把 10,000+ 沙箱与 partial rollout 用于长周期 agent 训练。",
+  method: "只把 METR time-horizon 定义外推到同类、可自动验证的软件任务；不等同于开放世界通用自主性。",
+  assumptions: "趋势在更长任务上不因错误复合、环境漂移或安全限制而明显饱和。",
+  indicators: "50% 与 80% time horizon 同时延长；多日任务的恢复、校验与人工接管率下降。",
+  invalidation: "任务长度增加后成功率曲线明显平台化，或短任务 benchmark 进步无法迁移到真实代码库/研究环境。",
+  uncertainty: "时间点对趋势拟合极敏感；2031 是宽区间中心而非发布日期预测。",
+  revisionNotes: ["2026‑05：METR Time Horizon 1.1 扩大任务集，并继续区分 50% 与 80% 可靠性。"],
+});
+
+const humanAverageBundle = forecastEvent({
+  id: "future-human-average-bundle",
+  date: "2033-06-01",
+  title: "“人类平均智能”被拆成能力束",
+  organization: "Evaluation horizon",
+  eyebrow: "5–10 年展望 / Intelligence",
+  summary: "AI 是否达到“普通人平均水平”不会有一个公认日期：知识、速度、具身、社交判断、长期可靠性与经济任务会在不同年份跨线。",
+  confidence: "高",
+  score: "非单一阈值",
+  tags: ["Human Baseline", "Evaluation", "Reliability", "Embodiment", "Economics"],
+  sources: [metrSource, aaMethodSource, epoch2030Source],
+  basisIds: [longHorizonAgents.id, costPerIntelligence.id],
+  conclusion: "到 2033，严肃讨论将很少用单一“AGI/人类平均”日期，而更常报告一个能力向量：任务跨度、成功率、速度、成本、监督需求、具身与社会稳健性。",
+  window: "2031—2035",
+  evidence: "Artificial Analysis 已把 intelligence 拆为多项 benchmark 与 cost/time；METR 用 50%/80% task horizon 衡量可靠性；GDPval 类评估用经济任务人类基线。",
+  method: "把‘平均人类’视为不同人口、职业和任务分布的统计量；任何单一分数都无法同时保持测量不变性与现实代表性。",
+  assumptions: "评估机构继续开放任务级数据与人类基线；部署方需要可审计的能力边界而非营销标签。",
+  indicators: "模型卡发布 capability vector、failure envelope、监督分钟/任务与 human-equivalent cost，而不是只给总榜分。",
+  invalidation: "出现一个被监管、产业与学术共同接受且能稳定预测现实表现的单一指标。",
+  uncertainty: "高置信的是评价方式碎片化；具体指标标准未知。",
+  revisionNotes: ["2026：AA v4.1 已同时加入真实工作、代码、科学、知识可靠性与长上下文等维度，单分数的构成持续变化。"],
+});
+
+const scienceLoops = forecastEvent({
+  id: "future-science-loops",
+  date: "2035-06-01",
+  title: "AI 科学家形成闭环",
+  organization: "Epoch AI horizon",
+  eyebrow: "5–10 年展望 / Science",
+  summary: "最先出现可持续超人产出的领域，可能不是开放式聊天，而是可模拟、可实验、可验证的科学与工程闭环。",
+  confidence: "中",
+  score: "中置信",
+  tags: ["AI for Science", "Simulation", "Verifier", "Robotics", "R&D"],
+  sources: [epoch2030Source, metrSource],
+  basisIds: [verifierTraining.id, longHorizonAgents.id, bagel.id],
+  conclusion: "2035 前后，材料、蛋白、芯片、软件与部分实验科学中将出现 AI 提案—模拟—实验—更新的持续闭环，人类角色更多是目标、边界与异常审查。",
+  window: "2031—2036",
+  evidence: "Epoch AI 将科学 R&D 视为 2030 scale-up 的高价值部署方向；当前 agent 训练已依赖 verifier 与执行环境，多模态模型开始统一感知和生成。",
+  method: "优先外推可自动验证、反馈周期短、实验数字化程度高的领域；不把结论外推到无法快速验证的基础科学。",
+  assumptions: "自动化实验设施、数据权限与仿真保真度同步提升；AI 生成假说能通过真实实验而非只优化 proxy。",
+  indicators: "由 AI 提议并经独立实验复现的成果比例；闭环每轮成本/时间；跨实验室迁移率。",
+  invalidation: "模拟—现实 gap 长期不降，或数据/设备瓶颈使 agent 速度无法转化为实验吞吐。",
+  uncertainty: "领域差异巨大；软件/芯片可能比湿实验早数年。",
+  revisionNotes: ["2025‑09：Epoch AI 的 2030 报告把 scientific R&D 作为规模化能力影响的主要观察窗口。"],
+});
+
+const provenanceLayer = forecastEvent({
+  id: "future-provenance-layer",
+  date: "2036-01-01",
+  title: "证据与权限成为模型外壳",
+  organization: "Deployment horizon",
+  eyebrow: "5–10 年展望 / Governance",
+  summary: "当 agent 能执行多日任务，组织不会只部署“一个模型”，而会部署模型 + 来源账本 + 权限边界 + verifier + 可回滚状态。",
+  confidence: "中",
+  score: "中置信",
+  tags: ["Provenance", "Permissions", "Audit", "Rollback", "Agents"],
+  sources: [metrSource, aaMethodSource, dspark.sources[0]],
+  basisIds: [longHorizonAgents.id, humanAverageBundle.id, dspark.id],
+  conclusion: "2036 的高价值 AI 系统会把 provenance、权限、验证和 rollback 当作与模型权重同等的一等组件。",
+  window: "2032—2036",
+  evidence: "长任务增加错误复合与恢复需求；当前推测解码已经把 verification 从算法细节变成生产调度对象；评估正从答案正确扩展到真实任务过程。",
+  method: "类比数据库事务与软件供应链：当模型具有外部副作用且任务变长，操作日志、最小权限与可回滚性成为可用性的必要条件。",
+  assumptions: "agent 获得越来越多真实系统权限；监管和企业采购要求可审计。",
+  indicators: "标准模型接口携带 source lineage、policy decision、tool receipt 与 checkpoint/rollback metadata。",
+  invalidation: "AI 长期只作为无副作用建议工具，或端到端模型可靠性高到无需外部验证层。",
+  uncertainty: "标准可能由监管、云厂商或开源协议主导，形态未知。",
+  revisionNotes: ["2026‑07：DSpark 把 verification scheduling 的生产价值量化，说明“验证层”本身会成为核心系统。"],
+});
+
+export const futureData: TimelinePageData = {
+  page: "future",
+  kicker: "Speculative / Bounded",
+  title: "五至十年展望",
+  intro: "这里不是预言，而是带边界的情景树：每个节点列出证据、假设、失效条件与时间区间。越远的判断，越强调可证伪性。",
+  windowLabel: "2031—2036 / 5–10 YEAR HORIZON",
+  startDate: "2030-01-01",
+  endDate: "2037-01-01",
+  tickDates: ["2030-01-01", "2031-01-01", "2032-01-01", "2033-01-01", "2034-01-01", "2035-01-01", "2036-01-01"],
+  lanes: [
+    { id: "future-chips", group: "展望 / 01", title: "芯片与系统", description: "从单芯片走向 rack/POD 与异构推理流水线", color: "cyan", events: [rackScaleFuture, heterogeneousInference] },
+    { id: "future-energy", group: "展望 / 02", title: "电力与园区", description: "GW 级负载、混合电源与情景区间", color: "amber", events: [hybridPowerFuture, electricityRangeFuture] },
+    { id: "future-intelligence", group: "展望 / 03", title: "能力与人类基线", description: "任务跨度、可靠性与“人类平均”能力束", color: "violet", events: [longHorizonAgents, humanAverageBundle] },
+    { id: "future-society", group: "展望 / 04", title: "科学与治理", description: "闭环科学、证据账本与可回滚代理", color: "green", events: [scienceLoops, provenanceLayer] },
+  ],
+};
