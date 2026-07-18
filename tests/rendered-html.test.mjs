@@ -52,7 +52,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 9);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 15);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
   assert.match(source, /注意力创新/);

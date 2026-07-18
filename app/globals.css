@@ -14,6 +14,347 @@
   --panel-line: rgba(255, 255, 255, 0.13);
 }
 
+/* Utility-first revision: content starts above the fold, decoration stays secondary. */
+body {
+  background: #f7f7f4;
+  font-family: Inter, "Noto Sans SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+.site-header {
+  background: #fff;
+  height: 54px;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.site-header nav a {
+  font-size: 12px;
+  padding: 0 20px;
+}
+
+.site-header nav a::after {
+  left: 20px;
+  right: 20px;
+}
+
+.page-switch a {
+  font-size: 11px;
+}
+
+.page-summary {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 94px;
+  padding: 14px 24px;
+}
+
+.page-summary > div {
+  display: grid;
+  gap: 8px 18px;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.page-summary .kicker {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.page-summary h1 {
+  font-size: 26px;
+  line-height: 1.1;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.page-summary > div > p:last-child {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 900px;
+}
+
+.page-summary dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(88px, auto));
+  margin: 0;
+}
+
+.page-summary dl div {
+  border-left: 1px solid var(--line);
+  padding: 3px 16px;
+}
+
+.page-summary dt {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+
+.page-summary dd {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 7px 0 0;
+}
+
+.control-bar {
+  background: #fff;
+  min-height: 48px;
+  padding: 0 20px;
+}
+
+.search-box {
+  min-width: 330px;
+}
+
+.scope-toggle,
+.view-toggle {
+  align-items: center;
+  border-right: 1px solid var(--line);
+  display: flex;
+  gap: 4px;
+  padding: 0 10px;
+}
+
+.scope-toggle button,
+.view-toggle button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 6px 9px;
+}
+
+.scope-toggle button.active,
+.view-toggle button.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.view-toggle {
+  margin-left: auto;
+}
+
+.frontier-note {
+  align-items: center;
+  background: #eef6f7;
+  border-bottom: 1px solid #c8dcdf;
+  color: #3c5459;
+  display: flex;
+  font-size: 10px;
+  gap: 18px;
+  min-height: 32px;
+  padding: 0 24px;
+}
+
+.frontier-note span {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.frontier-note i {
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  width: 8px;
+}
+
+.legend-frontier { background: var(--cyan); }
+.legend-watch { background: transparent; border: 2px solid var(--amber); }
+.frontier-note b { font-weight: 500; margin-left: auto; }
+
+.timeline-shell {
+  background: #fff;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.axis-label,
+.time-axis {
+  height: 48px;
+}
+
+.lane-label,
+.timeline-lane {
+  height: 116px;
+}
+
+.lane-label {
+  padding: 14px 17px;
+}
+
+.lane-label::before {
+  height: 28px;
+  top: 15px;
+}
+
+.lane-label h2 {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.lane-label > span {
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.lane-label > small {
+  bottom: 10px;
+}
+
+.timeline-canvas {
+  min-width: 1580px;
+}
+
+.scope-frontier .timeline-canvas {
+  min-width: 1180px;
+}
+
+.vertical-grid {
+  top: 48px;
+}
+
+.lane-baseline {
+  top: 58px;
+}
+
+.tick span {
+  bottom: 13px;
+  font-size: 9px;
+}
+
+.event-marker {
+  background: #fff;
+  gap: 1px;
+  min-height: 39px;
+  min-width: 138px;
+  padding: 5px 8px 5px 11px;
+}
+
+.event-marker strong {
+  font-family: inherit;
+  font-size: 11px;
+  max-width: 170px;
+}
+
+.event-marker.tier-baseline {
+  opacity: .62;
+}
+
+.event-marker.tier-frontier {
+  border-color: color-mix(in srgb, var(--lane-color) 50%, transparent);
+  box-shadow: 0 3px 10px rgba(17, 28, 36, .07);
+}
+
+.event-marker.tier-watch {
+  border-style: dashed;
+  border-color: var(--amber);
+}
+
+.event-marker > small {
+  color: var(--amber);
+  font-size: 8px;
+  grid-column: 1 / -1;
+}
+
+.comparison-wrap {
+  background: #fff;
+  min-height: 510px;
+  overflow: auto;
+  padding: 0 20px 24px;
+}
+
+.comparison-table {
+  border-collapse: collapse;
+  font-size: 11px;
+  min-width: 1100px;
+  width: 100%;
+}
+
+.comparison-table th {
+  background: #f3f4f2;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .07em;
+  padding: 10px;
+  position: sticky;
+  text-align: left;
+  text-transform: uppercase;
+  top: 0;
+}
+
+.comparison-table td {
+  border-bottom: 1px solid var(--line);
+  max-width: 260px;
+  padding: 11px 10px;
+  vertical-align: top;
+}
+
+.comparison-table td strong,
+.comparison-table td small {
+  display: block;
+}
+
+.comparison-table td small {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.comparison-table td button {
+  background: transparent;
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.mono { font-family: "SFMono-Regular", Consolas, monospace; }
+
+.table-tier {
+  border: 1px solid var(--line);
+  display: inline-block;
+  font-size: 9px;
+  padding: 3px 5px;
+  white-space: nowrap;
+}
+
+.table-tier.tier-frontier { border-color: var(--cyan); color: var(--cyan); }
+.table-tier.tier-watch { border-color: var(--amber); color: var(--amber); }
+.table-empty { color: var(--muted); padding: 30px; text-align: center; }
+
+.site-footer {
+  background: #fff;
+  padding: 13px 20px;
+}
+
+@media (max-width: 900px) {
+  .site-header { grid-template-columns: auto 1fr auto; padding: 0 10px; }
+  .site-header nav { justify-content: center; }
+  .site-header nav a { padding: 0 10px; }
+  .page-summary { grid-template-columns: 1fr; }
+  .page-summary dl { display: none; }
+  .control-bar { flex-wrap: wrap; padding: 0; }
+  .search-box { min-height: 46px; min-width: 100%; }
+  .confidence-filter { display: none; }
+  .scope-toggle, .view-toggle { min-height: 42px; }
+  .view-toggle { margin-left: auto; }
+  .frontier-note b { display: none; }
+  .timeline-shell { grid-template-columns: 155px minmax(0, 1fr); }
+  .lane-label { padding-left: 12px; }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1126,5 +1467,143 @@ a {
   * {
     scroll-behavior: auto !important;
     transition: none !important;
+  }
+}
+
+/* Final cascade: keep the research controls and current frontier above the fold. */
+body {
+  background: #f7f7f4;
+}
+
+.site-header {
+  background: #fff;
+  height: 54px;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.site-header nav a {
+  font-size: 12px;
+  padding: 0 20px;
+}
+
+.site-header nav a::after {
+  left: 20px;
+  right: 20px;
+}
+
+.control-bar {
+  background: #fff;
+  min-height: 48px;
+  padding: 0 20px;
+}
+
+.search-box {
+  min-width: 330px;
+}
+
+.timeline-shell {
+  background: #fff;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.lane-labels {
+  background: #fff;
+}
+
+.axis-label,
+.time-axis {
+  height: 48px;
+}
+
+.lane-label,
+.timeline-lane {
+  height: 116px;
+}
+
+.lane-label {
+  padding: 14px 17px;
+}
+
+.lane-label::before {
+  height: 28px;
+  top: 15px;
+}
+
+.lane-label h2 {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.lane-label > span {
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.lane-label > small {
+  bottom: 10px;
+}
+
+.timeline-canvas {
+  min-width: 1580px;
+}
+
+.scope-frontier .timeline-canvas {
+  min-width: 1180px;
+}
+
+.vertical-grid {
+  top: 48px;
+}
+
+.lane-baseline {
+  top: 58px;
+}
+
+.tick span {
+  bottom: 13px;
+  font-size: 9px;
+}
+
+.event-marker {
+  background: #fff;
+  gap: 1px;
+  min-height: 39px;
+  min-width: 138px;
+  padding: 5px 8px 5px 11px;
+}
+
+.event-marker strong {
+  font-family: inherit;
+  font-size: 11px;
+  max-width: 170px;
+}
+
+.site-footer {
+  background: #fff;
+  padding: 13px 20px;
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 10px;
+  }
+
+  .site-header nav a {
+    padding: 0 10px;
+  }
+
+  .timeline-shell {
+    grid-template-columns: 155px minmax(0, 1fr);
+  }
+
+  .lane-label {
+    padding-left: 12px;
   }
 }

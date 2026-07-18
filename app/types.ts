@@ -32,6 +32,7 @@ export interface TimelineEvent {
   sources: Source[];
   basisIds?: string[];
   revisionNotes?: string[];
+  tier?: "frontier" | "watch" | "baseline";
 }
 
 export interface TimelineLane {
