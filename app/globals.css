@@ -2156,9 +2156,10 @@ body {
 
 .structured-picker {
   align-items: stretch;
-  display: flex;
+  display: grid;
   flex: 0 0 auto;
   gap: 7px;
+  grid-template-columns: 210px minmax(320px, 430px) auto;
 }
 
 .structured-picker label {
@@ -2166,7 +2167,7 @@ body {
   border: 1px solid var(--line);
   display: flex;
   gap: 8px;
-  min-width: 280px;
+  min-width: 0;
   padding: 7px 9px;
 }
 
@@ -2183,6 +2184,15 @@ body {
   min-width: 0;
   outline: 0;
   width: 100%;
+}
+
+.structured-picker select optgroup {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.structured-picker select option {
+  font-weight: 400;
 }
 
 .structured-picker > button,
@@ -2290,6 +2300,44 @@ body {
 
 .structured-model-actions button {
   background: transparent;
+}
+
+.structured-drag-handle {
+  align-items: center;
+  background: #172832;
+  border: 1px solid #47616a;
+  color: #91cbd3;
+  cursor: grab;
+  display: inline-flex;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+  gap: 4px;
+  margin: 0 0 9px;
+  padding: 4px 6px;
+}
+
+.structured-drag-handle:hover {
+  background: #203640;
+  border-color: #91cbd3;
+  color: #d9f2f4;
+}
+
+.structured-drag-handle:active {
+  cursor: grabbing;
+}
+
+.structured-drag-handle:focus-visible {
+  outline: 2px solid #91cbd3;
+  outline-offset: 2px;
+}
+
+.structured-matrix thead th.drag-source {
+  opacity: .62;
+}
+
+.structured-matrix th.drag-over,
+.structured-matrix td.drag-over {
+  box-shadow: inset 3px 0 0 var(--cyan), inset -3px 0 0 var(--cyan);
 }
 
 .structured-matrix tbody th,
@@ -2898,6 +2946,11 @@ body {
     width: 100%;
   }
 
+  .structured-picker {
+    grid-template-columns: minmax(150px, .7fr) minmax(220px, 1.3fr) auto;
+    width: 100%;
+  }
+
   .structured-matrix thead th,
   .structured-matrix tbody td {
     min-width: 285px;
@@ -2916,6 +2969,12 @@ body {
   .chart-panel {
     padding-left: 8px;
     padding-right: 8px;
+  }
+}
+
+@media (max-width: 620px) {
+  .structured-picker {
+    grid-template-columns: 1fr;
   }
 }
 

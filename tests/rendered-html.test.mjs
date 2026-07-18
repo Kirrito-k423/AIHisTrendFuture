@@ -128,10 +128,17 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(comparisonSource, /StructuredComparison/);
   assert.match(comparisonSource, /数值矩阵/);
   assert.match(comparisonSource, /结构化文字字段/);
+  assert.match(comparisonSource, /reorderSelectedColumns/);
+  assert.match(comparisonSource, /draggable/);
+  assert.match(comparisonSource, /onDrop/);
+  assert.match(comparisonSource, /按厂商筛选可加入模型/);
+  assert.match(comparisonSource, /<optgroup/);
 
   const response = await render("/compare");
   const html = await response.text();
   assert.match(html, /注意力创新/);
+  assert.match(html, /全部厂商/);
+  assert.match(html, /拖动排序/);
   assert.match(html, /开创 \/ 关键方案/);
   assert.match(html, /训练算法 \/ 机制/);
   assert.match(html, /Agent Swarm/);

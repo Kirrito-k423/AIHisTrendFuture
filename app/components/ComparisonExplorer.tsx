@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type DragEvent, type KeyboardEvent } from "react";
 import {
   comparisonModels,
   formatMetricValue,
@@ -203,13 +203,54 @@ function StructuredComparison({
   onAdd,
   onRemove,
   onClear,
+  onReorder,
 }: {
   models: ComparisonModel[];
   availableModels: ComparisonModel[];
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
   onClear: () => void;
+  onReorder: (sourceId: string, targetId: string) => void;
 }) {
+  const [vendor, setVendor] = useState("");
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const vendors = useMemo(() => Array.from(new Set(availableModels.map((model) => model.organization)))
+    .sort((a, b) => a.localeCompare(b, "zh-CN")), [availableModels]);
+  const groupedAvailableModels = useMemo(() => {
+    const groups = new Map<string, ComparisonModel[]>();
+    availableModels
+      .filter((model) => !vendor || model.organization === vendor)
+      .forEach((model) => groups.set(model.organization, [...(groups.get(model.organization) ?? []), model]));
+    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, "zh-CN"));
+  }, [availableModels, vendor]);
+  const filteredModelCount = groupedAvailableModels.reduce((count, [, items]) => count + items.length, 0);
+
+  function startColumnDrag(event: DragEvent<HTMLButtonElement>, modelId: string) {
+    setDraggedId(modelId);
+    setDragOverId(modelId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", modelId);
+  }
+
+  function dropColumn(event: DragEvent<HTMLTableCellElement>, targetId: string) {
+    event.preventDefault();
+    const sourceId = event.dataTransfer.getData("text/plain") || draggedId;
+    if (sourceId && sourceId !== targetId) onReorder(sourceId, targetId);
+    setDraggedId(null);
+    setDragOverId(null);
+  }
+
+  function moveColumnWithKeyboard(event: KeyboardEvent<HTMLButtonElement>, modelId: string) {
+    if (!event.altKey || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+    const currentIndex = models.findIndex((model) => model.id === modelId);
+    const targetIndex = currentIndex + (event.key === "ArrowLeft" ? -1 : 1);
+    const target = models[targetIndex];
+    if (!target) return;
+    event.preventDefault();
+    onReorder(modelId, target.id);
+  }
+
   return (
     <section className="structured-comparison" aria-label="模型结构化文字字段比较">
       <header className="structured-toolbar">
@@ -219,11 +260,22 @@ function StructuredComparison({
           <p>每列一个模型，每行一个固定字段；未知不会被隐藏，状态、来源与推导口径保留在单元格内。</p>
         </div>
         <div className="structured-picker">
-          <label>
-            <span>加入模型</span>
-            <select value="" onChange={(event) => { if (event.target.value) onAdd(event.target.value); }}>
-              <option value="">选择模型…</option>
-              {availableModels.map((model) => <option value={model.id} key={model.id}>{model.name} · {model.organization}</option>)}
+          <label className="structured-vendor-picker">
+            <span>厂商</span>
+            <select value={vendor} onChange={(event) => setVendor(event.target.value)} aria-label="按厂商筛选可加入模型">
+              <option value="">全部厂商</option>
+              {vendors.map((item) => <option value={item} key={item}>{item}</option>)}
+            </select>
+          </label>
+          <label className="structured-model-picker">
+            <span>模型</span>
+            <select value="" onChange={(event) => { if (event.target.value) onAdd(event.target.value); }} aria-label="选择要加入比较的模型">
+              <option value="">选择模型…（{filteredModelCount}）</option>
+              {groupedAvailableModels.map(([organization, items]) => (
+                <optgroup label={organization} key={organization}>
+                  {items.map((model) => <option value={model.id} key={model.id}>{model.name} · {model.releaseDate}</option>)}
+                </optgroup>
+              ))}
             </select>
           </label>
           <button type="button" onClick={onClear} disabled={!models.length}>清空</button>
@@ -239,7 +291,26 @@ function StructuredComparison({
                 {models.map((model) => {
                   const disclosedCount = structuredFieldDefinitions.filter(({ label }) => model.structuredFacts[label].status !== "未知").length;
                   return (
-                    <th key={model.id}>
+                    <th
+                      key={model.id}
+                      className={`${draggedId === model.id ? "drag-source" : ""} ${dragOverId === model.id && draggedId !== model.id ? "drag-over" : ""}`.trim()}
+                      onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
+                      onDragEnter={() => { if (draggedId && draggedId !== model.id) setDragOverId(model.id); }}
+                      onDrop={(event) => dropColumn(event, model.id)}
+                    >
+                      <button
+                        type="button"
+                        className="structured-drag-handle"
+                        draggable
+                        aria-label={`拖动 ${model.name} 调整列顺序`}
+                        aria-grabbed={draggedId === model.id}
+                        title="拖到另一列即可调换顺序；也可按 Alt + ← / →"
+                        onDragStart={(event) => startColumnDrag(event, model.id)}
+                        onDragEnd={() => { setDraggedId(null); setDragOverId(null); }}
+                        onKeyDown={(event) => moveColumnWithKeyboard(event, model.id)}
+                      >
+                        <span aria-hidden="true">↔</span> 拖动排序
+                      </button>
                       <strong>{model.name}</strong>
                       <span>{model.organization}</span>
                       <small>{model.releaseDate} · {accessLabel(model.access)}</small>
@@ -269,7 +340,7 @@ function StructuredComparison({
                       {models.map((model) => {
                         const fact = model.structuredFacts[field.label];
                         return (
-                          <td key={model.id} className={fact.status === "未知" ? "structured-unknown" : ""}>
+                          <td key={model.id} className={`${fact.status === "未知" ? "structured-unknown" : ""} ${dragOverId === model.id && draggedId !== model.id ? "drag-over" : ""}`.trim()}>
                             <p>{fact.value}</p>
                             <div className="structured-fact-meta">
                               <span data-status={fact.status}>{fact.status}</span>
@@ -304,10 +375,11 @@ export function ComparisonExplorer() {
   const [organization, setOrganization] = useState("全部机构");
   const [access, setAccess] = useState("全部权限");
   const [modality, setModality] = useState("全部模态");
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(DEFAULT_STRUCTURED_MODELS));
+  const [selectedIds, setSelectedIds] = useState<string[]>(DEFAULT_STRUCTURED_MODELS);
   const [onlySelected, setOnlySelected] = useState(false);
   const [view, setView] = useState<ComparisonView>("structured");
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({ key: "releaseDate", direction: "desc" });
+  const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   const organizations = useMemo(
     () => ["全部机构", ...Array.from(new Set(comparisonModels.map((model) => model.organization))).sort()],
@@ -334,19 +406,27 @@ export function ComparisonExplorer() {
       .sort((a, b) => compareModels(a, b, sort.key, sort.direction));
   }, [access, modality, onlySelected, organization, query, selected, sort]);
 
-  const selectedModels = useMemo(() => Array.from(selected)
+  const selectedModels = useMemo(() => selectedIds
     .map((id) => comparisonModels.find((model) => model.id === id))
-    .filter((model): model is ComparisonModel => Boolean(model)), [selected]);
+    .filter((model): model is ComparisonModel => Boolean(model)), [selectedIds]);
 
   const availableStructuredModels = useMemo(() => comparisonModels
     .filter((model) => !selected.has(model.id))
     .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate)), [selected]);
 
   function toggleModel(id: string) {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+    setSelectedIds((current) => current.includes(id)
+      ? current.filter((item) => item !== id)
+      : [...current, id]);
+  }
+
+  function reorderSelectedColumns(sourceId: string, targetId: string) {
+    setSelectedIds((current) => {
+      const sourceIndex = current.indexOf(sourceId);
+      const targetIndex = current.indexOf(targetId);
+      if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return current;
+      const next = [...current];
+      [next[sourceIndex], next[targetIndex]] = [next[targetIndex], next[sourceIndex]];
       return next;
     });
   }
@@ -394,7 +474,7 @@ export function ComparisonExplorer() {
         <label><span>权限</span><select value={access} onChange={(event) => setAccess(event.target.value)}><option>全部权限</option><option value="open">开放权重</option><option value="api">API / 闭源</option><option value="pending">权重待发布</option></select></label>
         <label><span>模态</span><select value={modality} onChange={(event) => setModality(event.target.value)}>{modalities.map((item) => <option key={item}>{item}</option>)}</select></label>
         <button type="button" className={onlySelected ? "active" : ""} disabled={!selected.size} onClick={() => setOnlySelected((value) => !value)}>仅看已选 {selected.size || ""}</button>
-        <button type="button" onClick={() => { setSelected(new Set()); setOnlySelected(false); }}>清空</button>
+        <button type="button" onClick={() => { setSelectedIds([]); setOnlySelected(false); }}>清空</button>
         {view === "numeric"
           ? <span className="sort-summary">排序：{sort.key === "name" ? "模型" : sort.key === "releaseDate" ? "发布日期" : metricDefinitions[sort.key].shortTitle} {sort.direction === "asc" ? "↑" : "↓"}</span>
           : <span className="sort-summary">并排模型：{selected.size}</span>}
@@ -444,9 +524,10 @@ export function ComparisonExplorer() {
         <StructuredComparison
           models={selectedModels}
           availableModels={availableStructuredModels}
-          onAdd={(id) => setSelected((current) => new Set([...current, id]))}
-          onRemove={(id) => setSelected((current) => { const next = new Set(current); next.delete(id); return next; })}
-          onClear={() => { setSelected(new Set()); setOnlySelected(false); }}
+          onAdd={(id) => setSelectedIds((current) => current.includes(id) ? current : [...current, id])}
+          onRemove={(id) => setSelectedIds((current) => current.filter((item) => item !== id))}
+          onClear={() => { setSelectedIds([]); setOnlySelected(false); }}
+          onReorder={reorderSelectedColumns}
         />
       )}
 
