@@ -1,0 +1,153 @@
+{
+  "slug": "wan-2-5-preview",
+  "name": "Wan 2.5 Preview (T2V/I2V)",
+  "family": "Wan",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Alibaba Tongyi Lab / Alibaba Cloud",
+  "release_date": "2025-09-23",
+  "release_date_basis": "阿里云 Model Studio 官方模型生命周期页分别把 wan2.5-t2v-preview 和 wan2.5-i2v-preview 的中国内地上线日期列为 2025-09-23。该日期是可调用模型服务的正式平台发布日期；2025-11-11 的 Alibaba Cloud“Commercial Launch”线上活动是后续国际商业推广活动，不作为本条目的首发日。",
+  "access": "闭源托管模型服务。官方通过 Alibaba Cloud Model Studio（百炼/DashScope）提供异步 API 和控制台体验，正式模型 ID 为 wan2.5-t2v-preview 与 wan2.5-i2v-preview；当前文档列出国际区和中国内地区域。T2V 接受文本及可选音频，I2V 接受文本、首帧图像及可选音频。未发现 Wan-AI 官方 Hugging Face 组织或 Wan-Video 官方 GitHub 组织发布 Wan 2.5 Preview 的可下载 checkpoint、推理代码或训练代码；第三方 API/占位仓库不等于官方权重发布。",
+  "license": "专有商业 API，受 Alibaba Cloud Model Studio 服务条款及产品规则约束，不是开源或开放权重许可证。当前国际站条款保留 Alibaba Base IPR（包括模型与权重），禁止逆向工程及未经授权的模型转售等行为；输出可在遵守协议、平台规则和适用法律的前提下使用。未发布可下载权重，因此不存在可核验的 checkpoint 许可证。",
+  "official_model_ids": [
+    "wan2.5-t2v-preview",
+    "wan2.5-i2v-preview"
+  ],
+  "parameter_total": "未知。官方发布页、模型生命周期页和 API 文档均未披露参数总量；不得把 Wan 2.2 A14B 的总参数或 MoE 口径沿用到 Wan 2.5 Preview。",
+  "parameter_active": "未知。官方未说明 Wan 2.5 Preview 是否采用 MoE，也未给出激活参数口径；不得借用 Wan 2.2 A14B 的 14B active 标注。",
+  "weight_size": "未知/不适用于公开下载。官方未发布 Wan 2.5 Preview 权重文件，因而没有可核验的 checkpoint 文件大小。",
+  "precision": "未知。官方未披露训练精度、服务端推理 dtype、量化位宽或混合精度策略。",
+  "architecture": "未知。Alibaba Cloud 商业发布页只称其采用“newly upgraded model architecture”，并确认该升级支持音画同步、10 秒视频以及更好的指令遵循、运动与画质，但没有公开骨干网络类型、层数、参数规模或音频/视频生成拓扑。不能据 Wan 2.1/2.2 的公开技术报告推定 Wan 2.5 仍使用相同 DiT、MoE、高低噪声双模型或其他具体结构。",
+  "attention_or_sequence_design": "未知。官方未披露视频与音频 token 是否联合建模、注意力形式、时空注意力拆分、序列长度、位置编码、上下文窗口、跨模态融合位置或音画同步机制。",
+  "vae_or_tokenizer": "未知。官方未披露视频 VAE、音频 codec/tokenizer、压缩倍数、latent 通道或参数规模；不得使用 Wan 2.1/2.2 VAE 规格或第三方 Wan2.5 占位仓库的估算。",
+  "text_encoder_or_conditioner": "未知。官方只确认中文和英文 prompt、可选首帧图像、自定义音频输入及默认 prompt rewriting；未披露文本编码器、图像编码器、音频条件器名称、参数量或上下文长度。prompt rewriting 由文档称为 LLM 重写，但具体 LLM 未公开。",
+  "training_hardware": "未知。官方未披露训练所用 GPU/加速器厂商和型号。",
+  "training_hardware_scale": "未知。官方未披露 GPU/加速器数量、节点数、互联、训练 FLOPs、加速器时或能耗。",
+  "training_data_scale": "未知。官方未披露训练图像、视频、音频、文本的样本量、小时数、token 数或存储规模。",
+  "training_data_composition": "未知。官方未披露数据来源、授权结构、语言比例、图像/视频/音频配比、合成数据占比、过滤、去重或安全清洗流程。商业发布页所称“多模态输入”和音画同步能力不能反推训练数据构成。",
+  "training_stages": [
+    {
+      "stage": "未知",
+      "name": "未公开",
+      "description": "官方没有发布 Wan 2.5 Preview 技术报告，也未说明预训练、监督微调、偏好对齐、蒸馏或音画联合训练的阶段划分。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "全部训练阶段",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "未知。官方未披露扩散/流匹配目标、噪声日程、优化器、课程学习、SFT/RLHF、奖励模型、蒸馏或音画同步损失。不得把 Wan 2.1/2.2 或后续 Wan 2.6/2.7 的方法倒灌到本条目。",
+  "training_infra": "未知。官方未披露训练框架、并行策略、通信库、checkpoint、容错、数据吞吐或集群拓扑。",
+  "inference_hardware": "未知。Model Studio 和第三方托管端点均未公开 Wan 2.5 Preview 的底层 GPU/加速器型号、卡数、显存、批处理或并发配置。",
+  "inference_performance": "官方只规定异步任务调用，没有披露可复现的裸模型延迟、吞吐、采样步数或 SLA。Artificial Analysis 于 2026-07-19 页面快照中给出的 fal.ai 端点近 14 天端到端中位生成时间约为 108.68 秒，测试头部描述为 720p、5 秒视频并在精确配置不可用时采用最接近设置；该数值包含排队、轮询与成品下载，不能解释为阿里云官方端点或模型 kernel 延迟。",
+  "max_output_resolution": "1080P。官方规格同时列出 480P、720P、1080P；T2V 的 1080P 档包含 1920×1080、1080×1920、1440×1440、1632×1248、1248×1632 等固定尺寸。I2V 根据首帧宽高比在目标分辨率档位内缩放，不能把某一 T2V 固定尺寸当作所有 I2V 输出尺寸。",
+  "max_output_duration_seconds": 10,
+  "native_fps": 30,
+  "aa_elo": 1159.99,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis 动态模型页抓取快照；页面在同日请求间仍会随投票重算，数值不是固定发布分数）",
+  "generation_time_seconds": 108.680543044,
+  "generation_time_context": "Artificial Analysis 对“Wan 2.5 Preview, fal.ai”的动态端到端观测，抓取于 2026-07-19；页面测试头部为 720p、5 秒视频，精确配置不可用时使用最接近设置。数值是近 14 天中位数，包含生成任务、轮询和成品下载；约每天不同时间测量一次。它不区分阿里云的 T2V/I2V 两个官方 ID，也不是官方硬件上的纯推理延迟。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Video Arena / API Generation Time",
+      "variant": "Wan 2.5 Preview（模型页；托管速度为 fal.ai）",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_elo": 1159.99,
+        "median_end_to_end_generation_seconds": 108.680543044,
+        "generation_test_resolution": "720p",
+        "generation_test_duration_seconds": 5
+      },
+      "scope": "第三方动态模型级页面。Elo 来自 Video Arena 相对人类偏好；生成时间为近 14 天端到端中位数。页面没有把分数拆成官方 wan2.5-t2v-preview 与 wan2.5-i2v-preview，也未给出可复现硬件，因此只能作为带观察日期的外部快照。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "Wan 2.5 Preview 的 T2V 与 I2V 托管模型默认生成带音频的视频：无 audio_url 时可自动生成与画面内容匹配的背景音乐或音效；传入 WAV/MP3 时可用自定义音频驱动画面并实现音画同步。",
+      "scope_boundary": "这是官方可调用能力和相对 Wan 2.2 无声视频端点的产品升级，不等于已证实“单一联合扩散模型”或“原生联合 token 生成”。官方没有披露自动配音是否由级联系统完成，也没有公开音频声道、采样率、codec、语音/BGM/音效子模型或同步损失。",
+      "evidence": "官方模型生命周期页在 2025-09-23 的 T2V/I2V 条目明确写入自动配音、自定义音频和音画同步；当前官方 API 文档进一步说明 wan2.5 系列无 audio_url 时自动生成匹配的 BGM/音效，有 audio_url 时接收自定义音频，并明确 Wan 2.5 默认输出带音频视频。",
+      "confidence": "高（产品能力由官方 API 文档直接验证；内部实现未知）"
+    },
+    {
+      "claim": "同一 Wan 2.5 Preview 视频代际以两个独立服务 ID 覆盖文本生视频和首帧图生视频，并把官方输出规格扩展到 5/10 秒、480P/720P/1080P、30 fps；官方还宣称升级架构改善指令遵循、运动表现和画质。",
+      "scope_boundary": "可严格验证的是两个模型 ID 与输出规格。相较 Wan 2.2，10 秒和同步音频是清晰的服务能力扩展；“更好的指令遵循、运动和画质”来自厂商商业发布页，缺少公开消融、独立同配置基准和架构细节，不应扩写为已证明的 SOTA 或某种具体网络创新。",
+      "evidence": "Alibaba Cloud 官方 Wan 模型清单将 wan2.5-t2v-preview 与 wan2.5-i2v-preview 独立列为 T2V/I2V，规格均为 480P/720P/1080P、5/10 秒、30 fps、MP4；同页的 Wan 2.2 T2V/I2V 端点为无声且最长 5 秒。官方商业发布页宣称新升级架构支持 10 秒同步音频视频，并改善指令遵循、运动和图像质量。",
+      "confidence": "高（ID 与规格）；中等（厂商质量提升主张）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "模型总参数、激活参数、是否 MoE、T2V 与 I2V 是否共享同一底座及共享比例",
+    "可下载权重、checkpoint 体积、权重许可证、推理代码和训练代码",
+    "训练精度、推理精度、量化位宽和各组件 dtype",
+    "骨干网络类型、层数、宽度、head 数、时空注意力、位置编码和跨模态融合结构",
+    "视频 VAE、音频 codec/tokenizer、压缩率、latent 维度和重建指标",
+    "文本/图像/音频条件编码器、prompt rewriting 所用 LLM 和上下文长度",
+    "训练硬件型号、数量、节点、互联、FLOPs、加速器时、能耗和成本",
+    "训练数据规模、来源、授权结构、模态/语言比例、合成数据比例、过滤与去重",
+    "预训练、SFT、偏好对齐、蒸馏等训练阶段及其 wall-clock、steps、batch、优化器和学习率",
+    "扩散或流匹配目标、噪声日程、音画同步损失、RLHF/奖励模型和蒸馏算法",
+    "训练框架、并行策略、通信、checkpoint、容错和吞吐",
+    "官方托管推理硬件、显存、批处理、并发、采样步数、裸延迟与吞吐",
+    "官方同配置质量基准、完整数值、样本、评审协议、置信区间和可复现代码",
+    "音频采样率、位深、声道数、编码格式细节，以及语音、BGM、音效的生成/级联拓扑",
+    "2025-09-23 中国内地上线与国际区首次开放之间的精确时间差；后者不能由 2025-11-11 商业活动日期反推"
+  ],
+  "sources": [
+    {
+      "title": "Model lifecycle and updates - Alibaba Cloud Model Studio",
+      "url": "https://help.aliyun.com/en/model-studio/newly-released-models",
+      "source_type": "official_release_changelog"
+    },
+    {
+      "title": "Video generation and editing - Alibaba Cloud Model Studio",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/video-generate-edit-model",
+      "source_type": "official_model_documentation"
+    },
+    {
+      "title": "Wan - text-to-video API reference - Alibaba Cloud Model Studio",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/legacy-wan-text-to-video-api-reference",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Image-to-video - based on first frame - Alibaba Cloud Model Studio",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/image-to-video-guide",
+      "source_type": "official_api_user_guide"
+    },
+    {
+      "title": "Commercial Launch of Wan2.5-Preview",
+      "url": "https://www.alibabacloud.com/en/events/wan2-5-preview-launch",
+      "source_type": "official_commercial_launch_event"
+    },
+    {
+      "title": "Alibaba Cloud International Website Product Terms of Service - Model Studio section",
+      "url": "https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-international-website-product-terms-of-service-v-3-8-0",
+      "source_type": "official_service_terms"
+    },
+    {
+      "title": "Wan-AI official Hugging Face organization",
+      "url": "https://huggingface.co/Wan-AI",
+      "source_type": "official_model_hub_inventory_checked_2026-07-19"
+    },
+    {
+      "title": "Wan-Video official GitHub organization",
+      "url": "https://github.com/Wan-Video",
+      "source_type": "official_code_inventory_checked_2026-07-19"
+    },
+    {
+      "title": "Wan 2.5 Preview - Model Elo, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/video/models/wan-2-5-preview",
+      "source_type": "independent_benchmark_model_page"
+    },
+    {
+      "title": "Idea2StableDiffusion",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue"
+    }
+  ],
+  "notes": "本条目只覆盖 2025-09-23 上线的 Wan 2.5 Preview 视频生成服务，即 wan2.5-t2v-preview 与 wan2.5-i2v-preview。它们有官方独立模型 ID、可调用 API、明确发布日期和第三方模型级榜单，因此 entry_kind=\"model\"、comparison_eligible=true、history_eligible=true；“model”在此表示正式托管模型服务，不表示开放权重。modality 记为 T2V 是因为枚举不含 I2V，而条目名称和 official_model_ids 明确保留 I2V 边界。不要把同期 wan2.5-t2i-preview、wan2.5-i2i-preview 合并进本视频条目，也不要把 Wan 2.2 A14B/5B 的参数、MoE、VAE、文本编码器、训练配方或许可证沿用到 2.5；同样不要用后续 Wan 2.6/2.7 的多镜头、15 秒、统一媒体协议或技术叙述倒灌。2025-11-11 的 Commercial Launch 活动可作为能力宣传材料，但不是模型首发日。Artificial Analysis 数值是 2026-07-19 的动态外部快照，与 2025-09 首发能力和官方 API 性能不能混为一谈。"
+}

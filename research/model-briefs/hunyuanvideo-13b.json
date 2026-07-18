@@ -1,0 +1,255 @@
+{
+  "slug": "hunyuanvideo-13b",
+  "name": "HunyuanVideo 13B",
+  "family": "HunyuanVideo",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Tencent Hunyuan Foundation Model Team（腾讯混元）",
+  "release_date": "2024-12-03",
+  "release_date_basis": "Tencent Hunyuan Community License 明确写明 Release Date: December 3, 2024；官方 GitHub 同日宣布发布 T2V 推理代码和权重，arXiv v1 也于 2024-12-03 提交。文章只给出 2024-12 线索，本条采用可核验的官方日级日期。",
+  "access": "开放权重与推理代码，无需申请即可从 Hugging Face 下载 tencent/HunyuanVideo；仓库提供 PyTorch 模型定义、采样/推理、单卡与 xDiT 多卡推理以及后续 FP8 权重，但没有公开可复现原始 13B 预训练的端到端训练代码、训练集或训练集群配置。官方另行开放约 779 GB 的 HunyuanVideo-PromptRewrite 完整权重；它是可选前处理器，不在 13B DiT 内。这里的“开放”是受腾讯社区许可证约束的 open-weight，而不是 OSI 意义的无地域、无用途限制开源。",
+  "license": "Tencent Hunyuan Community License Agreement（HunyuanVideo，2024-12-03）。许可地域排除欧盟、英国和韩国；发布日前一自然月全部产品/服务 MAU 超过 1 亿的主体须另行向腾讯申请许可；分发须附许可证、修改通知和 Notice；不得用模型、输出或结果改进腾讯混元及其衍生模型以外的其他 AI 模型，并受可接受使用政策约束。",
+  "official_model_ids": [
+    "tencent/HunyuanVideo",
+    "tencent/HunyuanVideo-PromptRewrite"
+  ],
+  "parameter_total": "论文与官方页面采用“13B/over 13 billion”口径，指视频生成 DiT，而非含文本编码器的端到端系统。Diffusers 转换仓库的 safetensors 元数据给出 DiT 精确 12,821,012,544 个 BF16 参数；公开 3D VAE 另有 246,478,803 个 F32 参数，二者合计 13,067,491,347。官方推荐的开放文本条件器 LLaVA-Llama-3-8B 与 CLIP-Large 是外部依赖；可选 Hunyuan-Large prompt rewriter 也是独立模型，均不应计入“13B”。",
+  "parameter_active": "生成 DiT 是稠密 Transformer，不是 MoE；每个去噪步约 12.821B DiT 参数参与计算。MLLM、CLIP 与 3D VAE 分别在文本编码、全局条件和编解码阶段运行，官方没有发布把这些顺序阶段合并为单一 active-parameter 指标的口径。",
+  "weight_size": "官方 tencent/HunyuanVideo 中：原始 BF16 DiT mp_rank_00_model_states.pt 为 25,642,314,002 bytes（25.642 GB/约 23.88 GiB）；2024-12-18 后增发的 FP8 DiT 为 13,185,233,506 bytes，另有 103,890-byte scale map；F32 VAE 为 986,000,558 bytes。仓库约 39.8 GB 是 BF16、FP8 和 VAE 的合集，不是一次推理必须同时加载的大小。Diffusers 可运行整包（DiT、LLaVA-Llama-3-8B 文本部分、CLIP-Large、VAE 等）约 41.90 GB；可选 HunyuanVideo-PromptRewrite 仓库约 779.15 GB，独立于生成器。",
+  "precision": "首发 DiT 权重为 BF16（转换后 safetensors 也全部为 BF16），官方推理默认 backbone BF16；VAE 原始公开张量为 F32，但官方运行默认转换为 FP16；MLLM 与 CLIP 默认 FP16。2024-12-18 另发 FP8 DiT 与 scale map，官方称约节省 10 GB GPU 显存。论文没有披露原始大规模训练的完整混合精度、master-weight 或 loss-scaling 方案。",
+  "architecture": "基于 flow matching 的 latent video Diffusion Transformer。像素图像/视频先由 Causal 3D VAE 压入 16-channel 时空 latent，再以 1×2×2 的 3D patch embedding 展平成序列。13B 主干采用 20 个 dual-stream block（视觉与文本分别处理）接 40 个 single-stream block（拼接视觉与文本 token 后联合建模），model dimension 3072、FFN dimension 12288、24 heads、head dim 128，并有 2 层双向 token refiner。生成器统一把图像视作单帧视频，因此同一全注意力 DiT 可联合学习 T2I/T2V；首发公开产品能力与条目分类仍是 T2V。",
+  "attention_or_sequence_design": "统一 global/full attention，而非把空间和时间注意力拆开；每个 block 使用扩展到 time/height/width 三轴的 3D RoPE，通道分配为 [16,56,56]、rope theta 256，并使用 QK RMSNorm。视觉 latent 与文本序列先在 dual stream 分别调制，再在 single stream 拼接融合。129 帧、720×1280 输入经 4×时间与 8×空间 VAE 压缩、再经 1×2×2 patchify 后约为 33×45×80=118,800 个视觉 token，因此训练使用 FusedAttention、TP/SP/CP；公开推理建议 FlashAttention v2，xDiT 支持多 GPU sequence parallel。",
+  "vae_or_tokenizer": "从零训练的 AutoencoderKLCausal3D/Causal 3D VAE，使用 CausalConv3D 同时处理图像和视频；时间压缩 4×、空间压缩 8×、latent channels 16。公开配置为 block channels [128,256,512,512]、每级 2 个 residual blocks、scaling factor 0.476986。VAE 以视频:图像=4:1 混合，损失为 L1 + 0.1 LPIPS + 0.05 GAN adversarial + 1e-6 KL，并从低分辨率短视频逐步训练到高分辨率长视频；采帧间隔在 1–8 随机。为单卡长视频编解码，采用时空重叠 tile 与线性融合，并额外以随机启/停 tiling 微调以减少训练/推理不一致。",
+  "text_encoder_or_conditioner": "论文设计以 decoder-only 预训练 MLLM 取代常见 T5-XXL，利用视觉指令微调后的图文对齐、细节描述、推理与 system instruction 能力；由于 causal attention 不如双向编码适合扩散条件，又在 DiT 内加入 2 层 bidirectional token refiner。CLIP-Large 最后一个非 padding token 的 pooled feature 作为全局文本引导，注入 timestep 条件。腾讯未发布首发所用 HunyuanMLLM，官方社区路径推荐 xtuner/llava-llama-3-8b-v1_1-transformers（抽取 language model 部分）与 openai/clip-vit-large-patch14。可选 prompt rewrite 使用独立 Hunyuan-Large：先以详细指令、in-context examples 和 self-revision 做 training-free 改写，再用收集的高质量改写对做 LoRA；官方权重提供 Normal 与 Master 模式，Master 更强调构图、光照和镜头运动但可能丢失部分语义细节。",
+  "training_hardware": "未知。论文没有披露原始 13B DiT、3D VAE、SFT 或蒸馏所用 GPU/加速器厂商和型号。官方 README 的单张 H800/H20/80GB 测试是推理要求，不能反推为训练硬件。",
+  "training_hardware_scale": "未知；未披露训练节点数、GPU/加速器总数、互联拓扑、累计 accelerator-hours、FLOPs、能耗或成本。论文只说明使用腾讯 Angel 平台调度、XingMai 网络跨服务器通信，并宣称 scaling 策略相对随意扩展可节省最高约 5×计算资源。",
+  "training_data_scale": "图像侧从 billions of image-text pairs 构建两级数据：首个 256px T2I 阶段使用数十亿样本，第二个 256/512px mix-scale 阶段使用数亿样本。视频侧只称 internet-scale images and videos，没有公开原始/去重后 clip 数、视频小时数或各分辨率阶段样本数；最终高性能微调集明确为 1,000,000 条经人工审核的视频样本。",
+  "training_data_composition": "原始视频覆盖人物、动物、植物、风景、车辆、物体、建筑与动画。先用 PySceneDetect 切单镜头，以内部 VideoCLIP embedding 去重并做 10K concept-centroid 聚类重采样；再按 Dover 美学/技术质量、清晰度、光流运动、场景边界、OCR/字幕、水印、边框、logo 与敏感遮挡逐级过滤，形成 256p、360p、540p、720p 四级训练集，每级会淘汰前一级约 1/2 到 1/5。图像复用除运动外的过滤器。内部 VLM 为全部训练图像/视频生成 JSON 结构化 caption，覆盖短/密描述、背景、风格、景别、光照、氛围、转场和镜头运动；另有 14 类 camera-movement classifier。最终 1M SFT 集按色彩、光照、主体强调、空间布局、动作速度、动作完整性和 motion blur 人工筛选。论文声称数据获取遵循 GDPR 并使用数据合成与隐私计算，但未公开来源清单、授权比例或独立审计。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "3D VAE 从零训练",
+      "description": "视频:图像=4:1，以 L1、LPIPS、GAN adversarial 和 KL 联合损失，从低分辨率短视频逐步到高分辨率长视频，并以 1–8 随机采帧间隔覆盖高运动内容；后续增加随机 tiling 兼容微调。"
+    },
+    {
+      "stage": 2,
+      "name": "T2I 256px 预训练",
+      "description": "以数十亿图文对进行多宽高比 256px 训练，先学习广泛低频概念和图文映射，作为视频训练 warm-up。"
+    },
+    {
+      "stage": 3,
+      "name": "T2I 256/512px mix-scale 预训练",
+      "description": "同一 global batch 混合 256px 与 512px 多宽高比 bucket，并按尺度动态设置 micro-batch，以提升高分辨率能力且避免遗忘 256px 能力。"
+    },
+    {
+      "stage": 4,
+      "name": "低分辨率短视频图像-视频联合训练",
+      "description": "从 T2I 参数初始化，按 duration/aspect-ratio bucket 混合视频与不同比例图像，建立文本到短时视觉动作的一致映射。"
+    },
+    {
+      "stage": 5,
+      "name": "低分辨率长视频图像-视频联合训练",
+      "description": "逐步增加时长，学习更复杂动态、场景变化与较长时间的时空一致性；继续混入图像以补充世界知识并抑制灾难性遗忘。"
+    },
+    {
+      "stage": 6,
+      "name": "高分辨率长视频图像-视频联合训练",
+      "description": "继续提高分辨率与时长；论文总述为从 256px/512px 图像预训练后，图像-视频联合训练逐步提升到 960px，数据过滤图则明确列出 256p、360p、540p、720p 视频集。"
+    },
+    {
+      "stage": 7,
+      "name": "高性能微调",
+      "description": "从全量数据中自动筛选后再人工复核四个专项子集，最终使用 1M 高美学、高动态视频，重点改善视觉质量、连续运动控制和角色动画。四个子集的名称、配比和优化步数未公开。"
+    },
+    {
+      "stage": 8,
+      "name": "文本引导蒸馏（快速版）",
+      "description": "学生与教师结构相同并由教师初始化，将 CFG 的有/无条件组合输出蒸馏到单次前向；guidance scale 在 1–8 随机采样，论文报告约 1.9× 加速。公开 checkpoint 默认配置名为 HYVideo-T/2-cfgdistill。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "3D VAE 训练与 tiling 兼容微调",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "T2I 256px 与 256/512px mix-scale 预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "低分辨率短/长视频到高分辨率长视频联合预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "1M 高性能微调与 text-guidance distillation",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "生成器采用 rectified/conditional flow matching：从 logit-normal 采样时间，在线性插值的噪声与数据 latent 上预测 velocity，以 MSE 优化；推理用一阶 Euler ODE solver。课程依次为 T2I warm-up、mix-scale、逐级加长/提分辨率的 image-video joint training、高质量 SFT，并另做 CFG/text-guidance distillation。论文没有披露生成器 optimizer、学习率/调度、batch size、gradient clipping、EMA、weight decay、条件 dropout、各阶段图像/视频配比或完整超参数。VAE 的精确损失权重另见 vae_or_tokenizer。",
+  "training_infra": "腾讯内部 AngelPTM 大规模预训练框架，Angel 平台负责 GPU 调度，XingMai 网络负责高效跨服务器通信。采用所谓 5D 并行组合：tensor parallel、sequence parallel、context parallel（Ring Attention）与 data parallel + ZeroCache；并使用 FusedAttention、recomputation、按层 activation offload 到主存和自动故障检测/替换节点。论文报告训练稳定性 99.5%，但未提供吞吐、并行度、网络带宽或训练集群拓扑。",
+  "inference_hardware": "官方要求支持 CUDA 的 NVIDIA GPU，Linux；首发路径在单张 80GB GPU 上测试，README 后续明确测试 H800/H20。batch=1 时 720×1280×129 峰值约 60GB，544×960×129 约 45GB，推荐 80GB；CPU offload 对高分辨率生成是必要选项。FP8 约再省 10GB。官方 xDiT 路径可用多 GPU sequence parallel，但没有把某个固定多卡数列为最低要求。",
+  "inference_performance": "官方默认公开配置为 50 Euler/flow steps、flow shift 7、embedded CFG scale 6、129 帧；少于 20 步时论文建议 shift 17，10-step 实验显示其 timestep shifting 优于 linear-quadratic scheduler。CFG/text-guidance 蒸馏减少每步无条件分支，论文称约 1.9× 加速。官方没有发布绑定 H800/H20、分辨率、步数与软件版本的端到端秒级 latency/throughput；第三方研究的十几到数十分钟结果不写作官方性能。",
+  "max_output_resolution": "官方首发预设最高为 720p：1280×720 或 720×1280；同等像素预算还提供 960×960、1104×832、832×1104。另有 540p 预设。论文训练描述出现最高 960px，但公开推理表没有证据支持 1920×1080 或更高原生输出。",
+  "max_output_duration_seconds": 5.4,
+  "native_fps": 24,
+  "aa_elo": 1001,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis Text-to-Video、无音频全局数据中 Hunyuan Video (Fal) 的底层 Elo 1000.51，页面取整 1001；95% CI ±8，8050 appearances。该托管端点链接到官方开放权重，Elo 会随盲测投票动态变化。）",
+  "generation_time_seconds": null,
+  "generation_time_context": "未知。官方只给显存、默认 50 步与约 1.9× 蒸馏相对加速，没有绝对生成时间。Artificial Analysis 当前模型家族页的 14-day API latency 图只列出现役子集，未提供可可靠抽取的原始 Hunyuan Video (Fal) 端到端中位秒数，因此不以社区测试或后续 HunyuanVideo-1.5 的速度回填。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Official professional human evaluation",
+      "variant": "HunyuanVideo high-quality version, 5-second T2V",
+      "metrics": {
+        "prompts": 1533,
+        "professional_evaluators": 60,
+        "text_alignment_percent": 61.8,
+        "motion_quality_percent": 66.5,
+        "visual_quality_percent": 95.7,
+        "overall_satisfaction_percent": 41.3,
+        "overall_rank_among_6": 1
+      },
+      "source_scope": "腾讯自报的人评；每个 prompt 单次生成、对手采用默认设置并保持分辨率一致。论文明确这是 high-quality version，与当前公开 fast/CFG-distilled version 不同，不能把数值直接视为公开 checkpoint 的复现实验。"
+    },
+    {
+      "benchmark": "3D VAE reconstruction PSNR",
+      "variant": "HunyuanVideo Causal 3D VAE",
+      "metrics": {
+        "ImageNet_256x256_PSNR": 33.14,
+        "MCL_JCV_33x640x640_PSNR": 35.39
+      },
+      "source_scope": "官方论文 Table 1；与 FLUX-VAE、OpenSora-1.2、CogVideoX-1.5 和 Cosmos-VAE 比较。不同 VAE 的压缩设置与训练数据并非完全一致，属于组件重建质量而非 T2V 生成质量。"
+    },
+    {
+      "benchmark": "Artificial Analysis Text-to-Video Arena",
+      "variant": "Hunyuan Video (Fal), no-audio global pool",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_elo_raw": 1000.51,
+        "quality_elo_display": 1001,
+        "confidence_interval_95_percent": "-8/+8",
+        "appearances": 8050,
+        "open_weights": true
+      },
+      "source_scope": "第三方动态盲测；Fal 托管端点链接 tencent/HunyuanVideo，端点参数与官方本地默认配置不一定完全相同。Elo、排名、区间和样本数会继续变化。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "首发时以约 13B 的稠密视频 DiT 成为官方所称最大的开放权重视频生成模型，并通过先做图像 scaling law、再从最优图像 checkpoint 推导视频 scaling law 来选择 13B 与训练 token 配置。",
+      "scope_boundary": "“最大”是 2024-12-03、作者定义下的 open-source/open-weight 参数规模比较，不代表今天仍最大，也不是质量第一的独立证明。13B 只指 DiT；精确公开权重为 12.821B，不能再把 8B MLLM、CLIP、VAE 或 389B prompt rewriter相加后继续称官方 13B。最高 5× 计算节省是相对随机扩展策略的作者自报，未给绝对 FLOPs。",
+      "evidence": "技术报告摘要、Sections 1、4.4 与公开 safetensors 元数据；论文给出 92M–6.6B 的图像 scaling family，并据图像与视频两套 scaling law 最终设定 13B。",
+      "confidence": "高"
+    },
+    {
+      "claim": "同一 DiT 以 full attention 统一图像和视频生成，并采用 20 层 dual-stream 到 40 层 single-stream 的混合结构：先分开建模文本/视觉，再拼接 token 做多模态融合。",
+      "scope_boundary": "图像被视作单帧视频，描述的是训练架构与联合 T2I/T2V 能力；首发公开条目和比较表仍以 T2V 为产品能力。dual-to-single 思路明确借鉴 FLUX/相关 MMDiT，不能写成行业首创；论文没有给出相对纯 dual 或纯 single 架构的完整消融。",
+      "evidence": "技术报告 Sections 4.2、4.5，Table 2；官方模型 config 验证 20 dual blocks、40 single blocks、3072 hidden、24 heads、[16,56,56] 3D RoPE。",
+      "confidence": "高"
+    },
+    {
+      "claim": "以 decoder-only MLLM 作为细粒度文本编码器，配合额外双向 token refiner 与 CLIP 全局 pooled condition，强调复杂指令、图像细节描述、推理与 action planning。",
+      "scope_boundary": "腾讯未发布首发内部 HunyuanMLLM；开放复现路径使用第三方 LLaVA-Llama-3-8B，因此论文 high-quality 版本与社区公开条件器不一定等价。MLLM 是条件编码器，不表示 13B DiT 自身是 autoregressive LLM，也不代表模型具备通用视频理解接口。",
+      "evidence": "技术报告 Section 4.3、官方 checkpoint 下载指南与公开 config（text_embed_dim 4096、2 refiner layers、CLIP pooled dim 768）。",
+      "confidence": "高"
+    },
+    {
+      "claim": "从零训练同时支持图像/视频的 Causal 3D VAE，以 4×时间、8×空间和 16-channel latent 压缩，并用训练时随机 tiling 微调支持单卡任意分辨率/时长的分块编解码。",
+      "scope_boundary": "“任意分辨率/时长”只指 VAE tiling 的工程编解码能力，不等于 13B DiT 在任意长度和尺寸上都能高质量生成；公开生成预设仍止于 129 帧与 720p。论文只报告 PSNR，没有公开完整感知/时序消融。",
+      "evidence": "技术报告 Section 4.1、Table 1 与官方 VAE config；公开 F32 VAE 权重精确为 246,478,803 参数。",
+      "confidence": "高"
+    },
+    {
+      "claim": "独立 Hunyuan-Large prompt rewrite 模块把多语言用户输入标准化为训练 caption 风格，并用 self-revision 保持原意；Normal/Master 两种模式分别偏向意图理解与构图、灯光、镜头运动质量。",
+      "scope_boundary": "prompt rewrite 是可选的超大外部前处理器，不包含在 13B DiT，也不是无需额外成本的模型内自改写。Master 模式官方明确可能损失语义细节；论文先描述 training-free ICL/self-revision，再用收集改写对做 LoRA，不能简化为“13B 生成器自行重写”。",
+      "evidence": "技术报告 Section 4.6、官方模型卡与 tencent/HunyuanVideo-PromptRewrite 权重仓库。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "原始训练 GPU/加速器厂商与型号、节点数、设备数、互联拓扑、峰值显存、累计 accelerator-hours、FLOPs、能耗、成本",
+    "13B DiT、3D VAE、各级 image-video joint pretraining、1M 高性能微调和 CFG 蒸馏的 wall-clock 时间、优化步数、global batch 与各阶段精确配比",
+    "视频原始池、去重后训练 clips、总小时数与 256p/360p/540p/720p 各级数据的绝对规模",
+    "图像/视频原始来源清单、授权/自有/公开数据比例、语言分布、真实/合成比例、地域分布与 GDPR 合规独立审计",
+    "生成器 optimizer、学习率与调度、weight decay、gradient clipping、EMA、训练混合精度/master weights、条件 dropout 与完整超参数",
+    "四个高性能微调子集的名称、样本配比、每个子集规模和单独贡献消融",
+    "首发内部 HunyuanMLLM 的模型 ID、参数量、权重、训练数据，以及它与公开 LLaVA-Llama-3-8B 替代路径的量化质量差异",
+    "绑定明确硬件、软件版本、分辨率、帧数和步数的官方绝对 latency/throughput，以及 Artificial Analysis 原始 Hunyuan Video (Fal) 当前 14-day 中位 generation time",
+    "公开 fast/CFG-distilled checkpoint 在官方 1533-prompt 人评上的独立分数；公开表只给 high-quality 内部版本",
+    "超出 129 帧或官方 720p/540p preset 的 DiT 原生质量边界与可靠长视频外推上限"
+  ],
+  "sources": [
+    {
+      "title": "HunyuanVideo: A Systematic Framework For Large Video Generative Models",
+      "url": "https://arxiv.org/html/2412.03603",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "Tencent-Hunyuan/HunyuanVideo",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo",
+      "source_type": "official_github"
+    },
+    {
+      "title": "tencent/HunyuanVideo model card",
+      "url": "https://huggingface.co/tencent/HunyuanVideo",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "tencent/HunyuanVideo repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/tencent/HunyuanVideo?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "HunyuanVideo checkpoint and text-encoder download guide",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo/blob/main/ckpts/README.md",
+      "source_type": "official_checkpoint_guide"
+    },
+    {
+      "title": "Tencent Hunyuan Community License Agreement for HunyuanVideo",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo/blob/main/LICENSE.txt",
+      "source_type": "official_license"
+    },
+    {
+      "title": "tencent/HunyuanVideo-PromptRewrite",
+      "url": "https://huggingface.co/tencent/HunyuanVideo-PromptRewrite",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "HunyuanVideo Diffusers-compatible transformer config",
+      "url": "https://huggingface.co/hunyuanvideo-community/HunyuanVideo/blob/main/transformer/config.json",
+      "source_type": "official_ecosystem_model_config"
+    },
+    {
+      "title": "HunyuanVideo Diffusers-compatible safetensors metadata",
+      "url": "https://huggingface.co/api/models/hunyuanvideo-community/HunyuanVideo",
+      "source_type": "official_ecosystem_repository_api"
+    },
+    {
+      "title": "HunyuanVideo 3D VAE config",
+      "url": "https://huggingface.co/tencent/HunyuanVideo/blob/main/hunyuan-video-t2v-720p/vae/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "HunyuanVideo - Hugging Face Diffusers documentation",
+      "url": "https://huggingface.co/docs/diffusers/main/api/pipelines/hunyuan_video",
+      "source_type": "official_library_documentation"
+    },
+    {
+      "title": "Artificial Analysis Text-to-Video Leaderboard",
+      "url": "https://artificialanalysis.ai/video/leaderboard/text-to-video",
+      "source_type": "independent_dynamic_benchmark"
+    },
+    {
+      "title": "Artificial Analysis Video Generation Benchmarking Methodology",
+      "url": "https://artificialanalysis.ai/video/methodology",
+      "source_type": "independent_benchmark_methodology"
+    }
+  ],
+  "notes": "条目严格对应 2024-12-03 的首代 HunyuanVideo T2V，不把 2025-03 的 HunyuanVideo-I2V、后续 Avatar/Custom 或 2025-11 的 HunyuanVideo 1.5 能力回填。名称中的 13B 是论文的 DiT 规模口径；公开精确参数 12.821B 与 VAE 相加略超 13B，但端到端运行还需外部 8B MLLM 与 CLIP。论文人评使用未公开的 high-quality version，官方仓库明确提醒它不同于当前发布 fast version，因此比较时必须保留这一限定。最大时长按官方 129 帧、24 fps 编码约 5.4 秒记录，论文横向表按 5 秒展示。comparison_eligible=true：有可下载权重、推理代码、精确架构/权重和第三方动态 Elo；history_eligible=true：许可证、GitHub 发布、HF 仓库与 arXiv 日期互相印证。"
+}

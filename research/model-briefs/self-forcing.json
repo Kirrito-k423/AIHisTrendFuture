@@ -1,0 +1,232 @@
+{
+  "slug": "self-forcing",
+  "name": "Self Forcing",
+  "family": "Self Forcing / Wan2.1-derived autoregressive video diffusion",
+  "entry_kind": "method",
+  "modality": "T2V",
+  "organization": "Adobe Research；The University of Texas at Austin",
+  "release_date": "2025-06-09",
+  "release_date_basis": "arXiv:2506.08009 v1 于 2025-06-09 提交；官方 Hugging Face 仓库也创建于 2025-06-09。NeurIPS 2025 Spotlight 是后续会议身份，不据此把发布日期延后。",
+  "access": "论文、项目页和 Apache-2.0 代码公开；官方 Hugging Face 仓库 gdhe17/Self-Forcing 无门控，公开 ODE 初始化、DMD、SiD、GAN、SiD v2 和后续 10 秒 checkpoint。实际推理不能只下载 Self-Forcing checkpoint，还必须另行下载 Wan-AI/Wan2.1-T2V-1.3B 的 VAE、文本编码器及其他基础组件。",
+  "license": "官方 GitHub 代码与 gdhe17/Self-Forcing 模型卡均标注 Apache-2.0；依赖的 Wan-AI/Wan2.1-T2V-1.3B 也标注 Apache-2.0。",
+  "official_model_ids": [
+    "gdhe17/Self-Forcing",
+    "gdhe17/Self-Forcing::checkpoints/self_forcing_dmd.pt",
+    "gdhe17/Self-Forcing::checkpoints/self_forcing_sid.pt",
+    "gdhe17/Self-Forcing::checkpoints/self_forcing_sid_v2.pt",
+    "gdhe17/Self-Forcing::checkpoints/self_forcing_gan.pt",
+    "gdhe17/Self-Forcing::checkpoints/self_forcing_10s.pt",
+    "gdhe17/Self-Forcing::checkpoints/ode_init.pt",
+    "Wan-AI/Wan2.1-T2V-1.3B",
+    "Wan-AI/Wan2.1-T2V-14B"
+  ],
+  "parameter_total": "Self Forcing 是训练方法，没有独立固定参数量。论文主结果和公开学生 checkpoint 使用 Wan2.1-T2V-1.3B，同架构口径为约 1.3B DiT 参数；DMD 训练另用 Wan2.1-T2V-14B 作 real-score teacher，不能把 14B 加到推理模型参数量中。VAE 与 UMT5 文本编码器是所需基础组件，但论文未给出端到端总参数口径。",
+  "parameter_active": "主生成去噪阶段为稠密约 1.3B DiT，没有 MoE 激活子集；文本编码和 VAE 分阶段执行。DMD 的 14B real-score network 与 1.3B critic 仅参与训练，不参与发布 checkpoint 的常规生成路径。",
+  "weight_size": "Hugging Face 官方文件树显示：self_forcing_dmd.pt、self_forcing_gan.pt、self_forcing_sid.pt 各 5,676,252,553 bytes（约 5.68 GB / 5.29 GiB），self_forcing_sid_v2.pt 5,676,255,365 bytes，ode_init.pt 5,676,203,690 bytes；后续 self_forcing_10s.pt 为 11,352,514,125 bytes。上述是增量/训练 checkpoint，完整运行还需 Wan2.1-T2V-1.3B 基础仓库。",
+  "precision": "官方 .pt checkpoint 的 Hugging Face 扫描记录为 torch FloatStorage，文件大小也对应 FP32 量级的 1.3B 状态；训练配置启用 mixed_precision，官方 README 还把 FP8 linear 列为可选加速但提示可能损失质量。论文没有明确冻结一套统一的训练/推理精度口径，因此不把 FP8 当作原始发布精度。",
+  "architecture": "以 Wan2.1-T2V-1.3B 为初始化的 latent flow-matching Diffusion Transformer，经因果注意力 ODE 初始化和 Self Forcing 后训练变为时间自回归视频扩散模型。Wan 1.3B 主干配置为 hidden size 1536、30 层、12 个注意力头、FFN 8960、16 通道 latent 输入/输出；Self Forcing 使用均匀 4 步去噪，可做 frame-wise AR，主结果采用每次生成 3 个 latent frame 的 chunk-wise AR。",
+  "attention_or_sequence_design": "时间维采用因果自回归分解：当前 frame/chunk 以过去已生成的 clean latent 为条件做少步扩散去噪。训练时也按推理次序 self-rollout，并首次把 KV cache 放进该训练回路；只对每个 frame 的最后一个去噪步反传、随机选择受监督的去噪阶段，并切断先前 frame 通过 KV embedding 回传的梯度。长视频使用固定窗口 rolling KV cache：缓存最近 L 帧/块，满时逐出最老条目，不重算重叠窗口，理论复杂度由滑窗重算的 O(L²+TL) 降为 O(TL)。为避免首个 image latent 被逐出后产生新的分布错配，训练时限制局部注意力，使最后一块看不到第一块。",
+  "vae_or_tokenizer": "沿用 Wan2.1 的 3D causal Wan-VAE：16 通道连续 latent，时间压缩约 4 倍、空间压缩约 8×8；首个 latent frame 只编码首图而不做时间压缩，这一统计特殊性正是 naive rolling KV cache 在逐出首帧后闪烁的原因。Self Forcing 未发布独立 VAE，需从 Wan-AI/Wan2.1-T2V-1.3B 加载。",
+  "text_encoder_or_conditioner": "沿用 Wan2.1 的 multilingual UMT5-XXL/T5 encoder 条件器，最大文本长度 512，并在各 Transformer block 通过 cross-attention 注入。约 250k 个后训练 prompt 由 Qwen/Qwen2.5-7B-Instruct 扩写；Qwen 是 prompt 预处理器，不是发布生成模型的内部文本条件器。DMD 训练的 real-score conditioner/teacher 来自 Wan2.1-T2V-14B。",
+  "training_hardware": "论文多数实验使用 64×NVIDIA H100 80GB；官方复现命令为 8 节点×8 GPU。",
+  "training_hardware_scale": "多数训练每 GPU batch size 1；DMD/SiD effective batch 64，GAN 通过梯度累积达到 batch 768。官方 README 估计加梯度累积后可在 8×H100 上少于 16 小时复现 DMD 结果，但这不是论文主跑的实测总时长。",
+  "training_data_scale": "ODE 初始化使用从基础模型采样的 16k ODE solution pairs；Self Forcing DMD/SiD 使用约 250k 个过滤并由 LLM 扩写的 VidProS/VidProM prompt，不需要视频训练数据；GAN 和 many-step TF/DF 基线使用 Wan2.1-T2V-14B 生成的 70k 个视频。Wan2.1 基础预训练数据总量不属于本方法披露范围，仍未知。",
+  "training_data_composition": "prompt 源自 VidProM 的约 1M 个语义唯一用户 T2V prompt 的 VidProS 子集；删除少于 20 字符、含命令行参数或任一 NSFW 类别概率高于 0.01 的条目后约 250k，再用 Qwen2.5-7B-Instruct 按 Wan2.1 prompt-extension 模板扩写。DMD/SiD 所谓 data-free 的严格含义是“不使用真实或合成视频训练集”，而非不使用 prompt、预训练权重或 teacher；GAN 路径使用 70k 个 14B 教师合成视频。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Wan2.1 基础模型预训练",
+      "description": "外部基础阶段；Self Forcing 直接采用 Wan2.1-T2V-1.3B。其原始预训练数据、硬件和完整训练时长不能归为 Self Forcing 后训练披露内容。"
+    },
+    {
+      "stage": 2,
+      "name": "Causal ODE initialization",
+      "description": "按 CausVid 协议，用基础模型采样的 16k ODE solution pairs 和因果注意力 mask 微调 1.3B 主干，得到官方 ode_init.pt。公开仓库暂未补齐从零执行该阶段的完整命令，只提供初始化 checkpoint。"
+    },
+    {
+      "stage": 3,
+      "name": "Self-rollout holistic post-training",
+      "description": "4-step 学生按真实推理路径自回归 rollout；用 KV cache、随机 denoising-step 监督和随机梯度截断控制显存，再在完整生成视频上做 DMD、SiD 或 GAN 分布匹配。DMD/SiD 不加载视频数据。"
+    },
+    {
+      "stage": 4,
+      "name": "Rolling-KV local-attention adaptation",
+      "description": "训练时让最后 chunk 无法看到第一个特殊 image-latent chunk，以覆盖推理中 rolling cache 已逐出首块的状态，避免 naive rolling cache 的闪烁/伪影。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "Wan2.1 基础预训练",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Causal ODE initialization",
+      "optimization_steps": "未知；公开说明为 16k ODE pairs",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Self Forcing DMD",
+      "optimization_steps": "官方 README：600 iterations",
+      "wall_clock_time": "论文约 1.5 小时；README 表述为 64×H100 上少于 2 小时"
+    },
+    {
+      "stage": "Self Forcing SiD / GAN",
+      "optimization_steps": "未知",
+      "wall_clock_time": "64×H100 上约 2–3 小时"
+    }
+  ],
+  "training_algorithms": "核心是 on-policy 式自回归 self-rollout 与完整视频级分布匹配，用模型自己的历史输出取代 ground-truth/noisy ground-truth context，从而直接匹配推理分布。公开实现支持 reverse-KL DMD、Fisher-divergence SiD 和 R3GAN（relativistic pairing loss 加 R1/R2 近似正则）；主结果为 DMD。4-step flow-matching 学生只对每帧最后去噪步反传，并随机选择 rollout 结束阶段、stop-gradient 旧 KV；DMD real-score network 为 Wan2.1-T2V-14B、critic 初始化为 Wan2.1-T2V-1.3B。",
+  "training_infra": "官方配置使用 PyTorch torchrun、8×8 分布式进程、FSDP hybrid-full sharding、mixed precision、gradient checkpointing、梯度累积与 EMA（0.99，step 200 开始）；Self Forcing attention 用 FlashAttention-3，TF/DF 基线用 FlexAttention。训练代码基于 Wan2.1 与 CausVid。互联、吞吐、容错、checkpoint 频率与能耗未知。",
+  "inference_hardware": "论文所有正式速度测试在单张 NVIDIA H100 上；官方仓库称 RTX 4090、A100、H100 均测试过，要求至少 24GB 显存、Linux 和 64GB RAM。README 对 RTX 4090 给出“real-time streaming”概括，但论文表格的 17.0 FPS/0.69s 数值严格属于 H100。",
+  "inference_performance": "单 H100、832×480、4-step：chunk-wise DMD 为 17.0 FPS、首块/首帧延迟口径 0.69s；frame-wise DMD 为 8.9 FPS、延迟 0.45s。10 秒外推中，滑窗 KV 重算只有 4.6 FPS；naive rolling cache 虽快但严重闪烁，经 local-attention 训练的 rolling cache 达 16.1 FPS 并显著缓解伪影。相比同为 1.3B 的 DF+DMD/CausVid，吞吐相同而 VBench Total 从 81.20/82.76 提升到 84.31，并减少长期饱和、过锐化与误差累积。",
+  "max_output_resolution": "论文与公开主 checkpoint 的验证分辨率为 832×480；没有给出 Self Forcing checkpoint 的严格最大宽高或可靠 720P 边界。",
+  "max_output_duration_seconds": null,
+  "native_fps": 16,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "论文报告流式吞吐和 first-frame/chunk latency，而不是固定 5 秒视频的一次性端到端生成秒数。rolling KV 在 10 秒测试为 16.1 FPS，接近 16 FPS 原生播放速率；“arbitrarily/endless”是算法外推能力，不是无质量损失的时长保证，论文明确承认远超训练上下文后仍会退化。",
+  "benchmark_scores": [
+    {
+      "benchmark": "VBench",
+      "variant": "Self Forcing DMD, chunk-wise AR, Wan2.1-T2V-1.3B base",
+      "metrics": {
+        "total": 84.31,
+        "quality": 85.07,
+        "semantic": 81.28,
+        "throughput_fps_h100": 17.0,
+        "latency_seconds_h100": 0.69
+      },
+      "scope": "论文 Table 1/2；832×480，单 H100。VBench prompt 与支持该功能的基线均做 Qwen2.5-7B prompt rewriting。"
+    },
+    {
+      "benchmark": "VBench",
+      "variant": "Self Forcing DMD, frame-wise AR, Wan2.1-T2V-1.3B base",
+      "metrics": {
+        "total": 84.26,
+        "quality": 85.25,
+        "semantic": 80.30,
+        "throughput_fps_h100": 8.9,
+        "latency_seconds_h100": 0.45
+      },
+      "scope": "论文 Table 1/2；frame-wise 运动更动态，但附录报告其背景一致性、运动平滑和 temporal flicker 弱于 chunk-wise。"
+    },
+    {
+      "benchmark": "Self Forcing training-objective ablation",
+      "variant": "chunk-wise / frame-wise, same implementation",
+      "metrics": {
+        "chunk_dmd_total": 84.31,
+        "chunk_sid_total": 84.07,
+        "chunk_gan_total": 83.88,
+        "frame_dmd_total": 84.26,
+        "frame_sid_total": 83.54,
+        "frame_gan_total": 83.27,
+        "chunk_df_plus_dmd_total": 82.76,
+        "frame_df_plus_dmd_total": 80.56
+      },
+      "scope": "论文 Table 2 的受控消融；支持“收益来自训练/推理分布对齐而非仅采用 DMD”这一方法结论。"
+    },
+    {
+      "benchmark": "Rolling KV cache efficiency ablation",
+      "variant": "10-second generation",
+      "metrics": {
+        "sliding_window_kv_recompute_fps": 4.6,
+        "trained_rolling_kv_cache_fps": 16.1
+      },
+      "scope": "论文报告；naive rolling KV 同样保持高吞吐但出现严重视觉伪影，论文未给该 naive 版本精确 FPS 或量化质量分。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "通过训练时按推理过程做自回归 self-rollout，并让未来 chunk 条件于模型自己已生成的历史，直接消除 TF/DF 使用 ground-truth/noisy ground-truth context 所造成的训练—推理分布错配。",
+      "scope_boundary": "这是训练范式与曝光偏差处理主张，不是新的通用基础模型，也不意味着无限时长无退化。论文只在 Wan2.1 1.3B、4-step、特定 frame/chunk 设置上系统验证；长于训练上下文很多时仍会降质。",
+      "evidence": "论文 Figure 1、Sections 3.2–3.3 与 Table 2：相同实现下 Self Forcing+DMD 的 chunk/frame VBench Total 为 84.31/84.26，高于 DF+DMD 的 82.76/80.56。",
+      "confidence": "高"
+    },
+    {
+      "claim": "把 DMD/SiD/GAN 之类的 holistic distribution-matching loss 施加到真实自回归 rollout 的完整视频分布，而不是错误的 DF 训练输出分布；主 DMD 路径无需视频训练数据。",
+      "scope_boundary": "“data-free”只表示 Self Forcing DMD/SiD 阶段不需要视频样本；它仍依赖预训练 Wan 权重、约 250k prompts、16k ODE 初始化 pairs，DMD 还需 14B teacher 与 1.3B critic。GAN 版本明确使用 70k 合成视频。",
+      "evidence": "论文 Sections 3.3/4、Appendix A 与官方训练 README/config；DMD、SiD、GAN 三种目标均优于对应 TF/DF 基线。",
+      "confidence": "高"
+    },
+    {
+      "claim": "固定窗口 rolling KV cache 在不重算重叠历史的情况下支持连续外推，并以专门的 local-attention 训练修复首个特殊 image latent 被逐出所造成的新分布错配。",
+      "scope_boundary": "rolling cache 自身并不自动保证质量：naive 版本会严重闪烁；16.1 FPS 结果依赖相配套的局部注意力训练。所谓 endless 是计算/缓存机制可持续，不是内容质量永久稳定。",
+      "evidence": "论文 Section 3.4、Appendix B 及 10 秒效率消融：KV 重算 4.6 FPS，训练后的 rolling KV 16.1 FPS；附录给出 naive 与 local-attention 版本视觉对比。",
+      "confidence": "高"
+    },
+    {
+      "claim": "在单 H100 上以 17.0 FPS、0.69 秒延迟流式生成 832×480 视频，同时 VBench 总分 84.31，质量接近或略高于慢得多的 Wan2.1 基座。",
+      "scope_boundary": "这组速度属于 chunk-wise DMD、4-step、单 H100 与论文实现，不能转写成所有 GPU 都为 17 FPS；frame-wise 只有 8.9 FPS。与 Wan2.1 的速度差同时包含 4-step 蒸馏和自回归缓存收益，不应全归因于 Self Forcing 单一训练信号。",
+      "evidence": "论文 Table 1：Self Forcing chunk-wise 17.0 FPS/0.69s/VBench 84.31，Wan2.1 0.78 FPS/103s/VBench 84.26。",
+      "confidence": "高（该实验设置）；中（外推到其他硬件/实现）"
+    }
+  ],
+  "comparison_eligible": false,
+  "history_eligible": true,
+  "unknown_fields": [
+    "Self Forcing 作为方法没有独立于 Wan2.1 实例的统一参数量、权重体积、精度和最大分辨率",
+    "Wan2.1 基础预训练的硬件规模、总训练数据、训练时长与完整阶段成本不由本论文披露",
+    "Causal ODE initialization 的优化步数、wall-clock 时间和完整公开复现命令",
+    "公开 .pt 文件内部各 state_dict（例如 generator/EMA/critic）的逐项组成及 self_forcing_10s.pt 体积翻倍的官方说明",
+    "论文训练 mixed precision 的确切 dtype，以及每个正式速度测试所用权重 dtype、torch.compile/TAEHV-VAE/FP8 开关状态",
+    "rolling KV 的精确 L 窗口长度、naive rolling 版本精确吞吐和量化画质分",
+    "固定 clip 的端到端生成时间、峰值显存、功耗与 RTX 4090/A100 上逐项可比速度",
+    "严格最大输出时长；方法计算上可持续外推，但论文确认远超训练上下文会退化",
+    "Artificial Analysis Elo；未发现该方法/公开 checkpoint 的可归属 AA 独立条目"
+  ],
+  "sources": [
+    {
+      "title": "Self Forcing: Bridging the Train-Test Gap in Autoregressive Video Diffusion — NeurIPS 2025",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/f4823f831af67a3ef15e41a85434422a-Abstract-Conference.html",
+      "source_type": "official_conference_proceedings"
+    },
+    {
+      "title": "Self Forcing: Bridging the Train-Test Gap in Autoregressive Video Diffusion",
+      "url": "https://arxiv.org/abs/2506.08009",
+      "source_type": "primary_paper"
+    },
+    {
+      "title": "Self Forcing official project page",
+      "url": "https://self-forcing.github.io/",
+      "source_type": "official_project_page"
+    },
+    {
+      "title": "guandeh17/Self-Forcing",
+      "url": "https://github.com/guandeh17/Self-Forcing",
+      "source_type": "official_code_repository"
+    },
+    {
+      "title": "Self Forcing DMD training configuration",
+      "url": "https://github.com/guandeh17/Self-Forcing/blob/main/configs/self_forcing_dmd.yaml",
+      "source_type": "official_training_config"
+    },
+    {
+      "title": "gdhe17/Self-Forcing",
+      "url": "https://huggingface.co/gdhe17/Self-Forcing",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "gdhe17/Self-Forcing checkpoint file tree",
+      "url": "https://huggingface.co/gdhe17/Self-Forcing/tree/main/checkpoints",
+      "source_type": "official_weight_repository"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-T2V-1.3B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B",
+      "source_type": "official_base_model_card"
+    },
+    {
+      "title": "Wan2.1 official repository",
+      "url": "https://github.com/Wan-Video/Wan2.1",
+      "source_type": "official_base_model_repository"
+    },
+    {
+      "title": "Idea2StableDiffusion chronology page",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue"
+    }
+  ],
+  "notes": "分类结论：Self Forcing 是可移植的 autoregressive video-diffusion 后训练范式（entry_kind=method），不是 Adobe 自研并从头训练的独立 T2V 基础模型。论文中的‘our model’与社区口语里的‘Self-Forcing model’指应用该方法后发布的 Wan2.1-T2V-1.3B 实例；实际基座是 Wan-AI/Wan2.1-T2V-1.3B，主 checkpoint 是 gdhe17/Self-Forcing 的 self_forcing_dmd.pt。Wan2.1-T2V-14B 只作 DMD real-score teacher、GAN/基线合成视频来源，不是用户生成时的基座。公开 checkpoint 证明方法有可运行实例，但不改变条目身份，所以 history_eligible=true、comparison_eligible=false：可纳入技术史，模型榜横向对比时应单列具体的‘Wan2.1-1.3B + Self Forcing DMD chunk-wise’实例，不能把方法名当成一个与 Wan、Veo、Sora 同层级的基础模型。质量/速度的关键证据边界是：Self-rollout 修复 TF/DF exposure bias；DMD 是完整 rollout 上的分布匹配目标而不是方法身份本身；rolling KV cache 的速度收益必须和 local-attention 训练一起看，否则会闪烁；论文的 17 FPS 和 0.69s 是 H100 数字，不能无条件归给 RTX 4090。"
+}

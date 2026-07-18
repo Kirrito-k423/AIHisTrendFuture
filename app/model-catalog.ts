@@ -1,3 +1,5 @@
+import { generativeResearchCatalog } from "./generative-research";
+
 export interface RawModelCatalogEntry {
   id: string;
   name: string;
@@ -17,6 +19,10 @@ export interface RawModelCatalogEntry {
   blendedPricePerMTok: number | null;
   primarySourceUrl: string;
   aaUrl: string | null;
+  architectureLabel?: string;
+  aaGenerativeElo?: number | null;
+  generationSeconds?: number | null;
+  generationContext?: string | null;
 }
 
 export const representativeModelCatalog: RawModelCatalogEntry[] = [
@@ -96,4 +102,5 @@ export const representativeModelCatalog: RawModelCatalogEntry[] = [
   { id: "z-image-turbo", name: "Z-Image-Turbo", org: "Alibaba / Tongyi-MAI", releaseDate: "2025-11-26", access: "open", license: "Apache-2.0", modality: "text→image", totalParamsB: 6.155, activeParamsB: 6.155, contextK: null, weightSizeGB: 32.832, trainingTokensT: null, aaIntelligence: null, aaAgentic: null, outputTokensPerSecond: null, blendedPricePerMTok: null, primarySourceUrl: "https://github.com/Tongyi-MAI/Z-Image", aaUrl: "https://artificialanalysis.ai/image/models/alibaba_z-image-turbo" },
   { id: "ltx-23", name: "LTX‑2.3", org: "Lightricks / LTX", releaseDate: "2026-03-05", access: "open", license: "LTX-2 Community License", modality: "text→video", totalParamsB: 22, activeParamsB: 22, contextK: null, weightSizeGB: 46.1, trainingTokensT: null, aaIntelligence: null, aaAgentic: null, outputTokensPerSecond: null, blendedPricePerMTok: null, primarySourceUrl: "https://huggingface.co/Lightricks/LTX-2.3", aaUrl: "https://artificialanalysis.ai/video/leaderboard/text-to-video/open-weights" },
   { id: "cosmos3-super", name: "Cosmos3‑Super Family", org: "NVIDIA", releaseDate: "2026-05-31", access: "open", license: "NVIDIA Open Model License", modality: "text+image→image+video", totalParamsB: 64, activeParamsB: 32, contextK: null, weightSizeGB: 133, trainingTokensT: 19.76, aaIntelligence: null, aaAgentic: null, outputTokensPerSecond: null, blendedPricePerMTok: null, primarySourceUrl: "https://huggingface.co/nvidia/Cosmos3-Super", aaUrl: "https://artificialanalysis.ai/image/leaderboard/text-to-image/open-weights" },
+  ...generativeResearchCatalog,
 ];

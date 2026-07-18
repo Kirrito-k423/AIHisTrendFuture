@@ -1,0 +1,237 @@
+{
+  "slug": "qwen-image-2",
+  "name": "Qwen-Image-2.0",
+  "family": "Qwen-Image",
+  "entry_kind": "model",
+  "modality": "Omni",
+  "organization": "Qwen Team, Alibaba Cloud",
+  "release_date": "2026-02-10",
+  "release_date_basis": "Qwen 官方博客页面标注 2026/02/10 并使用“launching Qwen-Image-2.0”表述；QwenLM/Qwen-Image 官方 GitHub News 也将发布公告记为 2026.02.10。因此采用首次公开产品发布日期。技术报告首次提交 arXiv 的日期为 2026-05-11，Alibaba Cloud 当前 API 的首个固定快照为 2026-03-03，二者均晚于产品首发，故不作为本字段日期。",
+  "access": "闭源托管服务。截至 2026-07-19，可通过 Qwen Chat 与 Alibaba Cloud Model Studio/DashScope API 使用；官方将 qwen-image-2.0 描述为兼顾质量与性能的加速版，并同时支持文生图和图像编辑。官方 Qwen Hugging Face collection 与 Qwen-Image GitHub 仓库未提供 Qwen-Image-2.0 权重、模型配置或本地推理代码；GitHub 仓库的 Apache-2.0 许可证不能据此外推到未发布的 2.0 权重。",
+  "license": "未知（未发布模型权重许可证；托管 API 的服务条款不等同于可下载权重许可证）",
+  "official_model_ids": [
+    "qwen-image-2.0",
+    "qwen-image-2.0-2026-03-03"
+  ],
+  "parameter_total": "未知（官方博客仅称模型更小，技术报告未给出 MMDiT、Qwen3-VL 条件编码器或全系统总参数量；网络文章常见的“7B”说法缺少上述官方来源支持，故不采纳。技术报告只披露 VAE 编码器 79M、解码器 259M，不能据此推断整机参数量）",
+  "parameter_active": "未知（官方未披露 active parameters，也未给出可用于判断 dense/MoE 激活口径的完整配置）",
+  "weight_size": "未知（没有官方可下载的 Qwen-Image-2.0 权重文件，不能从第三方包装或 API 名称反推）",
+  "precision": "未知（官方未披露训练精度、服务端推理精度或量化方案；不得从其他 Qwen-Image 版本的发布权重推断）",
+  "architecture": "统一的潜空间多模态扩散架构：冻结的 Qwen3-VL 作为条件编码器，16× 高压缩 VAE 负责图像与潜变量互换，Multimodal Diffusion Transformer（MMDiT）在共享 Transformer 主干中联合处理文本与图像 token 并执行去噪。单一架构同时训练 T2I 与 TI2I，支持交错多图输入。官方未披露 MMDiT 层数、hidden size、头数或总参数量。",
+  "attention_or_sequence_design": "Qwen3-VL 先产生文本/视觉模态表示；输入图像的视觉表示随后由 VAE 潜变量替换，并与文本表示沿序列维拼接后进入 Qwen-Image-2.0 blocks。注意力采用 Qwen-Image 引入的 MSRoPE 统一计算跨文本与图像位置；Q/K 使用 RMSNorm，其余归一化使用 LayerNorm。调制层去除偏置，只保留乘法项 h'=alpha*h；MLP 使用 SwiGLU，以缓解联合文本-图像训练中激活过大与神经元过早饱和。block 数量 L 与具体维度未知。",
+  "vae_or_tokenizer": "Qwen-Image-2.0-VAE 采用 f16c64 设置：16× 空间下采样、64 个潜通道、残差自编码器/非参数 shortcut；编码器 79M、解码器 259M。训练目标包括重建、感知与语义对齐损失，不使用对抗损失；语义对齐强度在早期较强、后期逐渐放松，以平衡重建保真度与 latent diffusability。主技术报告在 ImageNet 256×256 上报告 PSNR 33.42、SSIM 0.9225，在内部 Text 256×256 集上报告 PSNR 32.81、SSIM 0.9795。伴随 VAE-2.0 报告明确说明，集成进 Qwen-Image-2.0 的是其方法框架下的一个中间变体，不能把后来 VAE 套件的所有配置直接视为生产模型配置。文本 tokenizer 的具体版本未披露。",
+  "text_encoder_or_conditioner": "冻结的 Qwen3-VL 充当条件编码器，抽取用户文本和输入图像的模态感知表示；技术报告未指明具体 Qwen3-VL 参数档位，因此不能推断为 8B 等版本。另有独立 Prompt Enhancer：从 Qwen3.5-9B 初始化，以 SFT 后接 GRPO 的两阶段方式，把短或含糊请求重写成结构化、细节丰富的生成/编辑提示；它是前置重写模块，不等同于 MMDiT 内部参数。",
+  "training_hardware": "未知",
+  "training_hardware_scale": "未知",
+  "training_data_scale": "未知（主技术报告仅称 large-scale image-text data / large-scale internal corpus，未披露图像对、编辑对、token 或存储规模。伴随 Qwen-Image-VAE-2.0 报告称该 VAE 套件扩展到 billions of images，但同时说明 Qwen-Image-2.0 集成的是一个中间变体，故不能把“数十亿图像”无条件作为整机或集成 VAE 的精确训练规模）",
+  "training_data_composition": "T2I 数据覆盖真实摄影、平面设计、艺术内容和合成图像；真实子集包括人像、风景、物体、长尾概念与多样场景构图，布局敏感内容包括幻灯片、海报和渲染资产。TI2I 同时包含单图与多图数据：属性修改、背景替换、风格迁移、文字编辑、修复、结构感知操作，以及参考生成、主体一致性、跨图风格迁移和组合合并。标注分为 General、Text、Knowledge、Structured 四种 caption；高分辨率阶段加入分辨率、图像质量、美学和压缩质量过滤，SFT 再用更严格过滤与人工精选。VAE 另使用真实文档（PDF、幻灯片、海报）及英/中文合成段落。具体来源、许可、去重比例与样本数量未知。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Pre-training",
+      "description": "700K steps；256/512 分辨率；T2I:TI2I=0.9:0.1。对应数据课程从 256p 纯 T2I 清洗起步，引入编辑数据，再在 512p 加入合成数据。"
+    },
+    {
+      "stage": 2,
+      "name": "Continual pre-training",
+      "description": "250K steps；512/1024/2048 多分辨率；T2I:TI2I=0.7:0.3。1024p/2048p 使用更严格的分辨率、质量、美学与压缩过滤，以提升高分辨率细节和编辑能力。"
+    },
+    {
+      "stage": 3,
+      "name": "Supervised fine-tuning",
+      "description": "约 10K steps；512/1024/2048；T2I:TI2I=0.7:0.3。使用严格过滤及人工精选的高美学数据，重点改善生成图像美感与细节。"
+    },
+    {
+      "stage": 4,
+      "name": "RLHF",
+      "description": "分别用 T2I 的美学、图文对齐、人像奖励和 TI2I 的指令遵循、视觉一致性奖励进行 GRPO 式扩散强化学习；奖励权重与任务 prompt 分布动态校准，得到 Qwen-Image-2.0-RL。"
+    },
+    {
+      "stage": 5,
+      "name": "Few-step distillation",
+      "description": "以多步教师进行 Distribution Matching Distillation，论文得到 4-NFE 的 Qwen-Image-2.0-Distillation，并与 40-step 教师做定性比较。官方 API 将 qwen-image-2.0 称为加速版，但未明确说明线上快照与论文 4-NFE 检查点一一对应。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "Pre-training",
+      "optimization_steps": 700000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Continual pre-training",
+      "optimization_steps": 250000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Supervised fine-tuning",
+      "optimization_steps": "约 10000",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "RLHF",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Few-step distillation",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "三阶段主训练均使用 Adam、weight decay 0.001、gradient norm clip 1.0、unconditional dropout 0.1；学习率依次为 1e-4、2e-5、1e-5。RLHF 使用适配扩散模型的 GRPO：rollout 开启 CFG 以得到高质量奖励样本，但策略优化排除 unconditional branch，以降低计算并保留预训练知识；五类奖励经尺度校准并动态调权。少步版本使用 DMD，辅助 fake-score model 以 flow-matching objective 学习学生分布，教师提供目标 score。Prompt Enhancer 先做 next-token SFT，再以结合视觉一致性、美学与规则文本约束的 GRPO 训练。VAE 使用重建、感知与动态语义对齐损失并移除对抗损失。未披露 Adam betas、学习率调度、训练精度与 RL/DMD 完整超参数。",
+  "training_infra": "计算基础设施未知：未披露训练框架、加速器型号/数量、数据并行或张量并行策略、集群互联、吞吐、容错与 checkpoint 频率。已披露的数据工程基础设施包括错误归因驱动的闭环 data flywheel：汇总标准评测、bad-case mining 与用户反馈，将失败路由到 RL、预训练数据补偿或 prompt engineering；预训练路径使用向量检索、数据增强及人工过滤，再进入下一轮训练。",
+  "inference_hardware": "未知（仅提供托管 API/聊天服务，官方未公开服务端 GPU/加速器型号、数量、显存或本地最低硬件；不存在可据以验证的官方本地权重）",
+  "inference_performance": "技术报告的蒸馏实验将 40-step 多步教师压缩为 4-NFE 学生，并声称在多种 prompt 上保持可比的视觉质量、语义对齐与构图，但只给出定性示例，没有指定硬件上的端到端延迟/吞吐/显存。Artificial Analysis 对 Alibaba Cloud 的 qwen-image-2.0-2026-03-03 端点在 2026-07-19 页面抓取时给出约 12.407 秒/图的近 14 天中位 API 时间；该口径包含下载返回图像，不是纯模型 kernel 时间。官方 API 文档说明启用 prompt_extend 会额外增加约 3–5 秒。",
+  "max_output_resolution": "2048x2048。官方博客称原生支持 2K；Alibaba Cloud 文档对 qwen-image-2.0 系列给出自定义尺寸范围 512x512 至 2048x2048，默认 2048x2048。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1098.66,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis 动态 Image Arena 页面抓取日；分数会随新增盲测投票变化）",
+  "generation_time_seconds": 12.4072924852371,
+  "generation_time_context": "Artificial Analysis 对“Qwen Image 2.0 (2026-03-03), Alibaba Cloud”的动态观测；页面抓取于 2026-07-19，值为过去 14 天每图端到端 API 时间的中位数，包含从提供商返回 URL 时的图像下载。页面未在该数值旁披露服务端硬件，亦不能把它解释为 4-NFE 蒸馏主干的裸推理时间。静态图像模型的 max_output_duration_seconds 与 native_fps 不适用，故为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "LMArena Text-to-Image",
+      "variant": "Qwen-Image-2.0",
+      "observed_at": "2026-04-22",
+      "metrics": {
+        "Elo": 1168,
+        "global_rank": 9,
+        "rank_among_Chinese_models": 1
+      },
+      "scope": "Qwen-Image-2.0 技术报告给出的盲评结果；这是 LMArena 的时点性人类偏好分数，不应与 Artificial Analysis Elo 混为同一标尺。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Arena",
+      "variant": "Qwen Image 2.0 (2026-03-03), Alibaba Cloud",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_Elo": 1098.66
+      },
+      "scope": "第三方动态盲测榜单。搜索缓存与页面内嵌数据可能因刷新时刻出现小幅差异；本条采用核验时页面主显示值，不能与官方论文的 LMArena 1168 直接比较。"
+    },
+    {
+      "benchmark": "Qwen-Image-Bench",
+      "variant": "Qwen-Image-2.0 base before the later RL update",
+      "observed_at": "2026-06-25 technical-report release",
+      "metrics": {
+        "overall_score": 55.23
+      },
+      "scope": "后续官方 Qwen-Image-2.0-RL 报告称 RL 版为 57.84、较 base 提升 2.61，据此明确得到 base 55.23；这是后续报告中的 base 对照，不证明 2026-02-10 在线产品始终固定在该 checkpoint。"
+    },
+    {
+      "benchmark": "VAE reconstruction",
+      "variant": "Qwen-Image-2.0-VAE f16c64 component",
+      "metrics": {
+        "ImageNet_256x256_PSNR": 33.42,
+        "ImageNet_256x256_SSIM": 0.9225,
+        "internal_Text_256x256_PSNR": 32.81,
+        "internal_Text_256x256_SSIM": 0.9795
+      },
+      "scope": "仅衡量 VAE 重建组件，不是端到端 T2I 质量；Text 集为内部数据，跨论文可比性有限。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "以 f16c64 高压缩残差 VAE 支撑原生 2K：在 16× 空间压缩下用 64 潜通道、非参数 shortcut 与动态语义对齐，同时兼顾重建保真度与 latent diffusability。",
+      "scope_boundary": "这是 Qwen-Image-2.0 的关键组件设计及同压缩档位性能主张，不构成“首个 16× VAE”或“首个高压缩图像生成模型”的绝对首创声明；伴随 VAE-2.0 论文也说明线上集成的是其方法框架的中间变体。",
+      "evidence": "官方技术报告 Sec. 3.1 与 Table 1 明确给出 f16c64、79M/259M、损失设计和 PSNR/SSIM；官方博客与报告声明原生 2K。",
+      "confidence": "高"
+    },
+    {
+      "claim": "冻结 Qwen3-VL 条件编码器与共享 MMDiT 联合建模文本/图像 token，使一个模型统一承担 T2I、单图编辑与多图条件编辑，并用 MSRoPE、QK RMSNorm、无偏置乘法调制和 SwiGLU 稳定联合训练。",
+      "scope_boundary": "“统一生成与编辑”是该模型的架构/产品能力，不应表述为行业首次；此前已有统一生成编辑系统。官方也未公开足够配置来复现其参数规模与 block 细节。",
+      "evidence": "官方技术报告 Fig. 8、Sec. 3.2 及 Alibaba Cloud API 文档明确描述同一模型 ID 同时支持 generation 与 editing。",
+      "confidence": "高"
+    },
+    {
+      "claim": "面向专业排版与长文本视觉内容，支持最长 1K-token 指令，直接生成幻灯片、海报、信息图与漫画，并扩展多语言文字渲染。",
+      "scope_boundary": "1K token 是官方支持上限/能力声明，不等于能无误渲染 1K token 中的全部字符；主技术报告主要提供定性对比，没有公开统一 OCR 基准上的端到端 1K-token 准确率，也没有证明行业首次。",
+      "evidence": "2026-02-10 官方博客和技术报告摘要/贡献列表均明确写出 up to 1K tokens；报告 Figures 13、18、19 给出中英文、长诗与 slide 示例。",
+      "confidence": "中高"
+    },
+    {
+      "claim": "Prompt Enhancer 通过反向退化细粒度标注构造 (短提示, CoT, 细提示) 监督，再以 SFT+GRPO 直接结合下游图像质量反馈优化提示重写。",
+      "scope_boundary": "这是系统级前置模块，不是 MMDiT 本体的新注意力机制；官方未说明每个 Qwen Chat/API 请求是否必经相同 PE checkpoint。",
+      "evidence": "官方技术报告 Sec. 3.3 给出四类 prompt、随机退化策略、逆向 CoT、Qwen3.5-9B 初始化及 SFT+RL 奖励组成。",
+      "confidence": "中高"
+    },
+    {
+      "claim": "用 Distribution Matching Distillation 把 40-step 教师压缩成 4-NFE 学生，以降低交互式生成成本。",
+      "scope_boundary": "论文只用定性样例证明 4-NFE 与教师视觉上可比，未报告固定硬件的加速倍数；Alibaba Cloud 称 qwen-image-2.0 为加速版，但未公开确认线上 2026-03-03 快照就是该 4-NFE checkpoint。",
+      "evidence": "官方技术报告 Sec. 4.3 与 Fig. 11 明确给出 DMD、40-step teacher 和 4-NFE student。",
+      "confidence": "中"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "整机 parameter_total 与 parameter_active；官方仅称更小，未证实常见的 7B 转述",
+    "MMDiT 层数、hidden size、注意力头数、head dimension、完整组件参数拆分",
+    "冻结 Qwen3-VL 条件编码器的具体参数档位与 tokenizer 版本",
+    "模型权重许可证、公开权重体积、训练精度、API 推理精度和量化方式",
+    "训练加速器型号、GPU/加速器数量、节点数、互联拓扑、累计 FLOPs、能耗与峰值内存",
+    "pre-training、continual pre-training、SFT、RLHF、DMD 及 Prompt Enhancer 各阶段 wall-clock 时间",
+    "RLHF 与 DMD 的训练步数、batch size、学习率及完整采样/优化超参数",
+    "主模型 T2I/TI2I 数据总规模、各来源权利/许可、语言分布、合成数据占比和去重比例",
+    "集成进产品的中间 VAE 变体是否确切使用 companion VAE 报告所称的 billions-of-images 语料规模",
+    "训练框架、分布式并行策略、通信库、吞吐与容错方案",
+    "服务端推理硬件、显存、裸模型延迟、吞吐和不同分辨率/提示长度下的性能曲线",
+    "qwen-image-2.0 API 快照与论文 Qwen-Image-2.0-Base、RL、Distillation checkpoint 的精确映射",
+    "是否及何时会发布 Qwen-Image-2.0 官方权重与本地推理代码"
+  ],
+  "sources": [
+    {
+      "title": "Qwen-Image-2.0: Professional infographics, exquisite photorealism",
+      "url": "https://qwen.ai/blog?id=qwen-image-2.0",
+      "source_type": "official_blog"
+    },
+    {
+      "title": "Qwen-Image-2.0 Technical Report (arXiv:2605.10730)",
+      "url": "https://arxiv.org/abs/2605.10730",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "QwenLM/Qwen-Image official repository and release news",
+      "url": "https://github.com/QwenLM/Qwen-Image",
+      "source_type": "official_github"
+    },
+    {
+      "title": "Qwen-Image-VAE-2.0 Technical Report (arXiv:2605.13565)",
+      "url": "https://arxiv.org/abs/2605.13565",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "Alibaba Cloud Model Studio — How to call the Qwen-Image text-to-image API",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/qwen-image-api",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Alibaba Cloud Model Studio — Image generation and editing model matrix",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/image-model",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Alibaba Cloud Model Studio — Text-to-image size and prompt documentation",
+      "url": "https://www.alibabacloud.com/help/en/model-studio/text-to-image",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Qwen-Image-2.0-RL Technical Report (arXiv:2606.27608)",
+      "url": "https://arxiv.org/abs/2606.27608",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "Qwen Image 2.0 (2026-03-03) — Model Elo, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/image/models/qwen-image-2-0-alibaba-cloud-may-2026",
+      "source_type": "independent_benchmark"
+    },
+    {
+      "title": "Qwen-Image official Hugging Face collection",
+      "url": "https://huggingface.co/collections/Qwen/qwen-image",
+      "source_type": "official_model_collection"
+    }
+  ],
+  "notes": "候选文章把条目标为 T2I，但官方明确定义 Qwen-Image-2.0 为同时支持生成与编辑的 omni-capable 模型，因此 modality 采用 Omni；它仍可进入 T2I 横向比较。comparison_eligible=true 的含义是官方 API、公开技术报告与时点性人类偏好榜单足以比较其已发布服务能力，并不表示可复现训练或本地推理。history_eligible=true 依据 2026-02-10 官方首发日期。需严格区分 2026-02-10 的产品发布、2026-03-03 的 API 固定快照、2026-05-11 的技术报告，以及后续 Pro/RL 变体；本条 official_model_ids 不把 qwen-image-2.0-pro 纳入同一检查点。官方从未在所核验的一手材料中给出整机 7B 参数，因此不采用第三方 7B 宣传。"
+}

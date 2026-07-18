@@ -1,0 +1,222 @@
+{
+  "slug": "seedance-1-5-pro",
+  "name": "Seedance 1.5 Pro",
+  "family": "Seedance",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "ByteDance Seed / Volcano Engine",
+  "release_date": "2025-12-16",
+  "release_date_basis": "ByteDance Seed 的正式发布博客标注 2025-12-16，并明确称当天正式发布 Seedance 1.5 Pro。官方论文页标注 2025-12-15，arXiv 首次提交时间也是 2025-12-15，当前 PDF 为 2025-12-23 的 v3；本条目采用面向用户公开发布的 2025-12-16，而不是预印本提交日或后续修订日。",
+  "access": "闭源托管模型。官方通过火山方舟/Volcano Engine 提供体验与异步视频生成 API；技术报告还列出豆包和即梦的产品入口。支持文本到音视频、图像引导音视频，以及关闭音频后的 T2V/I2V。未发布本地权重、训练代码或可离线部署包。",
+  "license": "专有商业服务；没有公开模型权重许可证。API 使用受火山方舟平台专用条款、豆包模型服务协议及相应产品规则约束，不能把可调用 API 解释为开放权重或开源许可。",
+  "official_model_ids": [
+    "doubao-seedance-1-5-pro-251215",
+    "Doubao-Seedance-1.5-pro"
+  ],
+  "parameter_total": "未知。官方技术报告、模型主页、发布博客及火山方舟 API 文档均未披露参数总量；第三方媒体出现的“4.5B”未获得官方材料支持，因此不采用。",
+  "parameter_active": "未知。官方未说明模型是否采用 MoE，也没有 active-parameter 口径。",
+  "weight_size": "未知/不适用公开下载。模型权重未发布，无法核验 checkpoint 文件体积。",
+  "precision": "未知。官方只在推理加速部分笼统提到量化，没有披露训练精度、部署量化位宽、各组件 dtype 或混合精度策略。",
+  "architecture": "面向原生音视频联合生成的双分支 Diffusion Transformer。官方称其为基于 MMDiT 的统一框架：视觉流与音频流由双分支建模，并通过跨模态联合模块进行深层交互，以同时约束时间同步和语义一致性。大规模混合模态多任务预训练使同一系统覆盖 T2VA、I2VA、T2V 和 I2V。论文的推理流程图还显示：Prompt Engineering → Text Encoder → Video-Audio Joint Model (DiT) → Video-Audio Joint Model Refiner → 输出。官方没有进一步给出层数、宽度、分支参数共享方式、Refiner 结构或流匹配/扩散目标细节。",
+  "attention_or_sequence_design": "官方确认 MMDiT 基础、视频/音频双分支和 cross-modal joint module，但未披露音频与视频 token 的构造、序列长度、跨模态注意力插入频率、是否采用全注意力/窗口注意力、时空注意力拆分、位置编码、head 数、分支间参数共享或同步模块的具体数学形式。因而只能确认“跨模态深层交互”的设计意图，不能从 MMDiT 名称反推出实现细节。",
+  "vae_or_tokenizer": "未知。官方材料没有说明视频 VAE、音频 codec/tokenizer、空间/时间压缩比、latent 通道数、采样率或声码器。Seedance 1.0 的 VAE 细节不能自动沿用到 1.5 Pro。",
+  "text_encoder_or_conditioner": "论文推理流程明确存在 Text Encoder，并支持文本提示及图像引导条件；但未披露文本编码器名称、参数量、上下文长度、语言覆盖训练方式、图像条件编码器或 prompt engineering 模块的实现。多语言/方言能力是输出能力声明，不等于已公开编码器结构。",
+  "training_hardware": "未知。官方未披露训练加速器厂商、型号或精度配置。",
+  "training_hardware_scale": "未知。官方未披露 GPU/加速器数量、节点数、互联、峰值集群规模、FLOPs 或 accelerator-hours。",
+  "training_data_scale": "未知。官方仅称使用大规模 mixed-modality datasets 和高质量音视频 SFT 数据，没有给出样本数、视频小时数、token 数或存储规模。",
+  "training_data_composition": "官方描述了一个多阶段音视频数据框架：数据整理优先考虑音画一致性、动作表现力和课程式数据调度；captioning 系统同时为视频和音频生成丰富、专业化描述；预训练混合多模态数据以覆盖 T2VA、I2VA、T2V、I2V。未披露具体数据源、公开视频/内部数据占比、语言与方言分布、版权/授权结构、去重、安全过滤、合成数据比例或各阶段样本量。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "音视频联合模型预训练",
+      "description": "在大规模混合模态数据上进行多任务预训练，统一学习 T2VA、I2VA、T2V 和 I2V；配套多阶段数据清洗、音视频 captioning 与 curriculum-based scheduling。官方未公开损失函数、训练配比和优化器。"
+    },
+    {
+      "stage": 2,
+      "name": "监督微调（SFT）",
+      "description": "使用高质量音视频数据做 SFT，面向复杂指令、动作、画面美学、音频质量与实际创作场景进行精调；数据量和配方未披露。"
+    },
+    {
+      "stage": 3,
+      "name": "音视频反馈对齐（RLHF）",
+      "description": "在 SFT 后使用针对音视频场景的 RLHF 和多维奖励模型，优化 T2V/I2V 的动作质量、视觉美学和音频保真度。官方只引用 Flow-GRPO、RewardDance、DanceGRPO、UniFL 等相关工作，没有声明最终采用其中哪一套具体算法。"
+    },
+    {
+      "stage": 4,
+      "name": "推理蒸馏与部署优化",
+      "description": "对联合模型进行多阶段蒸馏以降低 NFE，并在服务侧加入量化和并行优化；论文还展示单独的 Video-Audio Joint Model Refiner。该阶段带来官方自报的端到端超过 10× 加速，但教师/学生结构、NFE 前后数值及蒸馏轮次未披露。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "音视频联合模型预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "监督微调（SFT）",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "音视频反馈对齐（RLHF）",
+      "wall_clock_time": "未知；官方只称 RLHF 基础设施优化使训练速度接近提升 3×，没有绝对时长或基线",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "多阶段蒸馏/推理优化",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "多模态多任务预训练 → 高质量音视频 SFT → 音视频 RLHF。RLHF 使用多维奖励模型，明确覆盖动作质量、视觉美学和音频保真度；针对 RLHF 管线的基础设施优化使训练速度接近 3×。推理模型随后采用多阶段蒸馏以减少 NFE。官方没有披露基础生成目标、噪声/flow schedule、优化器、学习率、batch、SFT loss、RLHF 的策略梯度算法、reward 权重、KL 约束或蒸馏的具体组合；论文引用相关算法不代表逐项采用。",
+  "training_infra": "官方称构建了面向海量多模态数据处理的 scalable infrastructure，并对 RLHF pipeline 做定向工程优化，获得接近 3× 的训练速度提升。未披露并行策略、通信库、容错、数据吞吐、存储、checkpoint、框架版本或硬件拓扑。",
+  "inference_hardware": "官方托管 API 未披露底层推理 GPU/加速器型号、卡数、显存或区域硬件。Artificial Analysis 的 BytePlus 端到端测速同样不能反推出具体硬件。",
+  "inference_performance": "官方自报：多阶段蒸馏显著降低 NFE，结合量化和并行等推理基础设施优化，在保持模型表现的前提下实现端到端超过 10× 加速。基线模型、硬件、并发、分辨率、时长、NFE 前后值和绝对延迟未公开，因此 10× 只能作为官方相对加速声明。第三方 Artificial Analysis 于 2026-07-19 页面数据给出 BytePlus 端点生成 1080p、5 秒、24 fps 无声 T2V 的近 14 天端到端中位数约 58.24 秒（含排队、轮询及下载），不能与官方 10× 直接等同。",
+  "max_output_resolution": "当前火山方舟官方 API 文档支持 480p、720p、1080p，最高为 1080p 档。Seedance 1.5 Pro 的 1080p 像素表包括 16:9 1920×1080、4:3 1664×1248、1:1 1440×1440、3:4 1248×1664、9:16 1080×1920、21:9 2206×946；4K 不支持。该文档在 2026-07-10 更新，不能据此断言 1080p 是首发日即有的规格。",
+  "max_output_duration_seconds": 12,
+  "native_fps": 24,
+  "aa_elo": 1176.75,
+  "aa_elo_observed_at": "2026-07-19",
+  "generation_time_seconds": 58.24,
+  "generation_time_context": "Artificial Analysis 模型页/提供商页在 2026-07-19 的页面数据：BytePlus 托管端点，1080p、5 秒、24 fps、无声 Text-to-Video，近 14 天成功测量的端到端中位数 58.241 秒；p05 45.123 秒、p25 50.665 秒、p75 72.529 秒、p95 99.335 秒。测量包含服务排队、异步轮询与结果下载，不是纯模型 kernel latency。AA 页面不同图表的说明曾同时出现 720p 与提供商页 1080p，故这里以提供商专页的 1080p 配置为准并保留此口径说明。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Text-to-Video Arena",
+      "metrics": {
+        "elo": 1176.75,
+        "elo_ci95_lower": 1168.75,
+        "elo_ci95_upper": 1184.75
+      },
+      "source_scope": "2026-07-19 页面快照；AA 的无声 Text-to-Video 独立偏好池，Elo 会随投票动态重算，不能与有声 T2V、I2V 或官方内部 SeedVideoBench 分数混用。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image-to-Video Arena",
+      "metrics": {
+        "elo": 1251.1
+      },
+      "source_scope": "同一 AA 模型页在 2026-07-19 暴露的 I2V Elo；作为补充能力记录，不写入本条目的 aa_elo 主字段。"
+    },
+    {
+      "benchmark": "Artificial Analysis API Generation Time",
+      "metrics": {
+        "median_seconds": 58.241,
+        "p05_seconds": 45.123,
+        "p25_seconds": 50.665,
+        "p75_seconds": 72.529,
+        "p95_seconds": 99.335
+      },
+      "source_scope": "BytePlus；1080p、5 秒、24 fps、无声 T2V；近 14 天端到端测量，观察日 2026-07-19。"
+    },
+    {
+      "benchmark": "SeedVideoBench 1.5 internal human evaluation",
+      "metrics": {
+        "protocol": "5-point absolute score plus Good-Same-Bad pairwise comparison",
+        "video_baselines": "Kling 2.5, Kling 2.6, Veo 3.1, Seedance 1.0 Pro",
+        "audio_baselines": "Veo 3.1, Wan 2.5, Kling 2.6, Sora 2",
+        "reported_result": "T2V instruction alignment leading in the compared set; visual aesthetics and motion competitive; Chinese voice generation reported above Veo 3.1; lip/audio synchronization reported above Veo 3.1 and Kling 2.6"
+      },
+      "source_scope": "ByteDance 自建 benchmark、专家人工评测和雷达图；论文没有提供可机器读取的逐项数值、样本数、置信区间或完整公开数据集，因此仅记录定性结论，不伪造雷达图分数。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "以视频/音频双分支 DiT 为骨干，在 MMDiT 统一框架中加入跨模态联合模块，让声音和画面在同一个生成系统中深层交互，并通过混合模态多任务预训练原生覆盖 T2VA、I2VA、T2V、I2V。",
+      "scope_boundary": "创新范围是 Seedance 1.5 Pro 的原生联合建模方案，而不是宣称业界首次生成音视频；论文自己列举了 Wan 2.5、Kling 2.6、Sora 2 等同期联合音视频系统。官方未公开 cross-modal module 的数学结构、tokenizer 或同步损失，因此不能把“深层交互”扩写为未证实的具体注意力实现。",
+      "evidence": "官方技术报告摘要和 Sec. 1 明确写出 dual-branch Diffusion Transformer、cross-modal joint module、MMDiT-based unified framework，以及 mixed-modality multi-task pre-training；官方发布博客也把统一多模态架构与音画时间同步/语义一致性直接关联。",
+      "confidence": "高（架构方向由官方明确披露；相对行业首创性为中等且未独立验证）"
+    },
+    {
+      "claim": "把音视频专用的 SFT/RLHF 对齐与少步蒸馏、量化、并行部署串成完整后训练/推理链路：多维奖励同时优化动作、视觉美学和音频保真度，官方自报 RLHF 训练近 3×、端到端推理超过 10×。",
+      "scope_boundary": "3× 与 10× 都是官方相对速度声明，缺少硬件、绝对时间、NFE、基线和消融；不能视为对所有分辨率、时长、负载或第三方 API 的普适加速。论文引用 Flow-GRPO、RewardDance、DanceGRPO、MeanFlow、Hyper-SD、RayFlow 等相关工作，但没有说明最终产品逐项采用何种算法。",
+      "evidence": "官方技术报告 Sec. 1 与发布博客明确给出高质量音视频 SFT、音视频 RLHF、多维奖励模型、多阶段蒸馏降低 NFE，以及量化/并行后端到端超过 10×；同节报告 RLHF pipeline 接近 3× 的训练速度提升。",
+      "confidence": "中高（方法链路由官方确认；倍率和质量保持缺少独立复现）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "模型总参数、活跃参数、是否 MoE、各分支及 Refiner 参数分配",
+    "权重文件体积、训练/推理精度、量化位宽和各组件 dtype",
+    "视频 VAE、音频 codec/tokenizer、声码器、压缩率、latent 维度和音频采样率",
+    "文本编码器、图像条件编码器、prompt engineering 模块的具体模型与上下文长度",
+    "双分支 MMDiT 的层数、宽度、head 数、位置编码、时空注意力设计、跨模态模块结构与融合频率",
+    "训练 GPU/加速器型号、数量、节点/互联、FLOPs、accelerator-hours、能耗和训练精度",
+    "预训练/SFT/RLHF 的数据规模、来源、授权构成、语言比例、去重、过滤和合成数据占比",
+    "各训练阶段 wall-clock、steps、batch、优化器、学习率、生成目标、噪声/flow schedule 和 loss 权重",
+    "RLHF 的具体策略优化算法、采样方式、reward 权重、KL 约束、标注规模与人类偏好流程",
+    "蒸馏教师/学生结构、阶段数、训练时长、NFE 前后值、Refiner 作用和质量保持的数值消融",
+    "官方 10× 推理加速与近 3× RLHF 训练加速的基线、硬件、分辨率、时长、并发与绝对延迟",
+    "首发当天而非 2026-07 当前 API 的分辨率/时长规格历史快照",
+    "SeedVideoBench 1.5 的公开样本、逐项数值、评审人数、统计显著性和可复现实现",
+    "托管服务底层推理硬件、峰值显存、吞吐、并发策略和能耗"
+  ],
+  "sources": [
+    {
+      "title": "Seedance 1.5 pro: A Native Audio-Visual Joint Generation Foundation Model (arXiv:2512.13507 v3)",
+      "url": "https://arxiv.org/pdf/2512.13507",
+      "source_type": "official_technical_report"
+    },
+    {
+      "title": "Seedance 1.5 pro technical report metadata",
+      "url": "https://arxiv.org/abs/2512.13507",
+      "source_type": "official_preprint_metadata"
+    },
+    {
+      "title": "Seedance 1.5 pro publication page",
+      "url": "https://seed.bytedance.com/en/public_papers/seedance-1-5-pro-a-native-audio-visual-joint-generation-foundation-model",
+      "source_type": "official_research_page"
+    },
+    {
+      "title": "Sound and Vision, All in One Take | The Official Release of Seedance 1.5 pro",
+      "url": "https://seed.bytedance.com/en/blog/sound-and-vision-all-in-one-take-the-official-release-of-seedance-1-5-pro",
+      "source_type": "official_release_blog"
+    },
+    {
+      "title": "Seedance 1.5 pro model homepage",
+      "url": "https://seed.bytedance.com/en/seedance1_5_pro",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "火山方舟：创建视频生成任务 API",
+      "url": "https://www.volcengine.com/docs/82379/1520757?lang=zh",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "火山方舟：查询视频生成任务 API",
+      "url": "https://www.volcengine.com/docs/82379/1521309?lang=zh",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Seedance-1.5-pro 提示词指南",
+      "url": "https://www.volcengine.com/docs/82379/2168087?lang=zh",
+      "source_type": "official_product_guide"
+    },
+    {
+      "title": "豆包模型服务协议",
+      "url": "https://docs.volcengine.com/docs/82379/1142195?lang=zh",
+      "source_type": "official_service_terms"
+    },
+    {
+      "title": "Seedance 1.5 pro Quality, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/video/models/seedance-1-5-pro",
+      "source_type": "independent_benchmark"
+    },
+    {
+      "title": "Seedance 1.5 pro API Provider Benchmarking and Analysis",
+      "url": "https://artificialanalysis.ai/video/providers/seedance-1-5-pro",
+      "source_type": "independent_provider_benchmark"
+    },
+    {
+      "title": "Artificial Analysis Video Generation Benchmarking Methodology",
+      "url": "https://artificialanalysis.ai/video/methodology",
+      "source_type": "independent_benchmark_methodology"
+    },
+    {
+      "title": "Ideas around T2I2V models — Seedance 1.5 Pro index entry",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/#251216-seedance-15-pro-%E5%AD%97%E8%8A%82",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "条目分类为 model/T2V，是因为仓库枚举没有单独的 T2VA 值；实际上 Seedance 1.5 Pro 的核心是原生音视频联合生成，并可通过 generate_audio=false 作为无声 T2V/I2V 使用。它是可公开调用且有第三方 Arena/延迟数据的商业模型，因此 comparison_eligible=true；其双分支联合音视频架构和音视频 RLHF/蒸馏链路也构成 2025 年视频模型演进节点，故 history_eligible=true。官方报告非常简略：参数量、tokenizer/VAE、硬件、数据规模和多数训练配方均未披露。特别地，第三方所称“4.5B 参数”没有出现在官方论文、主页、博客或 API 文档中，本条目不采信。官方 10× 是相对加速而非绝对生成耗时；当前 AA 的约 58.24 秒是 2026-07 的 BytePlus 端到端服务观测，两者口径不同。官方 API 规格取自 2026-07-10 更新版文档，可能包含首发后的能力扩展。"
+}

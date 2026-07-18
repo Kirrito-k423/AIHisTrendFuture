@@ -1,0 +1,190 @@
+{
+  "slug": "easyanimate-v5-12b",
+  "name": "EasyAnimate V5 12B",
+  "family": "EasyAnimate",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Alibaba Cloud PAI / aigc-apps",
+  "release_date": "2024-11-08",
+  "release_date_basis": "EasyAnimate 官方 GitHub/模型卡的版本时间线将 V5 公布日明确记为 2024-11-08，并写明该版首次把 EasyAnimate 扩展到 12B。Hugging Face 的 alibaba-pai/EasyAnimateV5-12b-zh 仓库 createdAt 为 2024-11-07T05:52:40Z，属于公开公告前一日的仓库预置；本条按正式版本公告日期记载。2024-04-12 是家族代码起点，不是 12B 模型发布日期。",
+  "access": "开放权重，可从 Hugging Face 或 ModelScope 直接下载；官方同时提供 T2V 基座 alibaba-pai/EasyAnimateV5-12b-zh、InP 图生视频/首尾帧与编辑变体、Control 控制变体以及训练和推理代码。这里选取首个 12B 的 T2V 基座作为比较对象，其他变体只记作同代衍生权重。",
+  "license": "许可标注存在需要保留的歧义：官方 GitHub 项目声明采用 Apache License 2.0，模型仓库也包含 LICENSE 文件；但 Hugging Face 模型页元数据标为 license=other。因此可以确认代码按 Apache-2.0 发布，但不能仅凭项目 README 把所有权重的许可范围无条件等同为标准 Apache-2.0，部署前应核对具体模型仓库 LICENSE。",
+  "official_model_ids": [
+    "alibaba-pai/EasyAnimateV5-12b-zh",
+    "alibaba-pai/EasyAnimateV5-12b-zh-InP",
+    "alibaba-pai/EasyAnimateV5-12b-zh-Control"
+  ],
+  "parameter_total": "官方称 12B，Hugging Face 仓库 API 对 transformer safetensors 给出 11,797,483,584 个 BF16 参数，约 11.80B；这是命名口径中的视频 DiT/MMDiT 主干。完整推理包还包含约 1.41 GB BERT、约 6.68 GB T5 与约 0.99 GB VAE 权重文件，官方没有发布统一的端到端总参数口径，不能把 12B 误写成含双文本编码器和 VAE 的系统总量。",
+  "parameter_active": "MMDiT 为稠密模型，没有公开 MoE 路由；一次去噪步骤会激活约 11.80B 的 transformer 主干参数。双文本编码器先行编码，VAE 在编码/解码阶段另行激活；官方未给出跨阶段统一的 active-parameter 指标。",
+  "weight_size": "alibaba-pai/EasyAnimateV5-12b-zh 的五组主要 safetensors 合计约 32.67 GB（HF API usedStorage 32,673,493,582 bytes；仓库表格取整为 34 GB）：transformer 23,595,191,272 bytes，BERT 1,408,188,288 bytes，T5 两分片合计 6,679,861,488 bytes，VAE 985,942,732 bytes。官方本地说明建议预留约 60 GB 磁盘空间。",
+  "precision": "发布 safetensors 的主干参数由 HF API 标为 BF16；官方默认推理使用 torch.bfloat16，不支持 BF16 的 V100/2080 Ti 等可改为 FP16。model_cpu_offload_and_qfloat8 会在运行时对 transformer 做 float8 量化以节省显存，但它是可选推理模式，不是首发权重精度。",
+  "architecture": "V5 12B T2V 是潜空间视频扩散模型：EasyAnimateTransformer3DModel 主干采用 MMDiT，公开配置为 48 层、48 个注意力头、每头 64 维（主隐藏宽度 3072）、patch size 2、16 latent 输入/输出通道；文本与视频 token 进入联合注意力，同时为不同模态保留独立的线性/FFN 路径。位置编码为 3D RoPE。首发 scheduler 配置是 1000 训练时间步、v-prediction、scaled-linear beta、zero-terminal-SNR，并以 DDIM 推理。InP 与 Control 是同代独立权重，不等同于本条 T2V 基座。",
+  "attention_or_sequence_design": "V5 公告与公开 transformer 配置可以确认 MMDiT、联合文本-视频注意力和 3D RoPE；配置未出现 Hybrid Windows Attention 开关，因此不能把后续论文修订中“全注意力与多方向滑窗注意力交错”的 V5.1/后续系统特性倒灌到 2024-11-08 的 V5 首发权重。后续论文说明，初始 12B 全 3D 注意力在单张 A100 上生成 1024×1024、49 帧接近 30 分钟，随后提出 Hybrid Windows Attention：将头分组并沿不同三维方向做滑窗，再与全注意力层交错；该演进属于后续系统说明。早期 V1/V2 论文所称 motion module block 也不是 V5 需要单独加载的外挂模块：V5 官方目录只要求完整 Diffusion_Transformer 权重。",
+  "vae_or_tokenizer": "公开 V5 配置使用 AutoencoderKLMagvit，即带因果时序处理的 3D MagVIT 风格 KL VAE；包含 SpatialDownBlock3D、三组 SpatialTemporalDownBlock3D、对应上采样块、中间 spatial attention、16 latent channels，并支持缓存、tiling/slicing 相关实现。当前官方论文说明 3D causal VAE 可缓存前序 latent 状态，并用空间和时间切片降低长视频/高分辨率解码显存；但该论文是 V5.1 后修订版，V5 首发配置只足以确认 3D/MagVIT VAE，官方没有为首发 checkpoint 单独给出完整空间与时间压缩倍率。",
+  "text_encoder_or_conditioner": "V5 首发模型索引明确是双文本编码器：24 层 BERT（hidden 1024、16 heads、词表 47,020、最大位置 512）与 24 层 T5EncoderModel（d_model 2048、32 heads、词表 250,112，配置与 mT5-XL 级别相符但仓库未写明上游模型名），用于中英文条件。不要混入 V5.1：官方在 2025-01-21 明确宣布 V5.1 改用 Qwen2-VL 文本编码器；后续论文进一步记载取 Qwen2-VL-7B 倒数第二层、RMSNorm 后投影并与视频 token 拼接。",
+  "training_hardware": "未知。官方只说在 GPU cluster 上训练，并公开 A100 的注意力消融和推理速度；没有披露 V5 12B 原始训练所用 GPU 厂商/型号组合。",
+  "training_hardware_scale": "未知；未披露 V5 12B 训练节点数、GPU 数、互联拓扑、峰值集群规模、累计 GPU-hours、FLOPs、能耗或成本。后续论文的 batch size 256 吞吐实验不能反推原始训练集群。",
+  "training_data_scale": "V5 首发 checkpoint 的精确数据规模未知。2025 年修订的家族论文（内容包含 V5.1 的 Qwen2-VL、rectified flow 与 Hybrid Windows Attention）报告当前系统约 34M video-text 和 3M image-text 对：Pretrain 为 33.72M 视频/2.87M 图片，Pretrain-HR 为 25.10M/2.87M，Finetune 为 0.47M/0.04M；论文没有明确证明这些数字逐项对应 2024-11-08 的 V5 双编码器/DDIM checkpoint，因此不作为 V5 首发的确定训练量。",
+  "training_data_composition": "V5 首发的来源占比与授权结构未知。后续家族论文报告公开来源包含 Panda-70M、InternVid、MiraData、Pexels，加上内部视频；图像侧提到 JourneyDB 与 ALLaVa。处理流程用 PySceneDetect/FFmpeg 分镜，按美学、文字面积、光流运动与镜头抖动过滤，以 InternVL2-40B 生成密集 caption、Llama-3-70B 清理/摘要，并加入专门的镜头运动分类与 VideoCLIP 相似度筛选。由于该修订论文对应后续系统，以上只能作为家族后续训练管线证据，不能无条件归因于 V5 首发。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "V5 12B 首发训练阶段",
+      "description": "未知；V5 模型卡和首发公告没有给出该 checkpoint 的逐阶段训练配方、token length、分辨率课程或优化步数。"
+    },
+    {
+      "stage": 2,
+      "name": "后续家族论文：VAE-adapt",
+      "description": "后续论文描述先用 SAM 图像数据对齐 DiT 与 3D VAE；这是包含 V5.1 技术的论文修订版所述家族流程，不能直接当作 V5 首发的已证实阶段。"
+    },
+    {
+      "stage": 3,
+      "name": "后续家族论文：渐进预训练",
+      "description": "从较低到较高分辨率，先用 Pretrain 数据，再用设置 512 分辨率门槛的 Pretrain-HR 数据继续训练；同时按接近的 token length 将不同分辨率/帧数样本编组以平衡 GPU 负载。"
+    },
+    {
+      "stage": 4,
+      "name": "后续家族论文：高质量 I2V 微调",
+      "description": "用 720 分辨率门槛、较高运动和美学阈值的 0.47M 视频与 0.04M 图片数据强化图生视频能力，并继续提高 token length。"
+    },
+    {
+      "stage": 5,
+      "name": "后续家族论文：reward backpropagation 后训练",
+      "description": "以 LoRA 和可微奖励模型对 flow-based DiT 做偏好对齐；官方在 2024-11-27 才另行发布 V5 Reward LoRA，因此不应把该步骤写成 2024-11-08 T2V 基座必然已经包含的训练。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "V5 12B 基座全流程",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "后续论文的 VAE-adapt / Pretrain / Pretrain-HR / Finetune / reward backpropagation",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "V5 公开 scheduler 配置能确认 v-prediction、1000 个扩散训练时间步、scaled-linear beta 与 zero-terminal-SNR；推理用 DDIM，不能把 V5.1 公告的 Flow 采样改写为 V5 首发算法。后续论文才报告 rectified-flow loss 优于 DDPM、按 token length 组批（batch 256、1024×1024、49 帧时由 6.17M 提升到 13.63M tokens/iter，+120.91%）以及 reward backpropagation LoRA；这些应标为 V5.1/后续演进。V1/V2 的 motion-module 训练属于早期 PixArt/DiT 扩展路线，V5 则以整合式 MMDiT 主干取代单独外挂运动权重的部署方式。",
+  "training_infra": "V5 首发原始基础设施未知。官方开源代码基于 PyTorch/diffusers 风格组件，支持完整 DiT、VAE、LoRA 训练和数据预处理；后续论文说明在 GPU 集群中按 token length 编组不同分辨率/帧数样本，以减少各卡负载不均，但未披露集群、并行策略与容错细节。",
+  "inference_hardware": "官方验证 Windows/Linux 的 NVIDIA CUDA 环境，并给出 A10 24GB 与 A100 80GB 实测。V5 12B 可用 model_cpu_offload、transformer qfloat8+CPU offload 或 sequential CPU offload 降显存；官方矩阵显示 40GB 卡可覆盖表中的部分中分辨率配置，80GB A100 覆盖到 768×1344×49。无 offload 的实际显存下限未公开。",
+  "inference_performance": "官方 V5 模型卡的 25-step 表：A100 80GB 生成 384×672×49 约 90 秒、576×1008×49 约 300 秒、768×1344×49 约 710 秒；A10 24GB 对 576×1008×49 约 750 秒，高分辨率两档不可运行。表中还报告 A100 768×1344×25 约 265 秒。后续论文对全注意力 12B 给出单 A100、1024×1024×49 接近 30 分钟，并报告 Hybrid Windows Attention 在 1024 设定将测试每步 28.63 秒降到 21.32 秒；后两项属于后续/V5.1 注意力演进，不是 V5 首发 checkpoint 的默认性能。",
+  "max_output_resolution": "官方 V5 公告口径为最高 1024×1024，并称一个模型支持 512、768、1024 多分辨率；官方性能矩阵另列出 768×1344 的横屏输出，因此更准确的表述是支持约 1K 等级、多宽高比，而不是严格限制每边不超过 1024。",
+  "max_output_duration_seconds": 6,
+  "native_fps": 8,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": 710,
+  "generation_time_context": "官方 V5 12B 模型卡：单张 A100 80GB、25 sampling steps、768×1344、49 帧，约 710 秒（28.3 秒/step）；49 帧按官方 8 fps 口径约 6 秒。不同分辨率、帧数、offload/量化模式不可与该值直接横比。Artificial Analysis 未发现可核验的 EasyAnimate V5 12B 条目，故 generation_time 不是 AA 数据。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Official EasyAnimate V5 12B inference latency, 25 steps",
+      "metrics": {
+        "A100_80GB_384x672_49f_seconds": 90,
+        "A100_80GB_576x1008_49f_seconds": 300,
+        "A100_80GB_768x1344_25f_seconds": 265,
+        "A100_80GB_768x1344_49f_seconds": 710,
+        "A10_24GB_576x1008_49f_seconds": 750
+      },
+      "source_scope": "2024-11 的 V5 12B 官方模型卡速度表；是部署性能，不是质量榜单。"
+    },
+    {
+      "benchmark": "Later EasyAnimate paper VBench (not assigned to V5 launch checkpoint)",
+      "metrics": {
+        "EasyAnimate_total": 83.42,
+        "EasyAnimate_quality": 85.03,
+        "EasyAnimate_semantic": 77.01,
+        "EasyAnimate_Hybrid_total": 83.27,
+        "EasyAnimate_Hybrid_quality": 84.70,
+        "EasyAnimate_Hybrid_semantic": 77.54
+      },
+      "source_scope": "论文表格截止 2025-01-22，体系已包含 Qwen2-VL、rectified flow、Hybrid Windows Attention 等 V5.1/后续要素；仅用于说明家族后续结果，不能作为 2024-11-08 V5 双编码器 checkpoint 的直接分数。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "EasyAnimate V5 首次把该开源家族扩展到约 12B 的 MMDiT 视频主干，并发布 T2V、InP 与多条件 Control 权重。",
+      "scope_boundary": "“首次”只指 EasyAnimate 家族自己的 12B 里程碑，不是视频生成行业首个 12B，也不表示三种任务由完全相同的单一 checkpoint 同时完成。",
+      "evidence": "官方 2024-11-08 版本公告明确写出 expanded model scale to 12B、MMDIT 与 diverse-input control models；HF transformer 元数据给出 11,797,483,584 个 BF16 参数。",
+      "confidence": "高"
+    },
+    {
+      "claim": "V5 将双语文本条件、3D/MagVIT VAE、3D RoPE 与整合式 MMDiT 组合为可下载的约 1K、6 秒视频生成栈。",
+      "scope_boundary": "这些组件的单项技术并非 EasyAnimate 首创；可核验的新意是它们在该公开 12B 模型家族中的集成。V5.1 才改用 Qwen2-VL 与 Flow，Hybrid Windows Attention 则见后续修订论文。",
+      "evidence": "V5 公告、model_index、transformer/config.json、vae/config.json 与双文本编码器配置共同给出该组合。",
+      "confidence": "高"
+    },
+    {
+      "claim": "后续 EasyAnimate 通过多方向三维滑窗与全注意力交错，在尽量保持全局感受野的同时降低长视频注意力成本。",
+      "scope_boundary": "这是 2025 年修订论文与 V5.1/后续系统的创新主张，不能标成 V5 2024-11-08 首发配置已经默认使用。",
+      "evidence": "论文报告 A100 上 1024 设定的测试每步延迟从全注意力 28.63 秒降至 Hybrid 21.32 秒，并给出不同方向头分组的算法描述。",
+      "confidence": "中高（方法与消融明确，版本到 checkpoint 的逐项映射未公开）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "V5 12B 原始训练所用 GPU/加速器型号、节点数、互联、GPU-hours、FLOPs、能耗与成本",
+    "V5 首发 checkpoint 的精确训练样本数、来源占比、授权结构、语言比例、去重规则和安全过滤统计",
+    "V5 各训练阶段的完整课程、token length、全局 batch、优化器、学习率、步数与 wall-clock 时间",
+    "V5 3D MagVIT VAE 首发权重的官方空间/时间压缩倍率、VAE 训练损失与训练时长",
+    "V5 双文本编码器的官方上游模型名称及各自是否冻结/联合训练",
+    "V5 首发 12B T2V checkpoint 的独立 VBench、人评与 Artificial Analysis Elo",
+    "V5 公开包包含双文本编码器和 VAE 后的官方端到端总参数与跨阶段 active-parameter 口径",
+    "模型仓库 license=other 与项目 Apache-2.0 声明对权重使用范围的最终法律对应关系",
+    "后续论文的 34M/3M 数据、渐进训练、Flow、reward backpropagation 与 Hybrid Windows Attention 分别从哪个具体公开 checkpoint 开始生效"
+  ],
+  "sources": [
+    {
+      "title": "aigc-apps/EasyAnimate official repository and version timeline",
+      "url": "https://github.com/aigc-apps/EasyAnimate",
+      "source_type": "official_github"
+    },
+    {
+      "title": "alibaba-pai/EasyAnimateV5-12b-zh model card",
+      "url": "https://huggingface.co/alibaba-pai/EasyAnimateV5-12b-zh",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "EasyAnimateV5-12b-zh repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/alibaba-pai/EasyAnimateV5-12b-zh?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "EasyAnimate V5 12B transformer configuration",
+      "url": "https://huggingface.co/alibaba-pai/EasyAnimateV5-12b-zh/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "EasyAnimate V5 12B VAE configuration",
+      "url": "https://huggingface.co/alibaba-pai/EasyAnimateV5-12b-zh/blob/main/vae/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "EasyAnimate V5 12B pipeline model index",
+      "url": "https://huggingface.co/alibaba-pai/EasyAnimateV5-12b-zh/blob/main/model_index.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "EasyAnimate: High-Performance Video Generation Framework with Hybrid Windows Attention and Reward Backpropagation",
+      "url": "https://arxiv.org/html/2405.18991",
+      "source_type": "official_paper_later_revision"
+    },
+    {
+      "title": "EasyAnimate arXiv submission and version history",
+      "url": "https://arxiv.org/abs/2405.18991",
+      "source_type": "official_preprint_metadata"
+    },
+    {
+      "title": "EasyAnimate official project page",
+      "url": "https://easyanimate.github.io/",
+      "source_type": "official_project_page"
+    },
+    {
+      "title": "Ideas around T2I2V models — EasyAnimate index entry",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "版本边界：家族代码始于 2024-04-12；V2（2024-05-26）把上限推进到 768×768、144 帧、约 6 秒、24 fps，早期论文路线是在 PixArt/DiT 上加入 motion module，仓库还列出独立 V1 motion-module 权重；V3（2024-07-01）提高到 960×960、144 帧、24 fps，并同时提供文生视频与图生视频；V4（2024-08-15）进一步到约 1024×1024/1280 档、144 帧、24 fps，并统一支持文本、图像、视频输入；V5（2024-11-08）才首次出现 12B，换为 MMDiT、最高约 1K，但帧率/帧数课程改为 49 帧、8 fps、约 6 秒，发布双语 T2V/InP/Control 变体；V5.1（2025-01-21）沿用 7B/12B 规模，明确更换 Qwen2-VL 文本编码器与 Flow 采样，并扩展 trajectory、camera 等控制，2025-03-06 加入 diffusers 支持。当前 arXiv HTML 已是后续大幅修订稿，包含 Qwen2-VL、rectified flow、Hybrid Windows Attention、reward backpropagation 和截止 2025-01-22 的评测；这些不能反向写成 V2/V3 或 V5 首发特性。本条选择 2024-11-08 的 EasyAnimateV5-12b-zh T2V 基座，因为它是可核验的首个 EasyAnimate 12B，而不是按文章家族起点误记为 2024-04。"
+}

@@ -1,0 +1,256 @@
+{
+  "slug": "seedance-2",
+  "name": "Seedance 2.0",
+  "family": "Seedance",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "ByteDance Seed / Volcano Engine",
+  "release_date": "2026-02-12",
+  "release_date_basis": "采用 ByteDance Seed 官方《Seedance 2.0 Official Launch》页面标注的 2026-02-12。官方技术报告仅写“2026 年 2 月上旬在中国正式发布”，模型 ID 的 260128 是模型快照日期而不是已证实的公开发布日期。输入线索文章标注 2026-02-07，但当日公开内容仍以预告/即将上线为主，不能覆盖官方发布公告日期。",
+  "access": "闭源托管模型，无公开权重或本地推理包。官方技术报告确认可通过豆包、即梦和中国大陆火山引擎使用，标准模型 ID 为 doubao-seedance-2-0-260128；火山引擎官方 API Explorer 另确认 fast 变体 doubao-seedance-2-0-fast-260128。当前商业 API/资源包支持多模态视频生成，标准版可选 480p、720p、1080p 与 4–15 秒输出；模型本身同时覆盖 T2V、I2V、参考生成、视频编辑、续写和延长。海外/全球产品可用性与中国大陆火山方舟并不等价，不能把第三方转售接口视为官方权重开放。",
+  "license": "专有闭源服务。ByteDance 未发布模型权重许可证；使用受豆包、即梦、火山引擎/BytePlus 等相应产品服务条款、内容政策和肖像/版权合规要求约束。API 可用不等于开放模型或开源许可。",
+  "official_model_ids": [
+    "doubao-seedance-2-0-260128",
+    "doubao-seedance-2-0-fast-260128"
+  ],
+  "parameter_total": "官方未披露。2026-07-07 的 36Kr 独家报道援引匿名内部人士称，团队曾讨论先训 100B 级模型还是直接扩到 200B–300B，并称负责人希望至少 200B、最终获得资源支持；报道没有给出最终上线 checkpoint 的精确参数量。因此“Seedance 2.0 = 200B”只能标为高价值二手报道线索，不能作为官方参数。",
+  "parameter_active": "未知。官方发布博客仅使用“sparse architecture（稀疏架构）”表述，官方技术报告没有出现 MoE、专家数量、路由方式或激活参数量；稀疏架构不能自动等同于已证实的 MoE，更不能由 200B 传闻推导 active parameters。",
+  "weight_size": "未知且当前不可获得；未发布官方权重文件。",
+  "precision": "未知。官方未披露训练精度、服务端推理精度或量化格式。",
+  "architecture": "官方口径是“统一、高效、大规模的多模态音视频联合生成架构”，在同一产品模型中接收文本、图像、视频和音频条件并生成同步音视频；官方发布博客还提到稀疏架构，但没有公开稀疏单元、专家路由或分支结构。36Kr 的内部人士报道把 Seedance 家族技术路线描述为由早期 3D-UNet 转向基于 DiT 的原生视频路线，该信息与官方“稀疏架构”可并存，但仍不是可复现的正式架构说明。所谓“200B MoE 双分支 DiT”等更具体结构没有官方依据。",
+  "attention_or_sequence_design": "未知。官方没有披露时空注意力形式、位置编码、音视频 token 排列、跨模态注意力、上下文长度、因果掩码或多镜头序列规划的底层实现；“可自动规划镜头”和“原生多镜头”是能力描述，不等于公开了注意力机制。",
+  "vae_or_tokenizer": "未知。官方未披露视频/音频 VAE、tokenizer、潜空间压缩率、通道数、码率或重建指标；技术报告所称原生 480p/720p 输出不足以反推出 tokenizer 配置。",
+  "text_encoder_or_conditioner": "未知。官方未披露文本编码器/VLM/LLM 提示增强器身份、参数规模、上下文长度，或图像、视频、音频参考素材如何编码与融合。",
+  "training_hardware": "官方未披露。36Kr 援引匿名内部人士称，Seedance 训练所用 GPU 的数量和质量不及海外公司常用的大规模 B200/B300 集群，团队因而更依赖结构与数据优化；该报道没有给出实际加速器型号，不能将其写成官方硬件规格。",
+  "training_hardware_scale": "未知；未披露 GPU/加速器数量、节点数、峰值集群规模、互联拓扑、累计 accelerator-hours、训练 FLOPs、能耗或成本。",
+  "training_data_scale": "官方未披露样本数、视频小时数、token 数或去重后数据规模。36Kr 只定性描述为大规模、丰富的数据投入，不能换算成可比较的训练数据量。",
+  "training_data_composition": "官方技术报告没有披露来源构成。36Kr 依据匿名内部人士采访称：Seedance 2.0 很少使用抖音数据，购买了大量影视资源并由语言模型拆解为剧本/分镜，还加入富含跑跳动作的影视片段、游戏模拟或录屏、室内空间等专业场景数据；报道称有数千人参与 Seedance 数据评估/标注。以上均为重要二手报道，授权比例、各来源占比、合成数据比例、语言分布、过滤和去重流程仍未知，不能当作官方数据卡。",
+  "training_stages": [
+    {
+      "stage": "未披露",
+      "name": "Seedance 2.0 训练流程",
+      "description": "官方只说明模型来自统一多模态音视频联合训练，并在展望中提到继续探索大模型与人类反馈的深度对齐；没有公开预训练、继续训练、SFT、偏好优化、蒸馏或加速各阶段的确定顺序。36Kr 报道称 1.5 发布后的 2025 年 12 月开始投入 2.0 训练，但不足以还原完整训练管线。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "全部训练阶段",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知；二手报道只给出 2025 年 12 月开始投入训练的时间线索"
+    }
+  ],
+  "training_algorithms": "未知。官方没有披露扩散/流匹配目标、噪声日程、优化器、学习率、损失函数、批量大小、偏好优化或蒸馏细节。官方技术报告引用 RewardDance 与 DanceGRPO 不能证明 Seedance 2.0 必然采用这些算法；官方博客提到人类反馈也不能据此断言已采用某一特定 RLHF/GRPO 配方。",
+  "training_infra": "未知。未披露训练框架、数据流水线、张量/流水线/专家并行策略、通信库、容错、checkpoint 频率、吞吐或存储系统。",
+  "inference_hardware": "未知。豆包、即梦和火山引擎提供托管推理，官方没有公开单请求使用的 GPU/加速器型号、数量、显存或并行配置。",
+  "inference_performance": "标准版与官方确认的 Fast 变体均为托管服务；技术报告只称 Fast 面向低延迟场景，未给出同硬件、同分辨率、同时长下的延迟或加速倍数。火山引擎产品页没有给出可复现的纯模型延迟，排队时间也会随负载变化。",
+  "max_output_resolution": "当前中国大陆火山引擎商业口径最高 1080p（可选 480p/720p/1080p）；2026-04 官方技术报告仍明确称原生输出为 480p 和 720p。因此 1080p 是已售 API 输出档位，但公开资料没有说明其是模型原生生成还是服务端增强，不能标成已证实的原生 1080p。官方媒体案例中的 8K 是后处理超分结果，不是模型原生输出。",
+  "max_output_duration_seconds": 15,
+  "native_fps": 24,
+  "aa_elo": 1225,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis Text-to-Video With Audio 动态榜单快照；Dreamina Seedance 2.0 720p，95% CI ±8，分数会随盲评投票变化）",
+  "generation_time_seconds": null,
+  "generation_time_context": "未找到 Artificial Analysis 对 Dreamina Seedance 2.0 720p 的可归属 API 延迟数值；其方法页说明音频赛道目前只做质量 Elo，不做 latency benchmark。官方也未公布指定硬件/分辨率/时长下的生成耗时，因此不采信第三方站点宣称的秒级或分钟级速度。native_fps=24 的依据是字节跳动技术团队在火山引擎开发者社区对 Seedance 春晚素材的说明：AIGC 原生 24FPS，后经插帧到 50FPS；该案例也明确 8K/50FPS 属于媒体后处理。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Text-to-Video Leaderboard (With Audio)",
+      "variant": "Dreamina Seedance 2.0 720p",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1225,
+        "rank": 2,
+        "rank_interval": "2",
+        "ci95": "-8/+8",
+        "samples": 10419
+      },
+      "scope": "独立第三方动态盲评的人类偏好分数；为带音频 T2V 赛道，不能与无音频、I2V、编辑或 Arena.AI 的 Elo 直接互换。"
+    },
+    {
+      "benchmark": "Artificial Analysis Text-to-Video Leaderboard (Without Audio)",
+      "variant": "Dreamina Seedance 2.0 720p",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1272,
+        "rank": 4
+      },
+      "scope": "同一模型的无音频 T2V 动态盲评快照；与 aa_elo 字段采用的带音频赛道是不同比赛池。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image-to-Video Leaderboard (With Audio)",
+      "variant": "Dreamina Seedance 2.0 720p",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1197,
+        "rank": 2,
+        "rank_interval": "1-2",
+        "ci95": "-8/+8",
+        "samples": 8845
+      },
+      "scope": "独立第三方动态 I2V 带音频盲评；不是 T2V 分数。"
+    },
+    {
+      "benchmark": "Artificial Analysis Video Editing Leaderboard (With Audio)",
+      "variant": "Dreamina Seedance 2.0 720p",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1039,
+        "rank": 3,
+        "rank_interval": "3",
+        "ci95": "-5/+5",
+        "samples": 15425
+      },
+      "scope": "独立第三方动态视频编辑带音频盲评；显示模型确有可比较的编辑能力，但分数不能与 T2V Elo 合并。"
+    },
+    {
+      "benchmark": "Arena.AI Video Generation Leaderboards",
+      "variant": "Dreamina Seedance 2.0 720p",
+      "observed_at": "2026-04-08 ET",
+      "metrics": {
+        "t2v_elo": 1450,
+        "t2v_ci": "±15",
+        "t2v_rank": 1,
+        "i2v_elo": 1449,
+        "i2v_ci": "±11",
+        "i2v_rank": 1
+      },
+      "scope": "由官方技术报告转录的公共 Arena.AI 榜单快照。它与 Artificial Analysis 当前榜单使用不同时间点和评分池，不能直接比较绝对 Elo。"
+    },
+    {
+      "benchmark": "SeedVideoBench 2.0 Text-to-Video",
+      "variant": "Seedance 2.0",
+      "observed_at": "2026-04 technical report",
+      "metrics": {
+        "motion_quality_1_to_5": 3.75,
+        "video_prompt_following_1_to_5": 3.43,
+        "aesthetics_1_to_5": 3.67,
+        "audio_quality_1_to_5": 3.63,
+        "audio_visual_sync_1_to_5": 3.75,
+        "audio_prompt_following_1_to_5": 3.56,
+        "motion_usability_percent": 97.55,
+        "audio_visual_sync_usability_percent": 93.3
+      },
+      "scope": "ByteDance 自建 SeedVideoBench 2.0 的专家/自动化混合评测，厂商自报且未公开完整提示集与可复现脚本；适合记录官方结果，不应等同于独立榜单。"
+    },
+    {
+      "benchmark": "SeedVideoBench 2.0 Image-to-Video",
+      "variant": "Seedance 2.0",
+      "observed_at": "2026-04 technical report",
+      "metrics": {
+        "motion_quality_1_to_5": 3.35,
+        "video_prompt_following_1_to_5": 3.46,
+        "image_preservation_1_to_5": 3.31,
+        "audio_quality_expressiveness_1_to_5": 3.61,
+        "audio_visual_sync_1_to_5": 3.54,
+        "audio_prompt_following_1_to_5": 3.7
+      },
+      "scope": "ByteDance 自建基准的厂商自报 I2V 结果；与 AA I2V Elo 的量表和评测集不同。"
+    },
+    {
+      "benchmark": "SeedVideoBench 2.0 Reference-to-Video",
+      "variant": "Seedance 2.0",
+      "observed_at": "2026-04 technical report",
+      "metrics": {
+        "multimodal_task_following_1_to_3": 2.5,
+        "editing_consistency_1_to_5": 3.54,
+        "reference_alignment_1_to_5": 3.03,
+        "motion_quality_1_to_5": 3.24,
+        "prompt_following_1_to_3": 2.52,
+        "supported_task_input_combinations": "20 of 22"
+      },
+      "scope": "厂商自建 R2V 基准；混合使用 1–3 与 1–5 量表。报告同时承认多主体一致性、文字还原、复杂编辑仍需优化。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "把文本、图像、视频和音频四类输入统一到多模态音视频联合生成产品模型中，并在同一模型范围覆盖主体/动作/风格/特效参考、定向编辑、续写和延长。",
+      "scope_boundary": "可靠边界是官方确认的输入/任务覆盖与开放平台上限：最多 9 张图、3 段视频、3 段音频加文本。官方没有公开这些模态是否共享单一 latent、编码器或注意力堆栈，也没有证明“行业首个/唯一”；技术报告的 20/22 任务覆盖来自厂商自建基准。",
+      "evidence": "ByteDance Seed 官方发布博客与技术报告均明确四模态输入、参考/编辑/续写能力及 9 图+3 视频+3 音频上限；技术报告 Table 25 报告 20/22 类输入任务组合支持。",
+      "confidence": "高（能力与产品边界）；中（相对行业领先程度）"
+    },
+    {
+      "claim": "原生面向多镜头叙事的同步音视频生成：单次可输出最长 15 秒多镜头视频，生成双声道音频，并让对白、环境音/音效和背景音乐与画面节奏对齐。",
+      "scope_boundary": "“原生/联合”是官方架构口径，但未披露音频和视频的共享生成机制；公开产品时长为 4–15 秒，不能外推为分钟级长视频。双声道/多轨内容生成不等于 API 会返回可独立编辑的多条音轨。多镜头、物理一致性和导演级规划仍会在多主体、文字和复杂编辑上失败。",
+      "evidence": "官方发布博客明确 15 秒高质量多镜头音视频、双声道与多类音频并行生成；技术报告给出原生 480p/720p、4–15 秒，并在 SeedVideoBench 2.0 中报告 T2V 音画同步 3.75/5、可用率 93.30%。",
+      "confidence": "高（功能与规格）；中（质量领先与“导演级”营销表述）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "最终上线 checkpoint 的精确 parameter_total；36Kr 的至少 200B/200B–300B 讨论不是官方定值",
+    "稀疏架构是否具体采用 MoE、专家数量、路由策略与 parameter_active",
+    "层数、宽度、注意力/时序设计、位置编码、音视频 token 布局与上下文长度",
+    "视频/音频 VAE 或 tokenizer 的类型、压缩率、潜变量配置与重建指标",
+    "文本编码器、VLM/LLM 条件器和提示增强组件的身份与规模",
+    "训练硬件型号、GPU/节点数量、集群互联、训练 FLOPs、accelerator-hours、能耗与成本",
+    "训练数据精确规模、授权结构、来源占比、合成数据比例、语言分布、去重和安全过滤流程",
+    "完整训练阶段、优化步数、wall-clock 时间、批量大小、优化器、学习率、损失函数、偏好优化和蒸馏方法",
+    "训练框架、数据/张量/流水线/专家并行、通信、吞吐、容错和 checkpoint 基础设施",
+    "服务端推理硬件、精度、采样步数、批处理、显存、纯模型延迟、吞吐与 Fast 变体加速倍数",
+    "火山引擎 1080p API 档位究竟是模型原生生成还是服务端超分/增强",
+    "是否向 API 用户返回真正分离的多轨音频，而非双声道混音成片",
+    "带官方时间戳的 2026-02-07 公测/发布证据；现有官方发布页日期为 2026-02-12"
+  ],
+  "sources": [
+    {
+      "title": "Seedance 2.0: Advancing Video Generation for World Complexity",
+      "url": "https://arxiv.org/abs/2604.14148",
+      "source_type": "official_technical_report"
+    },
+    {
+      "title": "Seedance 2.0 Official Launch",
+      "url": "https://seed.bytedance.com/en/blog/seedance-2-0-official-launch",
+      "source_type": "official_launch_blog"
+    },
+    {
+      "title": "Seedance 2.0",
+      "url": "https://seed.bytedance.com/en/seedance2_0",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "Seedance 2.0 商业资源包与输出规格",
+      "url": "https://www.volcengine.com/activity/seedance2",
+      "source_type": "official_product_and_pricing_page"
+    },
+    {
+      "title": "Volcano Engine API Explorer: Seedance 2.0 / Fast badcase report model IDs",
+      "url": "https://api.volcengine.com/api-explorer/?action=CasePlatformV1BadcaseReport&groupName=CasePlatformPublic&serviceCode=ark&version=2024-01-01",
+      "source_type": "official_api_reference"
+    },
+    {
+      "title": "Seedance 2.0 登上春晚大屏：8K/50FPS背后的最佳拍档",
+      "url": "https://developer.volcengine.com/articles/7611443299467722779",
+      "source_type": "official_engineering_case_study"
+    },
+    {
+      "title": "Artificial Analysis Text to Video Leaderboard",
+      "url": "https://artificialanalysis.ai/video/leaderboard/text-to-video",
+      "source_type": "independent_dynamic_benchmark"
+    },
+    {
+      "title": "Artificial Analysis Image to Video Leaderboard",
+      "url": "https://artificialanalysis.ai/video/leaderboard/image-to-video",
+      "source_type": "independent_dynamic_benchmark"
+    },
+    {
+      "title": "Artificial Analysis Video Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/video/leaderboard/video-editing",
+      "source_type": "independent_dynamic_benchmark"
+    },
+    {
+      "title": "Video Generation Benchmarking Methodology",
+      "url": "https://artificialanalysis.ai/video/methodology",
+      "source_type": "independent_benchmark_methodology"
+    },
+    {
+      "title": "Unveiling ByteDance's Seedance: The Second Lucrative Global AI Business | 36Kr",
+      "url": "https://eu.36kr.com/en/p/3885177884078083",
+      "source_type": "secondary_investigative_report"
+    },
+    {
+      "title": "Ideas around T2I2V models — Seedance 2.0 index clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue_only"
+    }
+  ],
+  "notes": "Seedance 2.0 是真实已发布的闭源模型，故 entry_kind=model，而不是 rumor；仅其参数/具体架构传闻需要降级。关于“200B MoE”的结论必须拆成两部分：至少 200B、200B–300B 与 100B 方案争论来自 36Kr 对匿名内部人士的二手采访，官方未确认最终参数；官方只确认“稀疏架构”，没有使用 MoE 一词或披露激活参数。因此本条目不写 200B 为已知参数，也不写 MoE 为确定架构。规格方面，官方技术报告给出原生 480p/720p、4–15 秒、最多 9 图+3 视频+3 音频；当前火山引擎商业页增加 1080p 输出档位，但未说明是否原生。官方工程案例明确 8K/50FPS 是把 720p/24FPS AIGC 素材经过超分与插帧得到，不能把 8K/50FPS 归给模型。尽管权重、训练细节和纯模型速度未知，该模型有官方托管 API、明确任务边界、官方/独立评测和当前 AA Elo，故 comparison_eligible=true、history_eligible=true。"
+}

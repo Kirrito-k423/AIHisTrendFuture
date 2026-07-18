@@ -1,0 +1,207 @@
+{
+  "slug": "wan-video-2-1",
+  "name": "Wan2.1-T2V-14B",
+  "family": "Wan2.1",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Alibaba / Tongyi Lab（通义万相，Team Wan）",
+  "release_date": "2025-02-25",
+  "release_date_basis": "Wan-Video/Wan2.1 官方仓库的发布记录明确写明 2025-02-25 发布 Wan2.1 推理代码和权重。技术报告在 2025-03-26 才提交 arXiv，属于后续技术披露，不应替代模型首发日期。早期 Hugging Face 模型卡曾写 2025-02-22，但当前官方 GitHub 时间线和跨渠道公开记录以 2025-02-25 为准。",
+  "access": "开放下载的模型权重和推理代码。官方同时在 Hugging Face 与 ModelScope 发布 T2V-14B、T2V-1.3B，以及分辨率专用的 I2V-14B 权重；无需申请即可本地部署。可选的 DashScope 提示词扩写是托管 API，并非运行基础 T2V 模型的必要条件。",
+  "license": "Apache License 2.0。官方 GitHub 仓库与 Hugging Face 模型卡均标注 Apache-2.0；代码和官方权重按该许可证开放。训练数据本身未随模型发布。",
+  "official_model_ids": [
+    "Wan-AI/Wan2.1-T2V-14B",
+    "Wan-AI/Wan2.1-T2V-1.3B",
+    "Wan-AI/Wan2.1-I2V-14B-720P",
+    "Wan-AI/Wan2.1-I2V-14B-480P"
+  ],
+  "parameter_total": "代表模型的官方口径为 14B 参数，指生成主干 Flow-Matching Video DiT。Wan2.1 同时提供 1.3B 的轻量 T2V 主干；UMT5-XXL 文本编码器和 Wan-VAE 是独立组件，官方没有给出把它们与 14B DiT 相加后的统一端到端参数总数。",
+  "parameter_active": "14B T2V 主干是稠密 Transformer，不是 MoE；一次去噪前向中主干参数均参与计算。外部 UMT5 编码器先计算文本条件，Wan-VAE 在编码或解码阶段另行运行，官方未给出跨组件统一的 active-parameter 指标。",
+  "weight_size": "官方仓库提供 BF16/原始精度权重分片，14B DiT 理论 BF16 载荷约 28 GB，完整本地目录还包含 UMT5-XXL 编码器、Wan-VAE 与配置文件。官方材料未给出一个稳定、去除仓库版本与文件系统开销后的精确完整下载字节数，因此不把理论值当作官方下载大小。",
+  "precision": "官方 Diffusers 与原生推理示例使用 torch.bfloat16；多卡示例支持 FSDP。权重仓库、运行时转换与社区量化版本可能使用不同精度，FP8/量化并非 2025-02 首发基础模型的官方统一口径。原始大规模训练采用何种完整混合精度与 loss-scaling 策略未披露。",
+  "architecture": "基于 latent flow matching 的视频 Diffusion Transformer。14B T2V 配置为 40 层、model dimension 5120、FFN dimension 13824、40 个注意力头，输入/输出 latent channel 为 16；每个 block 结合时空自注意力、文本交叉注意力、时间步调制和前馈网络。T2V-1.3B 使用同一总体范式但缩小主干，面向消费级显卡。I2V-14B 从同一家族主干增加首帧 latent 与视觉语义条件；后续 FLF2V、VACE 等是 Wan2.1 家族扩展，不等同于首发 T2V-14B。",
+  "attention_or_sequence_design": "视频 latent 被展平成时空 token 序列并使用全序列 self-attention；位置编码采用三维旋转位置编码（3D RoPE）表达时间、高度和宽度。文本通过 block 内 cross-attention 注入。官方多卡推理集成 xDiT/USP，可用 Ulysses 与 ring sequence parallel 切分长视频 token 序列；这是分布式推理实现，不改变首发模型的稠密全注意力定义。14B 公开配置为 40 heads、head dimension 128。",
+  "vae_or_tokenizer": "Wan-VAE 是为图像与视频共同设计的因果 3D 卷积变分自编码器，空间压缩 8×8、时间压缩 4×，latent channel 为 16；首帧采用因果边界处理，使图像也能由同一 VAE 表示。官方称其可编码和解码 1080p、任意长度视频并保留时间信息；该声明描述 VAE 的流式/分块编解码能力，不代表 T2V checkpoint 原生可生成任意时长。公开 T2V 默认 81 帧输入对应 latent 时间长度 21。",
+  "text_encoder_or_conditioner": "T2V 使用冻结的 multilingual UMT5-XXL 文本编码器，通过 cross-attention 条件化 DiT，支持中文与英文提示。T2V 不需要 CLIP。CLIP 视觉编码器（公开权重名为 open-clip-xlm-roberta-large-vit-huge-14）用于 I2V 的图像语义条件，并与首帧 VAE latent 配合；不能把它算作 T2V-14B 的必要条件器。官方另提供可选提示词扩写：DashScope 的 qwen-plus，或本地 Qwen2.5-Instruct；它属于推理前处理而非生成主干。",
+  "training_hardware": "未知。技术报告与官方模型卡没有披露原始 Wan2.1-T2V-14B 预训练和 SFT 所用加速器的具体厂商、型号。官方的 RTX 4090 与多 GPU 命令均为推理示例，不能反推训练硬件。",
+  "training_hardware_scale": "未知。未披露训练节点数、GPU/加速器总数、互联拓扑、累计 accelerator-hours、FLOPs、能耗或训练成本。",
+  "training_data_scale": "技术报告给出量级口径：约 O(10B) 图像与 O(1B) 视频。该数字表示经过大规模收集与清洗后的训练池量级，并非公开可下载数据集，也没有逐阶段给出精确去重样本数、视频总时长或训练 token 数。",
+  "training_data_composition": "官方称数据来自内部授权内容与公开数据集，覆盖图像和视频。视频处理包括镜头切分、去重、清晰度/视觉质量、运动质量、文本-视频相关性及审美等自动筛选，并用自动 caption 系统生成更完整的场景、主体、动作、镜头和文字描述；图像与视频共同用于从视觉语义到时空动态的课程训练。来源清单、授权占比、语言/地域比例、真实与合成数据比例及安全过滤统计未公开。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Wan-VAE 训练",
+      "description": "单独训练因果 3D VAE，使同一 latent 空间支持图像和视频，并以时间 4×、空间 8×8 压缩降低后续 DiT 的序列长度。VAE 的具体训练样本量、步数和 wall-clock 未披露。"
+    },
+    {
+      "stage": 2,
+      "name": "图像与低分辨率视频基础预训练",
+      "description": "从大规模图像和经过清洗的视频建立视觉语义、构图与基础运动能力；官方描述为可扩展、由低成本样本开始的课程式预训练，但没有公开可逐项复现的首阶段分辨率、batch 和步数表。"
+    },
+    {
+      "stage": 3,
+      "name": "渐进式视频预训练",
+      "description": "逐步提高视频的分辨率、时长和数据质量，并混合多宽高比数据训练 1.3B 与 14B Flow-Matching DiT。技术报告用数据规模和模型规模实验说明扩展趋势，但未给出每个 curriculum 桶的精确样本重复次数。"
+    },
+    {
+      "stage": 4,
+      "name": "高质量 SFT",
+      "description": "最终以更严格筛选的高质量、语义一致视频做监督微调，强化画质、动态、稳定性、提示遵循与中英文文字生成。SFT 数据量、优化步数和是否包含额外偏好优化的完整配置未披露。"
+    },
+    {
+      "stage": 5,
+      "name": "任务分支适配",
+      "description": "T2V 之外，官方训练 I2V-14B 并使用首帧 VAE latent 与 CLIP 视觉语义；1.3B 则作为消费级 T2V 版本。后续 FLF2V 与 VACE 是在首发之后发布的家族扩展，本条不把它们的训练阶段回填为 T2V-14B 首发流程。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "Wan-VAE 训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "基础与渐进式预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "高质量 SFT",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "I2V/1.3B 等家族分支",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "生成主干采用 conditional flow matching：对 VAE latent 加噪，DiT 学习连续时间速度场，并在推理时用 FlowMatch 调度器和 UniPC 或 DPM++ 求解。模型使用时间步调制、UMT5 文本 cross-attention、3D RoPE 和 classifier-free guidance。训练课程从图像/低成本视频逐步扩展到更高分辨率、更长、更高质量视频，最后执行高质量 SFT。优化器、学习率、CFG dropout、全局 batch 与各阶段采样比例未完整公开。",
+  "training_infra": "原始训练基础设施未知。公开仓库是 PyTorch 推理实现，支持 torchrun、FSDP 和 xDiT Unified Sequence Parallel（Ulysses/ring）进行 14B 多 GPU 推理；这些公开能力证明模型可分布式运行，但不是原始训练集群配置的证据。",
+  "inference_hardware": "官方 14B 示例支持单张 CUDA GPU 配合 CPU offload，也提供 8 进程的 FSDP + xDiT USP 多 GPU 命令；未给出基础 14B BF16 单卡的统一最低显存承诺。消费级指标专属于 T2V-1.3B：官方报告最低约 8.19 GB VRAM，并以 RTX 4090 为速度示例。",
+  "inference_performance": "官方可复核的消费级速度是 T2V-1.3B 在 RTX 4090、无量化等优化时生成约 5 秒 480p 视频需约 4 分钟；该数值不能归给本条代表的 T2V-14B。14B 官方文档提供单卡 offload 与 8-GPU 并行命令，但未给出绑定帧数、采样步数、硬件和端到端范围的统一公开时延，因此 14B 生成时间记为未知。",
+  "max_output_resolution": "1280×720（T2V-14B 官方支持 480p 与 720p；T2V-1.3B 官方推荐 832×480，虽然可尝试 720p，但因该分辨率训练不足而更不稳定）",
+  "max_output_duration_seconds": 5,
+  "native_fps": 16,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "代表模型 T2V-14B 的官方、可严格对齐硬件/分辨率/帧数/步数的端到端生成时间未知。官方约 240 秒指标属于 T2V-1.3B、RTX 4090、480p、5 秒、无量化等优化，仅作为家族效率背景，不作为本条数值。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Official Wan T2V benchmark",
+      "variant": "Wan 14B / Wan2.1-T2V-14B",
+      "metrics": {
+        "aggregate_percent": 86.22,
+        "visual_quality_percent": 86.67,
+        "semantic_consistency_percent": 84.44
+      },
+      "source_scope": "技术报告汇总的官方 T2V 评测。报告称 14B 在综合分、视觉质量与语义一致性上领先所列开放及闭源对手；这是作者自建/汇总评测口径，不能与 Artificial Analysis 动态 Elo 互换。"
+    },
+    {
+      "benchmark": "Official consumer inference",
+      "variant": "Wan2.1-T2V-1.3B（家族背景，非代表 14B）",
+      "metrics": {
+        "peak_vram_gb": 8.19,
+        "resolution": "832×480",
+        "duration_seconds": 5,
+        "hardware": "NVIDIA RTX 4090",
+        "generation_time_seconds_approx": 240
+      },
+      "source_scope": "官方 GitHub/技术报告的效率陈述；无量化等额外优化。用于说明 1.3B 家族定位，严禁回填为 14B 的显存或速度。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "Wan-VAE 用统一的因果 3D VAE 表示图像与视频，以时间 4×、空间 8×8 压缩支持高分辨率、长视频编解码，同时保持首帧和时间连续性。",
+      "scope_boundary": "创新范围是 Wan 家族的具体 VAE 设计和效率/重建结果，不是首个 3D 或因果视频 VAE。‘可处理任意长度 1080p’是 VAE 编解码声明，不是 T2V-14B 能一次生成无限长度或原生 1080p。",
+      "evidence": "Wan 技术报告的 Wan-VAE 章节，以及官方 GitHub README 对 1080p、任意长度编码/解码的说明。",
+      "confidence": "高"
+    },
+    {
+      "claim": "Wan2.1 把大规模数据清洗、图像-视频渐进式课程与 1.3B/14B 稠密 Flow-Matching Video DiT 结合，并公开了从消费级到高质量档位的模型权重。",
+      "scope_boundary": "flow matching、DiT 和课程学习均有先例；可归于 Wan 的是具体系统组合、O(10B) 图像/O(1B) 视频规模披露与完整家族开放，不应声称单个基础算法由 Wan 首创。",
+      "evidence": "Wan 技术报告的数据、模型设计与 scaling 章节；官方 GitHub/Hugging Face 的 1.3B、14B T2V/I2V 权重列表。",
+      "confidence": "高（家族与公开权重）；中高（数据量为官方量级口径，缺少可审计数据清单）"
+    },
+    {
+      "claim": "官方称 Wan2.1 是首个可在视频中同时生成中文与英文文字的模型，并报告 14B 的综合 T2V 得分 86.22%。",
+      "scope_boundary": "‘首个’与领先结论来自作者声明和其评测集合；没有覆盖所有同期未公开系统，也不等同于第三方持续盲评。更稳妥的可核验事实是模型支持中英文 UMT5 条件并展示双语文字生成。",
+      "evidence": "官方 GitHub README、Hugging Face 模型卡和 Wan 技术报告的评测章节。",
+      "confidence": "中（首个/领先范围）；高（官方能力声明与自评数值）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "原始预训练、VAE 训练与 SFT 的加速器厂商/型号、GPU 数量、节点拓扑、累计 accelerator-hours/FLOPs、wall-clock、能耗与成本",
+    "各训练阶段的精确分辨率/时长课程边界、优化步数、global batch、学习率日程、优化器配置、checkpoint 频率与样本重复比例",
+    "O(10B) 图像和 O(1B) 视频的精确去重后数量、视频小时数、来源清单、授权占比、语言/地域分布、真实/合成比例和安全过滤统计",
+    "高质量 SFT 的样本数、偏好数据或人类反馈流程、是否以及如何执行额外 reward optimization",
+    "首发训练的完整混合精度、loss scaling、梯度裁剪和数值稳定性设置",
+    "14B DiT 加 UMT5-XXL、Wan-VAE 后的官方端到端总参数和统一 active-parameter 口径",
+    "Wan2.1-T2V-14B 官方完整仓库在指定 revision 下的精确下载字节数与各组件精确参数量",
+    "T2V-14B 在固定单卡/8 卡硬件、720p、81 帧、固定采样步数下的官方端到端时延、吞吐和峰值显存",
+    "Artificial Analysis 对精确 Wan2.1-T2V-14B checkpoint 的动态 Elo、观测日期、票数、置信区间和托管采样配置",
+    "超过官方 81 帧/约 5 秒配置时 T2V-14B 的稳定最大时长；Wan-VAE 的任意长度能力不能作为生成主干上限证据",
+    "官方 T2V 综合评测中所有 prompt、随机种子、对手版本、人工评分协议与置信区间"
+  ],
+  "sources": [
+    {
+      "title": "Wan: Open and Advanced Large-Scale Video Generative Models (arXiv:2503.20314)",
+      "url": "https://arxiv.org/abs/2503.20314",
+      "source_type": "official_technical_report"
+    },
+    {
+      "title": "Wan-Video/Wan2.1",
+      "url": "https://github.com/Wan-Video/Wan2.1",
+      "source_type": "official_github_repository"
+    },
+    {
+      "title": "Wan2.1 README and release/model matrix",
+      "url": "https://github.com/Wan-Video/Wan2.1/blob/main/README.md",
+      "source_type": "official_documentation"
+    },
+    {
+      "title": "Wan2.1 Apache-2.0 license",
+      "url": "https://github.com/Wan-Video/Wan2.1/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-T2V-14B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-T2V-14B",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-T2V-1.3B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B",
+      "source_type": "official_family_model_card"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-I2V-14B-720P",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-720P",
+      "source_type": "official_family_model_card"
+    },
+    {
+      "title": "Wan2.1 VAE implementation",
+      "url": "https://github.com/Wan-Video/Wan2.1/blob/main/wan/modules/vae.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "Wan2.1 model implementation",
+      "url": "https://github.com/Wan-Video/Wan2.1/blob/main/wan/modules/model.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "Wan2.1 generation entry point",
+      "url": "https://github.com/Wan-Video/Wan2.1/blob/main/generate.py",
+      "source_type": "official_inference_code"
+    },
+    {
+      "title": "Ideas around T2I2V models — Wan2.1 chronology clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "按任务要求以 Wan2.1-T2V-14B 作为代表条目。家族边界：首发 T2V 有 14B（480p/720p）与 1.3B（推荐 480p）；I2V 使用单独的 14B 480p/720p checkpoints，并额外使用 CLIP 视觉条件；后续 FLF2V、VACE 扩大到首尾帧、编辑等任务，但不是本条 T2V 代表模型。comparison_eligible=true，因为官方权重、代码、固定分辨率/帧率配置和技术报告评测均可核验；比较时必须锁定 14B 而不能混用 1.3B 的 8.19 GB/4 分钟指标，也不能把 I2V 的 CLIP 组件记为 T2V 条件器。history_eligible=true，因为 2025-02-25 官方代码与权重发布记录明确，且后续技术报告、GitHub 和 Hugging Face 可交叉确认。"
+}

@@ -1,0 +1,289 @@
+{
+  "slug": "hunyuanvideo-1-5",
+  "name": "HunyuanVideo 1.5",
+  "family": "HunyuanVideo",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Tencent Hunyuan Foundation Model Team（腾讯混元）",
+  "release_date": "2025-11-21",
+  "release_date_basis": "腾讯的 HunyuanVideo 1.5 专用许可证明确写明 Release Date: November 21, 2025，旧 HunyuanVideo 官方仓库的 News 也在 2025-11-21 宣布发布 1.5。HunyuanVideo-1.5 当前 README 的历史记录写 2025-11-20 已发布推理代码和权重，Hugging Face 仓库创建于 2025-11-18，arXiv v1 提交于 2025-11-24；本条采用许可证与官方家族公告共同给出的 2025-11-21，并把这些一至三日的仓库/时区差异保留在依据中。",
+  "access": "开放权重与代码：腾讯在 Hugging Face 发布 480p/720p T2V、I2V、部分 CFG/step-distilled 与 VSR 权重，在 GitHub 发布推理代码、后续发布训练/LoRA 代码，并由 Hugging Face Diffusers 提供转换仓库。无需申请即可下载 tencent/HunyuanVideo-1.5 主仓，但文本条件器依赖需另行下载；I2V 所需 FLUX.1-Redux-dev/SigLIP 依赖是门控仓库。腾讯官网另提供在线体验。这里的“开放”是受限社区许可下的 open-weight，不是 OSI 式无地域、无用途限制开源。",
+  "license": "Tencent Hunyuan Community License Agreement（HunyuanVideo 1.5，发布日期 2025-11-21）。许可地域明确排除欧盟、英国和韩国；发布时前一自然月全部产品/服务 MAU 超过 1 亿的主体必须另向腾讯申请许可；分发需附许可证、修改通知与 NOTICE，并披露第三方服务的实际提供者。不得使用模型、输出或结果改进腾讯混元及其衍生模型之外的其他 AI 模型，且受可接受使用政策约束。因此不能只按 Hugging Face 的“可下载”把它描述为无条件商用开源。",
+  "official_model_ids": [
+    "tencent/HunyuanVideo-1.5",
+    "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v",
+    "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v",
+    "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v_distilled"
+  ],
+  "parameter_total": "官方论文口径为 8.3B，专指第一阶段 unified video DiT。对官方 720p_t2v safetensors 头部逐张量计数得到 8,326,608,160 参数；公共 VAE 另有 1,260,634,115 参数。可选第二阶段 1080p VSR 使用独立的 8,331,398,432 参数 DiT，并有 50,350,112 参数 latent upsampler。因官方推荐的 Qwen2.5-VL-7B、Glyph-ByT5 等条件器是外部依赖且最新内部 HunyuanMLLM 未发布，官方没有给出统一端到端系统总参数；若只把已发布的 720p T2V DiT、VAE、1080p SR DiT 和 upsampler相加为约 17.97B，也仍不含外部文本条件器，不能把它冒充官方“8.3B”口径。",
+  "parameter_active": "主 DiT 与 VSR DiT 都是稠密模型，没有 MoE 路由；各自去噪时约 8.33B 主干参数全部参与。两阶段流水线先运行 base DiT、再运行独立 SR DiT，属于顺序激活，不能写成每一步同时激活约 16.7B。VAE、latent upsampler、MLLM 与 Glyph-ByT5 在各自编码、超分或解码阶段另行运行；官方未发布跨阶段统一 active-parameter 指标。",
+  "weight_size": "官方原始 safetensors 为 F32。720p T2V DiT 文件精确为 33,306,632,192 bytes（33.307 GB / 31.019 GiB），共享 VAE 为 5,042,560,980 bytes；1080p SR DiT 为 33,325,793,672 bytes，1080p latent upsampler 为 201,404,760 bytes。生成 720p base 再超分到 1080p 的这四类原始文件合计 71,876,391,604 bytes（71.876 GB / 66.94 GiB），尚不含 Qwen2.5-VL、Glyph-ByT5 和 tokenizer。Hugging Face 整仓约 371.8 GB 是多个分辨率、T2V/I2V、蒸馏与 SR 变体的合集，不能当作单次推理所需权重体积。",
+  "precision": "腾讯主仓发布的 720p T2V DiT、VAE、1080p SR DiT 与 upsampler safetensors 元数据均为 F32；官方 generate.py 默认把 Transformer 载入 BF16，也允许 FP32，Diffusers 示例同样用 BF16。2025-12-23 后仓库加入 FP8 GEMM 推理支持，但这属于后续运行优化，不改变首发原始权重精度。公开训练代码的 FSDP2 配方使用 BF16 parameter dtype、FP32 reduction，并在 BF16 autocast 下训练；论文没有明确披露原始大规模预训练的完整混合精度与 loss-scaling 策略。",
+  "architecture": "两阶段 latent video diffusion/flow-matching 系统。第一阶段是统一支持 T2I、T2V、I2V 的 8.3B Diffusion Transformer：54 个 dual-stream blocks、hidden/model dimension 2048、FFN dimension 8192、16 heads、head dim 128，公共配置没有 single-stream blocks；输入/输出 latent channels 为 32，并使用 QK RMSNorm、3D RoPE 与时间步条件。I2V 通过把参考图 VAE latent 沿 channel 与噪声 latent 拼接，同时把 SigLIP 语义特征沿序列拼接，并以 type embedding 区分条件。第二阶段是 cascaded latent-space VSR：先用独立 upsample block 对齐低清与高清 latent，再把低清 latent 和噪声按通道拼接进从 T2V 模型初始化的另一套约 8.3B DiT，最后经共享 3D VAE 解码到 720p 或 1080p。",
+  "attention_or_sequence_design": "基础公开 T2V checkpoint 使用 Flash Attention 与变长 attention mask；位置编码配置为 temporal/spatial 三轴 RoPE dims [16,56,56]、theta 256。论文另提出无新增可学习参数的 SSTA（Selective and Sliding Tile Attention）：先做 3D block partition，再用 Q-K block similarity 与 K-K redundancy 计算重要性并选取动态全局 blocks，同时保留 Sliding Tile Attention 的固定局部窗口，合并两类 mask 后执行 block-sparse attention。论文称 SSTA 在蒸馏阶段加入以减小质量损失，并用 ThunderKittens/flex-block-attn 实现。当前公开 sparse I2V 配置可核查 tile_size=[6,8,8]、topk=64、local window=[3,3,3]、lambda=0.7；但官方模型表中 720p T2V CFG-distilled sparse 仍标为 Coming soon，不能把该 I2V sparse 配置无条件当作已发布 T2V base checkpoint 的默认注意力。",
+  "vae_or_tokenizer": "AutoencoderKLConv3D / causal 3D joint image-video VAE，空间压缩 16x、时间压缩 4x、latent channels 32；公共配置的 block channels 为 [128,256,512,1024,1024]、每级 2 个 residual blocks、scaling factor 1.03682。输入视频帧数要求满足 4n+1，121/241 帧分别对应约 5/10 秒的 24fps 输出。该 VAE 公共 F32 权重精确约 1.2606B 参数、5.043 GB。VSR 不在像素空间直接锐化，而是在 VAE latent 空间先做可学习上采样并由独立 DiT 去噪，再用 VAE decoder 输出高分辨率视频。",
+  "text_encoder_or_conditioner": "论文采用双通道文本条件：大多模态模型负责中英双语场景、动作和约束理解，multilingual Glyph-ByT5 负责细粒度字形编码以改善视频内文字。官方尚未发布最新内部 HunyuanMLLM；公开运行指南推荐用 Qwen/Qwen2.5-VL-7B-Instruct 替代，并另下载 google/byt5-small 与 ModelScope 的 AI-ModelScope/Glyph-SDXL-v2。T2V 公共 transformer 配置接收 3584-dim MLLM states，并启用 glyph_byT5_v2，ByT5 最大长度 256。可选 prompt rewriting 推荐外部 Qwen3-235B-A22B-Thinking-2507/vLLM 服务，但它只是推理前处理，不属于 8.3B DiT。I2V 另用 FLUX.1-Redux-dev 中 1152-dim SigLIP 表征；本条按 T2V 范围不把该 vision encoder 算入必需条件器。",
+  "training_hardware": "未知。技术报告没有披露原始预训练、CT、SFT、DPO、在线 RL 或 VSR 训练所用 GPU/加速器厂商与型号。论文中的 8×NVIDIA H800 只用于推理速度评测，不能反推为训练硬件。",
+  "training_hardware_scale": "未知；未披露训练节点数、GPU/加速器数、互联拓扑、峰值集群规模、累计 accelerator-hours、FLOPs、能耗或成本。公开训练代码的 8-GPU torchrun 示例只是复现/微调入口，不是原始训练规模证据。",
+  "training_data_scale": "图像侧从超过 100 亿张原始图中筛出 50 亿张用于 256p T2I 预训练，并保留 10 亿张用于 512p 阶段。视频侧在基础去重和坏文件清理后有超过 1000 万小时原始视频，切成 2-10 秒 clips，经多级过滤后约 8 亿高质量视频片段用于首个视频预训练阶段；后续 480p、720p 16fps、720p 24fps 阶段分别使用 2亿、1亿、1亿规模的数据口径。T2V 与 I2V 的 CT 各使用 100 万高质量 clips。VSR 另用 100 万条 1K-4K、3-10 秒、24fps 高质量视频并混入高分辨率图像。SFT、DPO、在线 RL 的精确视频对数未完整披露；T2V DPO prompt 集仅披露为 O(10K)。",
+  "training_data_composition": "图像数据沿用 HunyuanImage 3.0 的获取与处理思路。视频覆盖多来源内容、拍摄技法、镜头运动、风格与场景；先用 PySceneDetect 加自研算子切镜，并用转场分类器二次过滤，再去除 padding、拼接、宫格、静态/低运动片段，按清晰度、细节、噪声/伪影、动态范围和美学打分过滤。字幕系统分别生成静态图 caption、包含叙事/镜头/构图/灯光/风格/色彩/氛围的结构化视频 caption，以及只描述首帧之后运动与变化的 I2V instruction caption，并加入专门的镜头运动识别描述。OPA-DPO 用于 caption 模型在丰富度与幻觉之间平衡，不是视频生成器的 DPO。官方没有公开原始来源清单、授权占比、语言比例、真实/合成比例、完整去重规则或安全过滤统计。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "T2I 256p 预训练",
+      "description": "用 50 亿张多宽高比图像按 bucket 训练统一 DiT 的基础语义对齐与图像生成能力；作者称该起点明显加快后续 T2V/I2V 收敛。"
+    },
+    {
+      "stage": 2,
+      "name": "T2I 512p 预训练",
+      "description": "用 10 亿张图像继续提高空间分辨率与细节；与第一阶段一起构成从图像生成起步的视频模型课程。"
+    },
+    {
+      "stage": 3,
+      "name": "统一 T2I/T2V/I2V 256p 预训练",
+      "description": "256p、16fps、2-10 秒，约 8 亿视频数据口径；三任务按 T2I:T2V:I2V=1:6:3 混合训练，并针对不同 token length 调整 flow-matching shift。"
+    },
+    {
+      "stage": 4,
+      "name": "统一 T2I/T2V/I2V 480p 预训练",
+      "description": "480p、16fps、2-10 秒，约 2 亿数据口径；继续提升时空分辨率。"
+    },
+    {
+      "stage": 5,
+      "name": "统一 T2I/T2V/I2V 720p 16fps 预训练",
+      "description": "720p、16fps、2-10 秒，约 1 亿数据口径；在长序列下继续使用自适应 shift schedule 稳定 flow matching。"
+    },
+    {
+      "stage": 6,
+      "name": "统一 T2I/T2V/I2V 720p 24fps 预训练",
+      "description": "720p、24fps、2-10 秒，约 1 亿数据口径，形成 T2V 与 I2V 共用的最优预训练 checkpoint。"
+    },
+    {
+      "stage": 7,
+      "name": "T2V continuing training 与 SFT",
+      "description": "从共享预训练 checkpoint 分支，先用 100 万条按类别平衡、偏重高动态运动的高质量 clips 在 480p/720p、24fps、2-10 秒继续训练，再用按美学、清晰度、运动平滑度严格筛选的数据做 SFT；SFT 样本数未披露。"
+    },
+    {
+      "stage": 8,
+      "name": "T2V offline DPO 与 online RLHF",
+      "description": "先用来自 LLM prompt 与训练 caption 的 O(10K) 平衡 prompt 集，让高质量 SFT checkpoint 每个 prompt 生成 N 个候选，人工按语义、运动与美学做 GSB 配对并执行 DPO；再复用 I2V 的 VLM reward、多 seed/CFG mixed sampling 与 MixGRPO 混合 ODE-SDE 在线优化框架。"
+    },
+    {
+      "stage": 9,
+      "name": "CFG / sparse distillation",
+      "description": "官方另发布部分 CFG-distilled checkpoint；论文说明 SSTA 的 sparse training 在蒸馏阶段加入以更好保持输出质量。当前公开 480p T2V CFG-distilled 权重存在，但 720p T2V CFG-distilled 与 sparse 版本在模型表中仍标为 Coming soon。"
+    },
+    {
+      "stage": 10,
+      "name": "Cascaded Video Super-Resolution",
+      "description": "从预训练 T2V 权重初始化独立 VSR DiT，使用 100 万条 1K-4K、3-10 秒、24fps 视频和高分辨率图像；低清 latent 经独立 upsample block 对齐后与噪声拼接，全参数按 flow matching 训练。发布的 480→720 SR 用 6 个蒸馏步，720→1080 SR 用 8 个蒸馏步。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "T2I 256p/512p 预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "统一 256p→480p→720p、16→24fps 视频预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "T2V CT 与 SFT",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "T2V offline DPO 与 online MixGRPO RLHF",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "CFG/sparse distillation 与 VSR",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "主干按 flow matching 训练，公开训练代码以 noise-latent 作为 velocity target，1000 个训练时间步，并支持 log-normal 等 timestep sampling；论文针对不同分辨率、帧长和 token length 设计 shift schedule。预训练使用 T2I:T2V:I2V=1:6:3 的多任务课程。优化器使用 Muon：论文称它以约一半训练步数取得比 AdamW 更低的 loss，并在多个 T2I benchmark 上更好；weight decay=0.01，公共实现以 momentum update 加 Newton-Schulz orthogonalization。后训练依次为 CT、SFT 和 RLHF：T2V 先离线 DPO，再用 VLM reward、mixed seed/CFG sampling 和 MixGRPO 混合 ODE-SDE solver 做在线优化；I2V 直接使用在线框架。OPA-DPO 只用于 caption 模型抑制描述幻觉，不能记作 T2V 生成器的对齐算法。VSR 也使用 flow matching；部分发布变体做 CFG distillation，SSTA 在蒸馏阶段稀疏训练。",
+  "training_infra": "原始内部训练基础设施未知。后续开源的训练入口基于 PyTorch，支持 torchrun、多 GPU、FSDP2、sequence/context parallel、gradient checkpointing、distributed checkpoint、LoRA，并提供 Muon 实现；FSDP mixed-precision policy 使用 BF16 参数与 FP32 reduction。公开代码的默认示例为 8 GPU、sequence parallel size 8、batch 1、10,000 steps，这只是继续训练/微调示例，不能当作论文预训练的真实集群拓扑、batch、吞吐或时长。",
+  "inference_hardware": "官方最低要求为支持 CUDA 的 NVIDIA GPU；开启 pipeline offloading、group offloading 与 VAE tiling 时，单卡生成 720p、121 帧 T2V/I2V 的报告峰值为 13.6 GB，README 取整写最低 14 GB，并举 RTX 4090 为消费级示例。官方速度表使用 8×NVIDIA H800、8 卡 context parallel、CFG-distilled checkpoint。Diffusers 示例以 BF16、CPU offload、VAE tiling运行；无 offload 时需要远高于 14 GB 的显存。FP8 GEMM、SageAttention、torch.compile、feature cache 与多种 cache backend 是可选后续优化。",
+  "inference_performance": "官方 base/CFG-distilled T2V 推荐 50 diffusion steps。8×H800、无工程加速时，720p 121 帧 FlashAttention-3 为 2.0084±0.0229 s/step，SSTA 为 1.5638±0.0150；720p 241 帧分别为 5.5070±0.0284 与 2.9475±0.0206 s/step，后者即约 1.87×。启用 SageAttention、torch.compile 与 feature cache 后，50 步总时间：480p 121/241 帧为 13.90/27.08 秒；720p 121 帧无/有 sparse 为 28.33/26.41 秒，720p 241 帧无/有 sparse 为 96.78/58.39 秒。所有这些速度均是 8×H800、CFG-distilled、context-parallel 研究配置，不代表单张 14GB 卡，也不包含可选 1080p SR 的统一端到端延迟。2025-12-05 的单 RTX 4090、约 75 秒指标只针对 480p I2V step-distilled 模型，不能回填给本条 T2V。",
+  "max_output_resolution": "基础 DiT 原生最高 1280×720（720p）；可选第二阶段 cascaded VSR 把 720p latent 超分到 1920×1080，因此系统最大官方输出为 1080p。1080p 是独立 SR 模型的输出，不应写成 base T2V checkpoint 原生生成 1080p。",
+  "max_output_duration_seconds": 10,
+  "native_fps": 24,
+  "aa_elo": 1022.44,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis 的 HunyuanVideo-1.5 (Fal) 动态模型页；Elo 会随新增盲评投票变化，且该分数对应 fal.ai 托管实现，不等于腾讯官方自测）",
+  "generation_time_seconds": 28.33,
+  "generation_time_context": "可复核的官方代表值：8×NVIDIA H800、CFG-distilled T2V、context parallel、720×1280、121 帧约 5 秒、50 diffusion steps、不开 SSTA但启用 SageAttention、torch.compile 与 feature cache，总推理时间 28.33 秒。该值来自技术报告 Table 8，不是单卡消费级时间，也不保证包含 prompt rewrite、下载/编码、队列或可选 VSR。Artificial Analysis 页面定义了 720p 5秒视频的 14 日 API 中位端到端时间，但当前公开文本未暴露可可靠抄录的 HunyuanVideo-1.5 单一数值，因此不以图表读数覆盖官方硬件实测。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Official multi-dimensional T2V rating",
+      "variant": "HunyuanVideo 1.5 720p T2V",
+      "metrics": {
+        "instruction_following": 61.57,
+        "aesthetic_quality": 63.30,
+        "visual_quality": 57.35,
+        "structural_stability": 79.75,
+        "motion_effects": 57.67
+      },
+      "source_scope": "腾讯自建评测。论文给出与 Wan2.2、Kling2.1 Master、Seedance Pro、Veo3 的并列表；不同维度各模型胜负不一致，不能把五项简单平均成通用质量分。"
+    },
+    {
+      "benchmark": "Official GSB human evaluation",
+      "variant": "HunyuanVideo 1.5 720p T2V",
+      "metrics": {
+        "prompts": 300,
+        "professional_assessors": "over 100",
+        "net_win_rate_vs_Wan2_2_percent": 17.12,
+        "net_win_rate_vs_Kling2_1_Master_percent": 12.60,
+        "net_win_rate_vs_Seedance_Pro_percent": 11.02,
+        "net_win_rate_vs_Veo3_percent": -10.32
+      },
+      "source_scope": "每个输入各模型只生成一次、不挑样，竞争模型用默认设置。net win rate 是 HY Better 减 Other Better；不是绝对胜率，也不是第三方 Elo。"
+    },
+    {
+      "benchmark": "Official SSTA inference ablation",
+      "variant": "CFG-distilled T2V, 8×H800, context parallel, no engineering acceleration",
+      "metrics": {
+        "resolution": "720×1280",
+        "frames": 241,
+        "flash_attention_3_seconds_per_step": "5.5070±0.0284",
+        "ssta_seconds_per_step": "2.9475±0.0206",
+        "speedup_x": 1.87
+      },
+      "source_scope": "技术报告 Table 7 的 10 秒长序列对比；是 8 卡研究配置的每 diffusion step 时间，不是公开 T2V base 单卡端到端 API latency。"
+    },
+    {
+      "benchmark": "Official accelerated inference",
+      "variant": "CFG-distilled T2V, 8×H800, 50 steps, SageAttention + torch.compile + feature cache",
+      "metrics": {
+        "720p_121_frames_no_sparse_seconds": 28.33,
+        "720p_121_frames_sparse_seconds": 26.41,
+        "720p_241_frames_no_sparse_seconds": 96.78,
+        "720p_241_frames_sparse_seconds": 58.39
+      },
+      "source_scope": "技术报告 Table 8；只统计报告定义的 50 步推理时间，未给统一包含 1080p VSR、prompt rewrite 和外部传输的端到端时间。"
+    },
+    {
+      "benchmark": "Artificial Analysis Video Arena",
+      "variant": "HunyuanVideo-1.5 (Fal), T2V hosted deployment",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_elo": 1022.44
+      },
+      "source_scope": "独立动态盲评页面。该 Elo 会变化，且托管方可能采用与腾讯本地默认不同的 checkpoint、采样与优化；页面当前没有在可抓取文本中给出本条的票数、置信区间或 14 日中位生成时间。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "SSTA 把动态全局 block 选择与固定局部 sliding-tile 先验合并为无新增参数的 block-sparse attention，在 720p、241 帧长序列上把相对 FlashAttention-3 的每步时间从 5.5070 秒降到 2.9475 秒，约 1.87×。",
+      "scope_boundary": "创新边界是 HunyuanVideo 1.5 的混合稀疏 mask 与工程实现，不是“首次稀疏视频注意力”；论文明确引用 Sliding Tile Attention。速度来自 8×H800 CFG-distilled 研究配置，SSTA 在蒸馏阶段训练；当前公开 sparse checkpoint 是 I2V，官方模型表仍把 720p T2V sparse 标为 Coming soon，因此不能把该速度视为公开 base T2V 默认能力。",
+      "evidence": "技术报告 Sections 3.1/6、Algorithm 1、Tables 7/8；官方 Hugging Face sparse I2V config 与 GitHub 模型发布表。",
+      "confidence": "高（算法与论文内速度）；中高（对公开 T2V 可直接复现性受尚未发布 sparse checkpoint 限制）"
+    },
+    {
+      "claim": "用顺序的 base DiT + latent-space VSR 构成两阶段视频生成：第一阶段以约 8.3B 统一 DiT 原生生成 480p/720p、5-10 秒视频，第二阶段用独立 latent upsampler 与另一套约 8.3B flow-matching DiT 做少步超分并纠正失真，最高输出 1080p。",
+      "scope_boundary": "1080p 是独立 SR 阶段，不是 base checkpoint 原生分辨率；第二阶段显著增加下载体积和算力，不能用“主模型仅 8.3B”掩盖完整两阶段的顺序成本。级联超分不是行业首次，创新主张应限制为腾讯在该紧凑统一视频模型中的 latent 对齐、T2V 初始化与少步 VSR 实现。",
+      "evidence": "技术报告 Sections 3.2/4.3 与 Figure 3；官方 1080p_sr_distilled transformer、upsampler 配置/权重及推荐 8-step SR 设置。",
+      "confidence": "高"
+    },
+    {
+      "claim": "从 T2I 到多分辨率/多帧率统一视频预训练，再以 Muon、任务分支 CT/SFT 和 T2V 离线 DPO→在线 MixGRPO 对齐形成完整训练课程；Muon 在作者消融中用约一半步数达到比 AdamW 更低的 loss。",
+      "scope_boundary": "Muon、DPO 与 MixGRPO 都有先例，本工作价值是把它们组织进 HunyuanVideo 1.5 的视频训练流水线，不应声称单项算法由腾讯首创。OPA-DPO 属于字幕模型后训练而非视频生成器 RLHF；论文未给 Muon 的完整数值表、训练 wall-clock 或跨硬件吞吐，半步收敛是作者报告范围内结论。",
+      "evidence": "技术报告 Sections 2.2/3.1/4.1-4.2 与公开 train.py、Muon 实现。",
+      "confidence": "高（流程归属与 OPA-DPO 边界）；中高（Muon 泛化收益缺少完整训练成本披露）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "最新内部 HunyuanMLLM 的 checkpoint、参数量、训练方式与其相对 Qwen2.5-VL-7B 替代方案的能力差异",
+    "包含 DiT、VAE、MLLM、Glyph-ByT5、可选 SigLIP 与 VSR 的官方端到端总参数/active-parameter 口径",
+    "原始预训练、CT、SFT、DPO、在线 RL 与 VSR 所用 GPU/加速器型号、数量、节点、互联与累计 accelerator-hours/FLOPs",
+    "各训练阶段的优化步数、全局 batch、wall-clock、学习率日程、checkpoint 频率、能耗与成本",
+    "原始大规模训练的完整数值精度、loss scaling 与 Muon/AdamW 参数分组；公开 BF16 FSDP 代码是后续入口而非充分历史证据",
+    "图像/视频原始来源清单、授权结构、语言与地域比例、真实/合成占比、完整去重和安全过滤统计",
+    "SFT 的样本数，以及 T2V DPO 中每 prompt 的候选 N、偏好对数、DPO beta 与全部在线 MixGRPO/reward 权重超参数",
+    "OPA-DPO caption 模型的规模、完整训练数据量与相对未对齐 captioner 的定量幻觉/丰富度消融",
+    "T2I:T2V:I2V=1:6:3 在所有阶段是否完全固定，以及表中 800M/200M/100M/100M 数据是否重叠、重复采样或按 epoch 重用",
+    "公开 T2V SSTA/720p CFG-distilled sparse checkpoint 的最终发布时间与其和论文速度表所用内部 checkpoint 的哈希对应关系",
+    "固定单张 RTX 4090 上 T2V base 480p/720p、5秒/10秒、50步的官方端到端 latency、吞吐与峰值 RAM",
+    "完整 base+1080p VSR 在指定硬件上的总延迟、峰值显存、VSR 单独质量消融与故障率",
+    "Artificial Analysis 当前 HunyuanVideo-1.5 (Fal) 的票数、95% CI、精确托管 checkpoint/采样配置和可抓取的 14 日中位生成时间"
+  ],
+  "sources": [
+    {
+      "title": "HunyuanVideo 1.5 Technical Report (arXiv:2511.18870)",
+      "url": "https://arxiv.org/html/2511.18870",
+      "source_type": "official_technical_report"
+    },
+    {
+      "title": "arXiv submission record for 2511.18870",
+      "url": "https://arxiv.org/abs/2511.18870",
+      "source_type": "official_preprint_metadata"
+    },
+    {
+      "title": "Tencent-Hunyuan/HunyuanVideo-1.5",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5",
+      "source_type": "official_github_repository"
+    },
+    {
+      "title": "Tencent HunyuanVideo 1.5 Community License",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "HunyuanVideo-1.5 checkpoint download guide",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/checkpoints-download.md",
+      "source_type": "official_dependency_documentation"
+    },
+    {
+      "title": "HunyuanVideo-1.5 official training entry point",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/train.py",
+      "source_type": "official_training_code"
+    },
+    {
+      "title": "HunyuanVideo-1.5 official inference entry point",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/generate.py",
+      "source_type": "official_inference_code"
+    },
+    {
+      "title": "tencent/HunyuanVideo-1.5 model card and weight repository",
+      "url": "https://huggingface.co/tencent/HunyuanVideo-1.5",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "tencent/HunyuanVideo-1.5 repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/tencent/HunyuanVideo-1.5?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "720p T2V transformer config",
+      "url": "https://huggingface.co/tencent/HunyuanVideo-1.5/blob/main/transformer/720p_t2v/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "720p sparse distilled transformer config",
+      "url": "https://huggingface.co/tencent/HunyuanVideo-1.5/blob/main/transformer/720p_i2v_distilled_sparse/config.json",
+      "source_type": "official_sparse_model_config"
+    },
+    {
+      "title": "HunyuanVideo-1.5 Diffusers collection",
+      "url": "https://huggingface.co/collections/hunyuanvideo-community/hunyuanvideo-15",
+      "source_type": "officially_endorsed_library_collection"
+    },
+    {
+      "title": "HunyuanVideo-1.5 (Fal) Quality, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/video/models/hunyuanvideo-1-5-fal",
+      "source_type": "independent_benchmark_page"
+    },
+    {
+      "title": "Ideas around T2I2V models — HunyuanVideo 1.5 chronology clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "本条按用户指定以 T2V 为主模态；同一模型家族和统一预训练主干也支持 I2V/T2I，但横向比较字段、AA Elo、官方 Rating/GSB 与代表生成时间均锁定 T2V，避免把 I2V 的 75 秒 step-distilled 单卡指标混入。comparison_eligible=true：官方 480p/720p T2V 权重、代码、固定采样配置、完整论文自评和独立 AA 条目均可核验；比较时必须注明 base 720p 还是额外 VSR 1080p、是否 CFG-distilled/SSTA、帧数与硬件。history_eligible=true：许可证、官方家族仓库、模型卡和 arXiv 共同确认 2025-11 发布。最关键的纠错边界有四点：一，8.3B 只指单个稠密 DiT；二，1080p 来自另一套约 8.3B VSR DiT；三，SSTA 的 1.87× 来自内部 CFG-distilled 8×H800 长序列评测，而公开 T2V sparse 权重仍未落表；四，OPA-DPO 训练 captioner，T2V 生成器本身使用 offline DPO 后接 online MixGRPO。"
+}

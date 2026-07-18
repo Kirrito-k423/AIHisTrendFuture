@@ -1,0 +1,263 @@
+{
+  "slug": "qwen-image-edit",
+  "name": "Qwen-Image-Edit",
+  "family": "Qwen-Image",
+  "entry_kind": "model",
+  "modality": "Edit",
+  "organization": "Qwen Team, Alibaba Cloud",
+  "release_date": "2025-08-18",
+  "release_date_basis": "采用官方 QwenLM/Qwen-Image GitHub News 明确记录的首次开源公告日 2025-08-18。Hugging Face 仓库元数据 createdAt 为 2025-08-17T08:32:01Z，但仓库创建时间不等于已公开可用时间；专题博客日期为 2025-08-19。2025-08-04 是生成基座 Qwen-Image 及技术报告的发布日期，不是独立 Qwen-Image-Edit 权重的发布日期。",
+  "access": "开放权重。官方 BF16 safetensors 可从 Hugging Face 与 ModelScope 下载，代码和权重采用 Apache-2.0；亦曾通过 Qwen Chat 与 Hugging Face Demo 提供在线体验。该首版只正式支持单张输入图像；2025-09-22 的 Qwen-Image-Edit-2509 与 2025-12-23 的 Qwen-Image-Edit-2511 是后续独立检查点，不能作为本条目的同名别称或把其多图能力回填到首版。官方另提示使用最新 Diffusers，并强烈建议做编辑提示词重写，否则身份保持与指令遵循可能不稳定。",
+  "license": "Apache-2.0",
+  "official_model_ids": [
+    "Qwen/Qwen-Image-Edit"
+  ],
+  "parameter_total": "20,430,401,088（Hugging Face 官方仓库 API 对 BF16 safetensors 给出的参数数，和官方“20B Qwen-Image / 20B MMDiT”口径一致，指核心 MMDiT 而非整条流水线）。技术报告另列冻结 Qwen2.5-VL 为 7B、VAE 编码器/解码器为 54M/73M；公开仓库的全部组件约为 28.8B 存储参数，因此不得把“20B”误解为包含条件编码器和 VAE 的严格全系统总参数。",
+  "parameter_active": "核心 MMDiT 是 dense 架构，按 MMDiT 单体口径约 20.43B 参数在每次去噪前向中参与计算；完整编辑流水线还执行冻结的 Qwen2.5-VL 与 VAE。官方未给出包含条件编码、VAE 编解码在内的统一 active-parameter 口径，亦未按文本-only 与图文条件分别统计。",
+  "weight_size": "57,710,671,286 bytes（57.711 GB / 53.747 GiB），来自 Hugging Face 官方仓库 usedStorage；仓库文件树显示约 57.7 GB，其中 text_encoder 约 16.584 GB、transformer 约 40.861 GB、VAE 约 0.254 GB。该数值是发布文件体积，不是峰值显存。",
+  "precision": "官方模型页标注 Tensor type 为 BF16，仓库 API 将 20,430,401,088 个核心参数列为 BF16，官方 quick start 也以 torch.bfloat16 加载。技术报告仅披露大规模训练通信时 all-gather 使用 bfloat16、gradient reduce-scatter 使用 float32；优化器状态、主权重及完整训练精度未知。VAE 重建基准为提高数值精度而用 float32 评测，不代表发布权重精度。",
+  "architecture": "继承 Qwen-Image 的三组件架构：冻结的 Qwen2.5-VL-7B-Instruct 作为多模态条件编码器，8×8 空间压缩、16 潜通道的 Qwen-Image-VAE 负责源图/目标图潜表示，60 层、20B 的双流 MMDiT 通过 rectified-flow/flow-matching 去噪。公开 transformer config 为 24 个注意力头、head dimension 128、intermediate size 12,288、patch size 2、joint attention dimension 3,584。Edit 检查点在 20B Qwen-Image 基座上继续做图像编辑多任务训练，而不是另一套尺寸不同的生成骨干。",
+  "attention_or_sequence_design": "Qwen-Image 基座使用标准 double-stream MMDiT，并以 MSRoPE（Multimodal Scalable RoPE）联合编码文字与图像位置：图像位置从中心扩展，文字位置沿图像网格对角线排列；Q/K 使用 RMSNorm，其余归一化使用 LayerNorm。编辑新增的关键序列设计是把源图 VAE latent 与带噪目标图 latent 沿图像序列维拼接，并把 MSRoPE 从 height-width 扩展出 frame 维，以区分编辑前后的图像；公开 config 的 RoPE 三轴维度为 [16, 56, 56]。Qwen2.5-VL 提取的源图视觉 patch 与文本 token 则组成条件/文本流。",
+  "vae_or_tokenizer": "Qwen-Image-VAE 源自 Wan-2.1-VAE：训练设计为共享单编码器、图像/视频双解码器，冻结共享编码器，只在文本密集图像上微调图像解码器；公开编辑流水线打包 AutoencoderKLQwenImage 的编码器与图像解码器。空间压缩为 8×8、潜通道 16；论文列编码器 54M、解码器 73M，而处理单帧图像时有效激活约 19M/25M。VAE 微调语料含真实 PDF、PPT、海报及中英文合成段落，目标使用重建损失与感知损失并动态调权，不使用最终无效的对抗损失。文本 tokenizer 为 Qwen2Tokenizer。",
+  "text_encoder_or_conditioner": "冻结的 Qwen2.5-VL-7B-Instruct 同时编码编辑指令与输入图像；公开 config 为 32 层 ViT、28 层语言骨干、hidden size 3,584、28 个查询头/4 个 KV 头，最终取语言骨干最后一层 hidden state 作为条件表示。编辑专用 system prompt 要求先描述输入图像关键特征，再说明指令应如何修改并在适当位置保持一致。Diffusers 管线的 tokenizer_max_length 为 1024，公开调用接口默认 max_sequence_length 为 512；这两个实现参数不等同于模型已验证可稳定遵循 1024 token 编辑指令。",
+  "training_hardware": "未知。技术报告只称 Consumer 部署在 GPU-dense clusters，并报告某个未指明 GPU 型号的 256 多分辨率实验中每卡内存为 71 GB（关闭 activation checkpointing）或 63 GB（开启），未披露具体加速器型号。",
+  "training_hardware_scale": "未知。官方未披露 Qwen-Image 基座或 Qwen-Image-Edit 继续训练使用的 GPU 数量、节点数、集群拓扑、总 GPU-hours、训练 FLOPs 或能耗。",
+  "training_data_scale": "Qwen-Image 基座训练收集并标注了 billions of image-text pairs；这是全基座语料口径。Qwen-Image-Edit 专属的 TI2I/I2I 编辑样本数、源图—指令—目标图三元组数、token 数与各任务混合比例均未披露，不能把“数十亿图文对”直接记作编辑对数量。",
+  "training_data_composition": "共享的 Qwen-Image 基座数据约由 Nature 55%、Design 27%、People 13%、受控文字渲染 Synthetic Data 5% 组成；合成部分明确排除其他生成模型直接产出的图像，覆盖纯文字渲染、真实场景文字合成及 PPT/UI 模板化复杂排版。编辑扩展采用 T2I、传统 TI2I 与 I2I reconstruction 多任务，并覆盖指令编辑、novel-view synthesis、深度估计等可统一为 TI2I 的任务；I2I reconstruction 用于对齐 Qwen2.5-VL 语义表示与 MMDiT/VAE 潜表示。编辑专属数据来源、许可证、去重、语言比例、真实/合成占比和安全过滤细节未知。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Qwen-Image progressive pre-training",
+      "description": "共享基座用 flow matching 逐步从约 256p、多长宽比训练扩展到 640p 和 1328p，同时从非文字图像过渡到文字图像、从海量数据过渡到更严格过滤数据、平衡域/分辨率并后期加入受控合成文字数据。"
+    },
+    {
+      "stage": 2,
+      "name": "Qwen-Image supervised fine-tuning",
+      "description": "使用按语义类别分层并经人工精标的清晰、细节丰富、明亮、写实样本，针对基座缺陷提升真实感与细节。报告没有给出编辑任务在该阶段的独立占比。"
+    },
+    {
+      "stage": 3,
+      "name": "Qwen-Image DPO post-training",
+      "description": "同一 prompt 多随机种子生成候选，由人工选择最佳/最差样本，对 flow-matching 模型做较大规模 DPO 偏好训练。是否所有公开 Edit 权重逐项继承同一 DPO checkpoint 未被单独说明。"
+    },
+    {
+      "stage": 4,
+      "name": "Qwen-Image GRPO refinement",
+      "description": "在 DPO 后用 Flow-GRPO 做较小规模、细粒度 on-policy 强化学习；将确定性 ODE 采样改写为带随机探索的 SDE 轨迹。Edit 检查点对应的奖励模型、组大小与训练步数未披露。"
+    },
+    {
+      "stage": 5,
+      "name": "Edit-specific multi-task extension",
+      "description": "从 20B Qwen-Image 基座继续训练面向编辑的多任务版本，联合 T2I、TI2I 和 I2I reconstruction；源图同时进入 Qwen2.5-VL 与 VAE，MMDiT 学习在语义指令遵循和像素/结构保持之间平衡。该阶段产生 2025-08-18 开放的单图 Qwen-Image-Edit 检查点，但官方未公开独立步骤数与数据配方。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "Qwen-Image progressive pre-training",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Qwen-Image supervised fine-tuning",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Qwen-Image DPO post-training",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Qwen-Image GRPO refinement",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Edit-specific multi-task extension",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "主干采用 rectified flow / flow matching：VAE 图像潜变量与标准高斯噪声线性插值，t 从 logit-normal 分布采样，以速度预测 MSE 训练。基座后训练包含面向 flow-matching 的 DPO 与 Flow-GRPO；编辑扩展以 T2I、TI2I、I2I reconstruction 多任务对齐语义条件与重建条件。VAE 图像解码器用重建损失和感知损失动态调权。官方未披露优化器类型、betas、weight decay、全局 batch、学习率与调度、梯度裁剪或 Edit 阶段损失权重。",
+  "training_infra": "共享基座训练使用 Ray-inspired Producer–Consumer 架构：Producer 做过滤、Qwen2.5-VL/VAE 预编码、按分辨率缓存并通过支持 RPC/异步零拷贝调度的 HTTP 传输层供数；Consumer 专注 MMDiT 训练。模型基于 Megatron-LM 与 NVIDIA Transformer Engine，采用 4-way tensor parallelism、data parallelism、head-wise attention parallelism 和 distributed optimizer。官方因激活检查点把单步从约 2 秒增至 7.5 秒（3.75×）而选择关闭它；all-gather 用 BF16、reduce-scatter 用 FP32。Edit 专属继续训练是否完全复用同一集群配置未单列。",
+  "inference_hardware": "官方 quick start 将完整 BF16 pipeline 放到 CUDA 设备，但未指定 GPU 型号、GPU 数量、最低/推荐显存或 CPU offload 基准。57.7 GB 发布权重体积意味着不能把社区量化或分层 offload 的低显存数字当作原生 BF16 最低显存。",
+  "inference_performance": "官方首版示例使用 50 个去噪步、true CFG 4.0、空 negative prompt，并只支持单图输入。官方没有在固定 GPU、输入/输出分辨率和提示词长度下报告端到端延迟、吞吐或峰值显存；2025-08-19 还专门提示旧 Diffusers 实现存在性能对齐问题，并建议更新以改善身份保持和指令遵循。",
+  "max_output_resolution": "未披露硬上限。官方/共同维护的 Diffusers QwenImageEditPipeline 默认按输入长宽比计算约 1,048,576 像素的输出面积并对齐到 32 的倍数（方图为 1024x1024），亦允许显式 height/width；技术报告的共享基座渐进训练最高写到 1328x1328。1MP 默认值与 1328p 训练档都不是经官方声明的最大可用输出分辨率，强制与输入差异很大的尺寸还可能降低保持度。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1087,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis Image Editing Leaderboard 动态榜单抓取；Qwen Image Edit 排名 52、95% CI ±8、8,497 次样本/对局，分数会随新增盲测投票变化）",
+  "generation_time_seconds": null,
+  "generation_time_context": "未知。官方论文、博客、模型卡与 GitHub 没有给出可复现的单图端到端耗时；Artificial Analysis 编辑榜单为该条目提供 Elo 与定价，但未在条目表中提供可归因于原版 Qwen Image Edit 的标准化生成秒数或服务端硬件。静态图像编辑的 max_output_duration_seconds 与 native_fps 不适用，故为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "GEdit-Bench full set",
+      "variant": "Qwen-Image multi-task editing model reported by the Qwen-Image technical report",
+      "protocol": "Semantic Consistency、Perceptual Quality、Overall 均由 GPT-4.1 评估，0–10 分；Overall 为每样本前两项的几何均值后再跨样本平均。",
+      "metrics": {
+        "English_G_SC": 8.00,
+        "English_G_PQ": 7.86,
+        "English_G_O": 7.56,
+        "Chinese_G_SC": 7.82,
+        "Chinese_G_PQ": 7.79,
+        "Chinese_G_O": 7.52
+      },
+      "scope": "技术报告以 Qwen-Image 总称报告编辑多任务模型；官方 Qwen-Image-Edit 模型卡沿用该论文并宣称相同编辑能力，但未公开论文评测 checkpoint 与 2025-08-18 权重文件的逐文件哈希映射。"
+    },
+    {
+      "benchmark": "ImgEdit",
+      "variant": "Qwen-Image multi-task editing model reported by the Qwen-Image technical report",
+      "protocol": "734 个真实世界案例、9 类编辑任务；GPT-4.1 按指令遵循、编辑质量和细节保持评为 1–5 分，Overall 为全部任务分数平均。",
+      "metrics": {
+        "Add": 4.38,
+        "Adjust": 4.16,
+        "Extract": 3.43,
+        "Replace": 4.66,
+        "Remove": 4.14,
+        "Background": 4.38,
+        "Style": 4.81,
+        "Hybrid": 3.82,
+        "Action": 4.69,
+        "Overall": 4.27
+      },
+      "scope": "同上，属于首版技术路线的官方编辑量化结果；不得与后续 2509/2511 检查点分数混用。"
+    },
+    {
+      "benchmark": "GSO novel-view synthesis",
+      "variant": "Qwen-Image editing model",
+      "protocol": "以物体正视图和类似“turn left 90 degrees, a dog”的文本生成新视角，与 GSO 真值比较。",
+      "metrics": {
+        "PSNR_higher_is_better": 15.11,
+        "SSIM_higher_is_better": 0.884,
+        "LPIPS_lower_is_better": 0.153
+      },
+      "scope": "这是编辑模型空间理解能力的专项结果，不等同于通用编辑质量总分。"
+    },
+    {
+      "benchmark": "Qwen-Image-VAE reconstruction",
+      "model_component": "shared Qwen-Image-VAE",
+      "protocol": "所有 VAE 均以 8x8 压缩、16 潜通道比较；ImageNet-1k validation 与内部 text-rich corpus 均在 256x256、float32 下评测。",
+      "metrics": {
+        "ImageNet_PSNR": 33.42,
+        "ImageNet_SSIM": 0.9159,
+        "internal_text_PSNR": 36.63,
+        "internal_text_SSIM": 0.9839
+      },
+      "scope": "仅衡量 Edit 与生成基座共享的 VAE 重建上限；内部文字集不可作为公开可复现的端到端编辑基准。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Editing Arena",
+      "variant": "Qwen Image Edit (open weights, Aug 2025)",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1087,
+        "rank": 52,
+        "rank_interval_95pct": "49–53",
+        "samples": 8497
+      },
+      "scope": "第三方动态盲评；榜单未披露该条目的具体推理后端、提示词重写、采样步数、分辨率或硬件，因此不能视为官方论文设置的复现。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "对同一输入图像做双编码：Qwen2.5-VL 提取高层视觉语义，VAE Encoder 提取低层重建/外观潜表示，两路同时条件化 MMDiT，以兼顾大幅语义编辑与未编辑区域的视觉保真。",
+      "scope_boundary": "双编码是相对纯 T2I Qwen-Image 发布权重新增/启用的编辑条件路径，但相关机制已在 2025-08-04 的 Qwen-Image 技术报告中作为多任务编辑版本披露；不能把它表述成 08-18 才首次提出，也不能把 Qwen2.5-VL 误写成只编码文字。",
+      "evidence": "官方技术报告摘要、Sec. 1、Fig. 14 与 Sec. 4.3 明确写出源图分别进入 Qwen2.5-VL 和 VAE；模型卡与 2025-08-19 官方博客再次用 visual semantic control / visual appearance control 概括两路作用。",
+      "confidence": "高"
+    },
+    {
+      "claim": "把源图 VAE latent 与带噪目标 latent 沿 MMDiT 图像序列拼接，并为 MSRoPE 新增 frame 维以区分编辑前后图像，使同一 20B 骨干直接建模 source–target 结构对应关系。",
+      "scope_boundary": "这是首版单图编辑的序列构造，不代表支持任意多图；正式多图输入是 2509 的后续能力。frame-aware MSRoPE 也不是一套独立新骨干，而是共享基座 MSRoPE 的编辑扩展。",
+      "evidence": "官方技术报告 Fig. 14 画出源图 VAE 路径与目标噪声路径，Sec. 4.3 明确说明沿 sequence dimension 拼接并增加 frame dimension；官方 Diffusers 实现的 latent_model_input=torch.cat([latents, image_latents], dim=1) 与 img_shapes 两帧结构对应论文设计。",
+      "confidence": "高"
+    },
+    {
+      "claim": "以 T2I、TI2I 与 I2I reconstruction 的增强多任务训练对齐 Qwen2.5-VL 语义潜表示和 MMDiT/VAE 图像潜表示，从训练目标层面改善编辑一致性。",
+      "scope_boundary": "技术报告没有公开任务混合比例、编辑样本规模或消融表来单独量化 I2I reconstruction 的增益，因此“改善一致性”有官方方法论与最终基准支持，但不能声称已隔离证明每个子目标的因果贡献。",
+      "evidence": "官方技术报告摘要明确列出 T2I、TI2I、I2I reconstruction 并说明其用于 latent alignment；GEdit-EN/CN Overall 7.56/7.52 与 ImgEdit 4.27 是完整多任务模型的最终结果。",
+      "confidence": "中高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "完整流水线严格 parameter_total 与统一 parameter_active 口径；20.43B 仅为官方核心 MMDiT 统计",
+    "Qwen-Image-Edit 专属训练数据规模、数据来源许可、任务混合比例、语言分布、真实/合成占比与去重/安全过滤细节",
+    "Edit 继续训练的优化步数、wall-clock 时间、优化器、学习率、全局 batch、梯度裁剪、训练精度和累计 FLOPs",
+    "训练 GPU/加速器型号、数量、节点数、互联拓扑、GPU-hours、吞吐、能耗、容错与 checkpoint 频率",
+    "DPO/GRPO 各自是否以及以何种 checkpoint/奖励配方进入最终公开 Qwen-Image-Edit 权重",
+    "技术报告中以 Qwen-Image 总称评测的编辑模型与 2025-08-18 发布文件之间的逐文件 hash/checkpoint 映射",
+    "原生 BF16 在指定 GPU、输入/输出尺寸、50 步与 CFG 设置下的端到端延迟、吞吐、峰值显存和最低显存",
+    "正式支持的最大输出分辨率；默认约 1MP 与训练 1328p 都不是官方硬上限",
+    "官方在线服务实际采用的提示词重写模型、系统提示与是否始终对应开放权重 checkpoint",
+    "Artificial Analysis 的具体推理后端、提示词重写、采样参数、分辨率和硬件；Elo 会随投票动态变化"
+  ],
+  "sources": [
+    {
+      "title": "Qwen-Image Technical Report",
+      "url": "https://arxiv.org/abs/2508.02324",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "Qwen-Image Technical Report official PDF",
+      "url": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Image/Qwen_Image.pdf",
+      "source_type": "official_paper_pdf"
+    },
+    {
+      "title": "Qwen-Image-Edit: Image Editing with Higher Quality and Efficiency",
+      "url": "https://qwenlm.github.io/blog/qwen-image-edit/",
+      "source_type": "official_blog"
+    },
+    {
+      "title": "Qwen-Image: Crafting with Native Text Rendering",
+      "url": "https://qwenlm.github.io/blog/qwen-image/",
+      "source_type": "official_base_model_blog"
+    },
+    {
+      "title": "QwenLM/Qwen-Image official repository and release news",
+      "url": "https://github.com/QwenLM/Qwen-Image",
+      "source_type": "official_github"
+    },
+    {
+      "title": "Qwen/Qwen-Image-Edit",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "Qwen/Qwen-Image-Edit repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/Qwen/Qwen-Image-Edit?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Qwen-Image-Edit model index",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit/blob/main/model_index.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Qwen-Image-Edit MMDiT transformer config",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Qwen-Image-Edit Qwen2.5-VL conditioner config",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit/blob/main/text_encoder/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Qwen-Image-Edit VAE config",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit/blob/main/vae/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Diffusers QwenImageEditPipeline implementation",
+      "url": "https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/qwenimage/pipeline_qwenimage_edit.py",
+      "source_type": "officially_maintained_inference_implementation"
+    },
+    {
+      "title": "Artificial Analysis Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_benchmark"
+    }
+  ],
+  "notes": "版本边界是本条目的核心：2025-08-04 发布的是 Qwen-Image 生成基座与覆盖生成/编辑研究的技术报告；独立、可下载、单图输入的 Qwen-Image-Edit 于 2025-08-18 才开源，专题博客在 08-19 发布。共享内容包括 60 层 20B MMDiT、冻结 Qwen2.5-VL-7B、Qwen-Image-VAE、MSRoPE、flow-matching 目标及基座文字渲染能力；Edit 新增/启用源图的 Qwen2.5-VL 语义编码和 VAE 重建编码双路径、源/目标 latent 序列拼接、frame-aware MSRoPE、编辑 system prompt 与面向 T2I/TI2I/I2I 的继续训练。2509（2025-09-22，多图输入与一致性改进）和 2511（2025-12-23，进一步人物一致性、几何推理及内化部分社区 LoRA）均是后续版本，不属于本条目。comparison_eligible=true：公开权重、官方 GEdit/ImgEdit/GSO 数值与 AA 动态 Elo 均可用于比较，但论文以 Qwen-Image 总称评测编辑多任务模型且未给出发布文件 hash 映射，比较时须标注此 checkpoint 边界。history_eligible=true：官方发布公告、模型仓库、博客和论文均可核验，且可清楚与 08-04 基座及后续月度版本分开。"
+}

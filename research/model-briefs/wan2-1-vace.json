@@ -1,0 +1,232 @@
+{
+  "slug": "wan2-1-vace",
+  "name": "Wan2.1-VACE",
+  "family": "VACE / Wan2.1",
+  "entry_kind": "model",
+  "modality": "Omni",
+  "organization": "Tongyi Lab, Alibaba Group（通义实验室 / 阿里巴巴）",
+  "release_date": "2025-05-14",
+  "release_date_basis": "VACE 论文 arXiv v1 于 2025-03-10 提交，项目于 2025-03-11 正式提出；VACE-Wan2.1-1.3B-Preview 与 VACE-LTX-Video-0.9 于 2025-03-31 发布。本文条目锁定可比较的最终 Wan2.1-VACE-14B 权重，官方 GitHub 与 Wan2.1 模型卡均记录其与最终 1.3B 版在 2025-05-14 发布，因此采用该日，而不是论文日或预览版日期。",
+  "access": "开放权重与推理代码：最终 Wan2.1-VACE-14B/1.3B 可直接从 Hugging Face 或 ModelScope 下载，官方 VACE 与 Wan2.1 仓库提供单卡/多卡推理、预处理和 Gradio 代码。论文只披露训练方法和超参数，官方仓库未提供完整训练流水线。",
+  "license": "代表权重 Wan-AI/Wan2.1-VACE-14B 与 1.3B 为 Apache License 2.0；VACE 项目说明各变体继承其 base model 许可。较早的 LTX-Video-0.9 base 变体在官方模型表中标为 LTX-Video 的 RAIL-M，不能用 Wan 版的 Apache-2.0 覆盖它。",
+  "official_model_ids": [
+    "Wan-AI/Wan2.1-VACE-14B",
+    "Wan-AI/Wan2.1-VACE-1.3B",
+    "ali-vilab/VACE-Wan2.1-1.3B-Preview",
+    "ali-vilab/VACE-LTX-Video-0.9"
+  ],
+  "parameter_total": "代表权重官方沿用 base 名称标为 14B，但这只准确标识 Wan2.1-T2V-14B 主干的规模。发布配置在 40 个主干 DiT block 之外另有 8 个复制得到的 VACE Context Blocks、Context Embedder 和投影层，故完整 VACE 去噪网络总参数必然高于 14B；官方没有给出完整精确参数总数，不能把 14B 当成端到端总参数。UMT5-XXL 与 Wan-VAE 又是额外组件。",
+  "parameter_active": "稠密非 MoE。推理时 40 个 Wan 主干 block 与 8 个分布式 Context Blocks 均参与前向传播；论文中的训练策略冻结主干、只训练 Context Embedder/Context Blocks，但冻结不等于推理时不激活。完整 active-parameter 数官方未给出。",
+  "weight_size": "Hugging Face API 对 Wan-AI/Wan2.1-VACE-14B 仓库的公开文件清单合计约 75.15 GB（十进制）：7 个核心 safetensors 分片的仓库对象大小合计约 63.25 GB，另含 11.36 GB 的 BF16 UMT5-XXL encoder 与 0.508 GB Wan2.1 VAE。核心 index.json 的 metadata 另写 tensor total_size=69,350,371,584 bytes，与 API 所报分片对象大小不完全一致；本条保留这一差异，不据此反推精确参数量。单次部署不应把同仓库素材文件算作模型权重。",
+  "precision": "论文表列 Wan 变体训练采用 BFloat16、FSDP 与 Tensor Parallel；官方推理代码通常以 BF16 运行。官方仓库同时包含名为 models_t5_umt5-xxl-enc-bf16.pth 的 BF16 文本编码器。核心 safetensors 的逐张量 dtype 分布未在模型卡中明确汇总，因此不把整个仓库笼统称为纯 BF16。",
+  "architecture": "基于 Wan2.1-T2V-14B 的 latent video Diffusion Transformer。代表配置为 hidden dim 5120、FFN dim 13824、40 个主干 block、40 heads、latent in/out dim 16、文本长度上限 512；VACE 新增 vace_in_dim=96 的 Context Embedder，并在主干层 [0,5,10,15,20,25,30,35] 配置 8 个 Context Blocks。VCU 将文本、参考图/帧、源视频和时空 mask 形式化为统一条件；Concept Decoupling 把待改变的 reactive frames 与应保留的 inactive frames 分开，经 VAE 编码并与 mask 对齐后形成 context tokens。",
+  "attention_or_sequence_design": "继承 Wan2.1 的视频 DiT 自注意力、文本交叉注意力与时空位置设计。Context Adapter 使用 Res-Tuning 式旁路：主干处理 noisy video tokens 与 text tokens，复制的 Context Blocks 处理 context tokens 与 text tokens，再把各旁路输出作为残差信号注入对应主干 block。论文消融显示，相同 Context Block 数量下，分布式插入优于只连续复制浅层 block；14B 最终配置用 8/40 个等距上下文层，序列长度表列 75,600。",
+  "vae_or_tokenizer": "继承 Wan2.1 的 Wan-VAE（3D causal video VAE）；代表仓库包含 Wan2.1_VAE.pth，约 0.508 GB。VCU 中 reference images 先单独经 VAE encoder，再沿时间维拼接；reactive/inactive videos 也映射到与 noisy video latent 时空对齐的空间，mask 直接 reshape/interpolate 后并入 Context Embedder。官方 VACE 论文未另报 VAE 参数量或重新训练细节。",
+  "text_encoder_or_conditioner": "代表 Wan 变体使用 UMT5-XXL 文本编码器，官方仓库附带 BF16 encoder（约 11.36 GB）与 tokenizer，DiT 配置 text_len=512。官方说明英文 Wan2.1 与 LTX 变体最好使用 prompt extension；Wan 推理可调用 DashScope 或本地 Qwen 做可选提示扩写，但这些扩写模型不是 VACE 核心权重。视觉条件由 VCU/Context Adapter 承担，而非把参考图交给 UMT5。",
+  "training_hardware": "论文 Appendix Table 3 对 Wan-T2V-based VACE 列为 A100，设备栏写作 A100×128；训练策略为 FSDP、Tensor Parallel、BFloat16。",
+  "training_hardware_scale": "128×NVIDIA A100（论文表格口径）。表中 Batch Size / GPU 对 Wan 变体记为 1/8、gradient accumulation=1，但未进一步说明这是否表示每 8 卡一个样本以及具体 A100 显存规格、节点数和互联拓扑。",
+  "training_data_scale": "未知。论文明确承认统一模型尚未使用可与 foundation model 相当的大规模数据和算力，但没有披露训练视频条数、小时数、图像数、token 数、去重后规模或各任务配比。VACE-Benchmark 的 240 条高质量视频是评测集，不是训练数据规模。",
+  "training_data_composition": "从视频先做镜头切分，并按分辨率、美学与运动幅度过滤；用 RAM 标注首帧、Grounding DINO 定位，再用 SAM2 跨帧传播分割并按实例面积/有效帧比例二次过滤。训练样本涵盖 T2V、I2V/extension、inpainting/outpainting、gray、depth、scribble、pose、optical-flow、layout、face/object reference 等 12 类及组合任务。控制信号部分离线提取、gray/layout 在线构造；重绘用随机实例 mask 及其反 mask；extension 抽取首尾帧、随机帧或两端片段；reference 从视频抽取人脸/物体实例并增强。不同任务会随机组合，mask 做任意粒度增强。来源数据集、许可构成和每类占比未知。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "基础互补任务",
+      "description": "从预训练 T2V 主干初始化，先学习 inpainting 与 extension，引入 mask，并学习空间与时间两个维度的上下文生成。"
+    },
+    {
+      "stage": 2,
+      "name": "任务与引用扩展",
+      "description": "从单输入 reference frame 逐步扩展到多 reference frames，并从单任务扩展到 R2V、V2V、MV2V 及其随机组合；采用 VCU、Concept Decoupling 和 Context Adapter。"
+    },
+    {
+      "stage": 3,
+      "name": "质量与长序列微调",
+      "description": "最后用更高质量数据和更长序列微调质量；训练输入支持任意分辨率、动态时长和可变帧率。论文未给每阶段各自步数，只给整个 Wan 配方 200,000 steps。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "基础互补任务",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知（总训练为 200,000 steps，未按阶段拆分）"
+    },
+    {
+      "stage": "任务与引用扩展",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知（总训练为 200,000 steps，未按阶段拆分）"
+    },
+    {
+      "stage": "质量与长序列微调",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知（总训练为 200,000 steps，未按阶段拆分）"
+    }
+  ],
+  "training_algorithms": "Wan 代表配方：基于预训练 Wan2.1-T2V-14B 做 Context Adapter/Res-Tuning，主干 DiT 冻结，只训练 Context Embedder 与复制的 Context Blocks；AdamW，weight decay 0.1，constant learning rate 5e-5，200,000 steps，uniform weighting，启用 timestep shifting。生成过程使用 Flow Euler；训练输入混合 12 类任务和 composition task。论文同时比较过 full fine-tuning，称两者效果相近但 adapter 收敛更快。",
+  "training_infra": "论文披露 Wan 变体采用 FSDP + Tensor Parallel + BF16，在 128×A100 上训练；未披露软件栈版本、并行维度、activation checkpointing、数据管线吞吐、容错、checkpoint 频率、通信拓扑或累计 accelerator-hours。官方公开仓库的 8 卡 xFuser/FSDP/Ulysses 推理命令不能反推训练集群实现。",
+  "inference_hardware": "论文对代表 Wan-T2V-based VACE 的速度使用 8 GPUs，设备为 NVIDIA A100；官方代码另支持 8 卡 FSDP + xDiT Ulysses 的 14B/720p 推理。论文未给出代表 14B 权重在单卡消费级 GPU 上的官方峰值显存或延迟。对照用 LTX-Video-0.9 变体是在单张 A100 上测得。",
+  "inference_performance": "论文 Appendix Table 3：Wan-T2V-based VACE 在 8×A100、约 720p、Flow Euler 25 steps、CFG 4.0 下 generation speed 约 260 秒；表格没有独立说明该速度是否包含 VAE 解码、prompt extension、预处理或 I/O。LTX-Video-0.9 base 变体则在单张 A100、约 480p、40 steps、CFG 3.0、无专门加速时约 24 秒生成约 5 秒视频；两者硬件、base、分辨率和采样步数均不同，不可直接当同配置速度比。",
+  "max_output_resolution": "代表 Wan2.1-VACE-14B 官方推荐最高约 1280×720（~81 frames）；14B 同时支持 480p/720p。最终 1.3B 推荐 ~832×480、约 81 帧，虽可尝试 720p但官方称训练不足而较不稳定。LTX-Video-0.9 变体为约 768×512、97 帧。输入可为任意分辨率，但官方提示最佳结果应落在各权重训练范围内。",
+  "max_output_duration_seconds": "未知；论文称训练支持动态时长和长序列，但未发布硬性最大秒数。官方示例/模型表的代表输出为约 81 帧，不能据此证明最大时长只有约 5 秒。",
+  "native_fps": "可变；官方 Wan2.1 示例通常按 16 fps 导出约 81 帧视频，但 VACE 论文明确称训练输入允许 variable frame rates，未定义唯一 native fps。",
+  "aa_elo": "未知；未找到可稳定归属于官方 Wan2.1-VACE-14B checkpoint 的 Artificial Analysis Video Arena 条目，不以第三方托管或后继 Wan 编辑模型回填。",
+  "aa_elo_observed_at": "2026-07-19 核验时未知",
+  "generation_time_seconds": 260,
+  "generation_time_context": "论文代表值：Wan-T2V-based VACE（即 14B 高质量 base 路线），约 720p，Flow Euler 25 steps，guide scale 4.0，8×NVIDIA A100，约 260 秒。官方发布模型表常用约 81 帧；论文速度表没有把准确帧数/秒数、A100 显存版本以及是否端到端逐项写清，因此这是研究配置速度而非通用 API 延迟。",
+  "benchmark_scores": [
+    {
+      "benchmark": "VACE-Benchmark automatic + MOS",
+      "variant": "VACE-LTX-Video-0.9（论文主定量表；不是最终 Wan2.1-VACE-14B）",
+      "task": "I2V",
+      "metrics": {
+        "normalized_average_percent": 74.38,
+        "prompt_following_mos": 3.20,
+        "temporal_consistency_mos": 4.00,
+        "video_quality_mos": 2.54,
+        "user_study_average_mos": 3.24
+      },
+      "source_scope": "VACE-Benchmark 每任务平均约 20 样本；MOS 1-5。论文为了可比性把任意帧引用能力约束为首帧 I2V。"
+    },
+    {
+      "benchmark": "VACE-Benchmark automatic + MOS",
+      "variant": "VACE-LTX-Video-0.9（论文主定量表；不是最终 Wan2.1-VACE-14B）",
+      "task": "Outpainting",
+      "metrics": {
+        "normalized_average_percent": 74.25,
+        "prompt_following_mos": 3.90,
+        "temporal_consistency_mos": 3.92,
+        "video_quality_mos": 3.58,
+        "user_study_average_mos": 3.80
+      },
+      "source_scope": "论文 Table 2；对照 Follow-Your-Canvas 与 M3DDM。"
+    },
+    {
+      "benchmark": "VACE-Benchmark automatic + MOS",
+      "variant": "VACE-LTX-Video-0.9（论文主定量表；不是最终 Wan2.1-VACE-14B）",
+      "task": "Pose-controlled V2V",
+      "metrics": {
+        "normalized_average_percent": 76.13,
+        "prompt_following_mos": 2.95,
+        "temporal_consistency_mos": 3.96,
+        "video_quality_mos": 2.63,
+        "user_study_average_mos": 3.18
+      },
+      "source_scope": "论文 Table 2；对照 Text2Video-Zero、ControlVideo 与 Follow-Your-Pose。"
+    },
+    {
+      "benchmark": "VACE-Benchmark automatic + MOS",
+      "variant": "VACE-LTX-Video-0.9（论文主定量表；不是最终 Wan2.1-VACE-14B）",
+      "task": "R2V",
+      "metrics": {
+        "normalized_average_percent": 76.76,
+        "prompt_following_mos": 3.47,
+        "temporal_consistency_mos": 3.42,
+        "video_quality_mos": 3.30,
+        "user_study_average_mos": 3.40
+      },
+      "source_scope": "论文 Table 2；自动指标接近 Vidu2.0，但 MOS 落后于 Keling1.6、Pika2.2、Vidu2.0。最终 Wan 14B 只在附录给出定性结果，不能把本数值误标为 14B。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "Video Condition Unit（VCU）把文本、图像/参考帧、源视频与时空 mask 统一表示为 text + frame sequence + mask sequence，并用同一模型覆盖 T2V、R2V、V2V、MV2V。",
+      "scope_boundary": "VCU 是输入形式与任务归一化方案，不是新的通用多模态 token 标准。T2V 是无视觉上下文的退化情形；R2V 在序列前插参考帧并配全零 mask；V2V 使用源视频和全一 mask；MV2V 同时给源视频和局部 3D ROI mask。",
+      "evidence": "VACE 论文 Sections 3.1-3.2、Table 1、Figure 2；官方 GitHub usage 接口固定为 prompt、src_video、src_mask、src_ref_images。",
+      "confidence": "高"
+    },
+    {
+      "claim": "Context Adapter 以分布式复制的 DiT Context Blocks 处理 context/text tokens，再向冻结的主干注入残差信号，从而比全量微调更快收敛且可作为可插拔能力。",
+      "scope_boundary": "其思想明确继承 Res-Tuning，不能声称旁路残差适配本身由 VACE 首创。对最终 Wan 14B，官方配置为 40 个主干层加 8 个 Context Blocks；所谓 14B 只是 base 名，不是完整模型总参数。",
+      "evidence": "VACE 论文 Sections 3.3.2、5.3 与 Appendix Table 3；官方 Wan2.1-VACE-14B config.json 的 vace_layers=[0,5,10,15,20,25,30,35]。",
+      "confidence": "高"
+    },
+    {
+      "claim": "VCU 支持把基础任务自由组合，例如 reference + inpainting、scribble + video extension，并由一个模型一次推理实现 Move/Swap/Reference/Expand/Animate-Anything 等工作流。",
+      "scope_boundary": "“自由组合”是训练分布与已展示组合范围内的能力，不代表任意未见条件都可靠；论文同时承认组合任务仍可能无法完整遵循输入、reference identity 也不总能保持。",
+      "evidence": "VACE 论文 Sections 3.2、5.2、6 与 limitations；官方项目页/GitHub demos。",
+      "confidence": "中高"
+    },
+    {
+      "claim": "作者将 VACE 定位为视频领域首个/当时无可比的 all-in-one creation-and-editing model，可在单一框架统一 R2V、V2V、MV2V 和组合任务。",
+      "scope_boundary": "这是作者在 2025-03 的文献检索与定义下的优先权主张，不应扩大为“首个视频生成模型”“首个视频编辑模型”或“首个统一控制模型”；此前已有 MotionCtrl 等统一某类控制的方法，也已有大量单任务生成/编辑系统。更稳妥的历史表述是：较早公开、明确以单模型统一多种视频创建与编辑接口并支持组合任务的框架之一。",
+      "evidence": "VACE 论文 Introduction、Related Work、Experimental Setup 与 Conclusion；论文原文称 currently there is no comparable all-in-one video generation model available，但未提供穷尽式优先权证明。",
+      "confidence": "中"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "最终 Wan2.1-VACE-14B 去噪网络（含 8 个 Context Blocks）与完整端到端系统的精确参数总数和 active-parameter 数",
+    "核心 safetensors index metadata 的 69.35 GB 与 Hugging Face API 所报 7 个分片对象合计 63.25 GB 差异原因，以及全部逐张量 dtype 分布",
+    "训练数据条数、小时数、原始来源、授权比例、语言/地域分布、真实/合成比例、去重和安全过滤统计",
+    "三个训练阶段各自的优化步数、wall-clock、全局 batch、吞吐、checkpoint 频率、累计 GPU-hours/FLOPs、成本与能耗",
+    "A100 的 40GB/80GB 规格、128 卡节点与互联拓扑，以及 Batch Size / GPU=1/8 的精确定义",
+    "代表 14B 速度表对应的准确帧数/视频秒数、是否包含 VAE、prompt extension、预处理、I/O，以及峰值显存",
+    "官方 14B 在单张消费级 GPU、A100/H100 单卡上的可重复端到端延迟与显存",
+    "硬性最大输出时长与唯一 native fps；论文只披露 dynamic duration / variable frame rates",
+    "最终 Wan2.1-VACE-14B 在 VACE-Benchmark 的完整定量表；论文主定量结果属于较小的 LTX-Video-2B base 变体",
+    "可稳定归属于官方 checkpoint 的 Artificial Analysis Elo、票数、置信区间与观测日期"
+  ],
+  "sources": [
+    {
+      "title": "VACE: All-in-One Video Creation and Editing (arXiv:2503.07598)",
+      "url": "https://arxiv.org/html/2503.07598",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "VACE arXiv submission record",
+      "url": "https://arxiv.org/abs/2503.07598",
+      "source_type": "official_preprint_metadata"
+    },
+    {
+      "title": "ali-vilab/VACE official repository",
+      "url": "https://github.com/ali-vilab/VACE",
+      "source_type": "official_github_repository"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-VACE-14B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-VACE-14B",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "Wan2.1-VACE-14B repository metadata and file sizes",
+      "url": "https://huggingface.co/api/models/Wan-AI/Wan2.1-VACE-14B?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Wan2.1-VACE-14B model config",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-VACE-14B/blob/main/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Wan2.1-VACE-14B safetensors index",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-VACE-14B/blob/main/diffusion_pytorch_model.safetensors.index.json",
+      "source_type": "official_weight_index"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-VACE-1.3B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-VACE-1.3B",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "VACE-LTX-Video-0.9",
+      "url": "https://huggingface.co/ali-vilab/VACE-LTX-Video-0.9",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "VACE-Wan2.1-1.3B-Preview",
+      "url": "https://huggingface.co/ali-vilab/VACE-Wan2.1-1.3B-Preview",
+      "source_type": "official_preview_model_card"
+    },
+    {
+      "title": "Wan2.1 official repository and VACE release log",
+      "url": "https://github.com/Wan-Video/Wan2.1",
+      "source_type": "official_family_repository"
+    },
+    {
+      "title": "Ideas around T2I2V models — Wan2.1-VACE chronology clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "代表比较权重选择最终 Wan-AI/Wan2.1-VACE-14B：它与文章的 2025-05 时间点一致，是官方高质量、720p、完整发布版，且配置与速度口径明确。LTX-Video-0.9-based VACE 是论文为快速实验和主定量评测使用的约 2B base 路线，2025-03-31 发布，约 480p、单 A100 约 24 秒；它的 VACE adapter 有 14/28 个 Context Blocks，许可边界也与 Wan 版不同。Wan-based 路线还包括 2025-03-31 的 1.3B Preview，以及 2025-05-14 最终 Wan2.1-VACE-1.3B 与 14B；最终 1.3B 配置为 30 个主干层、15 个 VACE layers，推荐 480p，而最终 14B 为 40+8 context layers、推荐到 720p。论文 Table 2 的数字属于 LTX base，不得回填为 Wan 14B 成绩；反之，260 秒速度属于 8×A100 的 Wan 14B 配方，不得与单 A100 的 24 秒 LTX 数字做无条件快慢结论。comparison_eligible=true 是因为官方 checkpoint、配置、采样参数和硬件速度均公开，但任何横向表必须写清 base、分辨率、任务与采样步数。history_eligible=true 是因为论文提交、预览权重和最终权重有可核验的连续时间线；“首个统一视频生成编辑”只按作者定义保留为有边界的优先权主张。"
+}

@@ -1,0 +1,216 @@
+{
+  "slug": "z-image-edit",
+  "name": "Z-Image-Edit",
+  "family": "Z-Image",
+  "entry_kind": "model",
+  "modality": "Edit",
+  "organization": "Tongyi-MAI, Alibaba Group",
+  "release_date": "2025-11-27",
+  "release_date_basis": "采用官方技术报告标题页与 arXiv 首次提交所标注的 2025-11-27，作为 Z-Image-Edit 首次正式技术披露日期；该日期不是权重发布日期。候选文章所列 2025-11-26 对应官方仓库 News 中 Z-Image-Turbo 的权重首发，也对应 Z-Image 家族仓库上线时段，不能据此声称 Edit 权重已经发布。官方仓库的首版详细 README 在 2025-11-26 UTC（北京时间 2025-11-27）已提到 Z-Image-Edit，但从当时至 2026-07-19 的 Model Zoo 始终将其标为 To be released。",
+  "access": "仅论文与官方仓库披露，未开放 Z-Image-Edit 权重、专属模型卡、官方 API 或可运行在线 Demo。截至 2026-07-19，官方 GitHub Model Zoo 对 Z-Image-Edit 的 Hugging Face 与 ModelScope 两栏仍均为 To be released；论文报告的是内部检查点的训练方法、示例与基准结果。官方仓库已有 Z-Image/Z-Image-Turbo 的生成代码与权重不等于 Edit 检查点可用。",
+  "license": "未知（Z-Image GitHub 代码仓库采用 Apache-2.0，但未发布的 Z-Image-Edit 权重没有可核验的模型许可证；不得把代码许可证或 Z-Image/Z-Image-Turbo 权重许可自动外推给 Edit）",
+  "official_model_ids": [],
+  "parameter_total": "核心 S3-DiT 为 6.15B（官方 Table 2：30 层、hidden size 3840、32 个注意力头、FFN intermediate size 10240）。这是扩散 Transformer 的参数量；Z-Image-Edit 还使用 Qwen3-4B 文本编码器、编辑专用 SigLIP 2、FLUX VAE，以及推理前的外部 Prompt Enhancer VLM。官方未给出含这些组件的端到端精确总参数量。",
+  "parameter_active": "未知；核心 6.15B S3-DiT 为 dense 架构而非公开的 MoE active-parameter 口径，但官方未给出包含 Qwen3-4B、SigLIP 2、FLUX VAE 与 Prompt Enhancer 的端到端 active parameters。",
+  "weight_size": "未知；截至 2026-07-19 没有官方 Z-Image-Edit 权重仓库或可下载 checkpoint，不能用 Z-Image 或 Z-Image-Turbo 的文件体积代替。",
+  "precision": "未知；官方未披露 Z-Image-Edit 的训练精度、内部推理精度、发布 dtype 或量化方案。Z-Image/Z-Image-Turbo 的 BF16 加载示例不能自动外推到未发布的 Edit 检查点。",
+  "architecture": "Z-Image 家族共享的 6.15B Scalable Single-Stream Diffusion Transformer（S3-DiT），以 flow matching 在 FLUX VAE 潜空间预测速度场。不同模态先各经过含两个 Transformer block 的轻量 processor，再把文本 token、参考图 SigLIP 2 视觉语义 token、参考/目标图 VAE token 拼成统一序列，进入 30 层 single-stream attention/FFN 主干。Z-Image-Edit 由共享 low-resolution pre-training 与 omni-pre-training 初始化，随后走独立的编辑 continued pre-training 与编辑 SFT；它不是 8-step Turbo 的编辑版。",
+  "attention_or_sequence_design": "采用 3D Unified RoPE 统一混合序列：图像 token 沿空间轴展开，文本 token 沿时间轴递增。编辑时，参考图与目标图使用对齐的空间 RoPE 坐标，但在时间维相差一个单位，并对干净参考图与含噪目标图施加不同 time conditioning，以显式区分两者。主干使用 QK-Norm、attention/FFN 输入输出两侧的 Sandwich-Norm，且统一为 RMSNorm；条件调制的 scale/gate 投影被拆成全层共享的低秩 down-projection 与逐层 up-projection，以减少参数开销。",
+  "vae_or_tokenizer": "图像潜变量使用 FLUX VAE；官方报告未披露所用 FLUX VAE 的精确仓库 ID、压缩倍数、latent channels、是否再训练或 Z-Image-Edit 专属改动。参考图还经过 SigLIP 2 提取抽象视觉语义，这不是替代 VAE 的重建 tokenizer。文本 tokenizer 的具体版本未披露。",
+  "text_encoder_or_conditioner": "Qwen3-4B 作为轻量双语文本编码器；仅编辑任务额外加入 SigLIP 2 对参考图抽取抽象语义。系统还使用一个固定、不随对齐训练更新的预训练 VLM 作为 Prompt Enhancer：SFT 时，文本提示以及 Z-Image-Edit 的输入图像先经该 VLM 生成带结构化推理的增强提示，再用于对齐 S3-DiT。Prompt Enhancer 的具体模型 ID、参数量、系统提示与是否在所有评测中启用均未完整披露。",
+  "training_hardware": "NVIDIA H800（官方对 Z-Image 家族完整训练成本使用 H800 GPU-hours 口径）；Z-Image-Edit 专属 continued pre-training/SFT 所用 H800 型号、显存版本及是否混用其他加速器未单独披露。",
+  "training_hardware_scale": "官方仅给出家族级累计训练成本：low-resolution pre-training 147.5K H800 GPU-hours、omni-pre-training 142.5K、post-training 24K，合计 314K H800 GPU-hours（估算租赁成本 628K 美元）。前两项是 Edit 与生成分支共享初始化；24K post-training 未拆分给 Z-Image、Z-Image-Turbo 与 Z-Image-Edit，因此不能作为 Edit 专属成本。GPU 数、节点数、wall-clock 时间、互联拓扑与 Edit 专属 GPU-hours 均未知。",
+  "training_data_scale": "未知；官方只称预训练来自大规模内部版权数据池、跨模态向量引擎包含 billions of embeddings，并称编辑训练语料为 large-scale corpus，但没有披露训练图像数、图文对数、编辑对数、视频帧对数、token 数、存储量或各阶段样本量。billions of embeddings 是检索基础设施规模，不能等同于最终训练样本数。",
+  "training_data_composition": "共享生成预训练侧以真实世界内部版权图像/文本为主，经 pHash 与跨模态去重、清晰度/压缩/水印/噪声/熵过滤、美学评分、AIGC 检测、NSFW 与中英文图文一致性筛选，并由 Z-Captioner 生成含 OCR、世界知识、长中短描述、标签和模拟用户提示的双语多粒度 captions。编辑数据来自三路：其一，以任务专用 expert models 为同一输入合成多种编辑结果，再用图结构任意组合/反转形成单项与 mixed-editing pairs；其二，从大规模视频帧中采集具有共同主体、场景或风格的自然图像组，并用 CN-CLIP 相似度筛选；其三，用可控文本渲染系统合成字体、颜色、尺寸、位置已知的文字编辑对。Z-Captioner 先分别生成源/目标图的含 OCR 详细描述，再分析差异并合成简洁编辑指令。Edit continued pre-training 混入较高比例的 T2I SFT 数据，论文建议 T2I:I2I=4:1；最终 SFT 使用人工构建的任务均衡高质量子集，并大幅下采样与真实用户输入分布差异较大的合成文字编辑数据。各来源的实际比例、许可结构与去重后规模未知。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "共享 256×256 low-resolution T2I pre-training",
+      "description": "在固定 256² 分辨率上以 text-to-image flow matching 建立跨模态对齐、视觉知识与多样概念/风格/构图能力；这是 Z-Image-Edit 与生成分支共享的初始化阶段。"
+    },
+    {
+      "stage": 2,
+      "name": "共享 omni-pre-training",
+      "description": "进行任意分辨率、多宽高比训练，联合 text-to-image 与 image-to-image，并混合双语、多粒度 captions；I2I 随机使用目标图 caption 或 pairwise difference caption，分别训练参考引导生成与编辑。阶段结束后模型可处理图文条件并生成约 1K–1.5K 范围的任意分辨率图像，形成 Z-Image/Z-Image-Edit 分支的共同起点。"
+    },
+    {
+      "stage": 3,
+      "name": "Z-Image-Edit 512×512 continued pre-training",
+      "description": "从共享 base/omni 初始化出发，在 512² 上使用全部构造编辑对训练数千步以快速适配编辑，同时混入 T2I SFT 数据；论文建议 T2I:I2I=4:1 以减轻小规模、低多样性的编辑对造成的生成质量退化。"
+    },
+    {
+      "stage": 4,
+      "name": "Z-Image-Edit 1024×1024 continued pre-training",
+      "description": "把训练分辨率提高到 1024²以提升输出质量；未披露步数、数据混合比是否改变、batch size 或优化器细节。"
+    },
+    {
+      "stage": 5,
+      "name": "任务均衡的编辑 SFT 与 PE-aware 对齐",
+      "description": "在人工构建的任务均衡高质量子集上进一步提升总体表现和指令遵循；大幅下采样合成文字编辑对。输入提示与参考图先经固定预训练 VLM Prompt Enhancer 生成含推理链的增强条件，用于使 Edit 主干适配 PE。官方 Model Zoo 将 Edit 标为 SFT=yes、RL=no。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "共享 256² low-resolution pre-training",
+      "accelerator_time": "147.5K H800 GPU-hours（家族共享口径）",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "共享 omni-pre-training",
+      "accelerator_time": "142.5K H800 GPU-hours（家族共享口径）",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "Z-Image-Edit 512² continued pre-training",
+      "accelerator_time": "未知",
+      "wall_clock_time": "未知",
+      "optimization_steps": "数千步（官方仅给出数量级，没有精确值）"
+    },
+    {
+      "stage": "Z-Image-Edit 1024² continued pre-training",
+      "accelerator_time": "未知",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "Z-Image-Edit 编辑 SFT / PE-aware 对齐",
+      "accelerator_time": "未知；家族表只给出全部 post-training 合计 24K H800 GPU-hours，无法分配到 Edit",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "核心训练目标为 flow matching：高斯噪声与图像 latent 线性插值，S3-DiT 预测速度场并用 MSE 优化；时间步采用 logit-normal 采样，多分辨率阶段采用 dynamic time shifting 调整不同分辨率的 SNR。编辑能力来自联合 T2I/I2I omni-pre-training、512²→1024² continued pre-training、任务均衡编辑 SFT，以及固定 VLM 的 PE-aware 对齐。重要版本边界：Decoupled-DMD 与 DMDR 都是把生成模型蒸馏/强化为 8-NFE Z-Image-Turbo 的算法；官方训练图与 Model Zoo 均显示 Z-Image-Edit 不经过 few-step distillation 或 RL，不能把这两项写成 Edit 的训练算法。",
+  "training_infra": "PyTorch 训练栈。冻结的 VAE 与 text encoder 使用标准 Data Parallelism；6.15B DiT 使用 FSDP2 分片优化器状态与梯度，所有 DiT 层启用 gradient checkpointing，DiT blocks 由 torch.compile 编译。混合分辨率训练采用 sequence-length-aware batching：按元数据估算序列长度、把相近长度样本分组，并对长序列减小 batch、短序列增大 batch，以降低 padding 与 OOM。具体 PyTorch/CUDA/NCCL 版本、FSDP shard 配置、并行度、吞吐、容错和存储系统未知。",
+  "inference_hardware": "未知；Z-Image-Edit 没有公开权重、专属推理代码或硬件要求。官方对 Z-Image-Turbo 所称 H800 亚秒级与 <16GB VRAM 仅适用于 8-step Turbo，不可外推到 50-step、带 CFG 与参考图编码的 Edit。",
+  "inference_performance": "官方当前 Model Zoo 仅给出 Z-Image-Edit 的推理形态为 50 steps、CFG=yes，任务为 Editing；没有披露任何 GPU 上的端到端延迟、吞吐、峰值显存、参考图数量/尺寸开销或 Prompt Enhancer 耗时。论文正文对标准 SFT teacher 的约 100 NFE 讨论属于蒸馏背景，不能覆盖当前 Model Zoo 对 Edit 的 50-step 声明。",
+  "max_output_resolution": "官方 Edit continued pre-training 的最高明确分辨率为 1024×1024；共享 omni-pre-training 声称可覆盖约 1K–1.5K 范围的任意分辨率与宽高比，但没有为未发布的 Edit checkpoint 给出正式最大输出边长、总像素或可用 bucket，因此 1024×1024 是可核验训练点而非完整产品上限。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "未知；截至 2026-07-19，Artificial Analysis Image Editing Leaderboard 未收录 Z-Image-Edit，官方也没有可访问 endpoint 或本地 benchmark。静态图像编辑不适用 max_output_duration_seconds 与 native_fps，故两者为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "ImgEdit",
+      "protocol": "官方技术报告 Table 14；评分综合 instruction completion 与 visual quality，覆盖 9 类常见编辑任务。结果来自未公开的内部 Z-Image-Edit checkpoint，未提供权重、推理参数、随机种子或完整复现脚本。",
+      "rank_reported": 3,
+      "metrics": {
+        "add": 4.40,
+        "adjust": 4.14,
+        "extract": 4.30,
+        "replace": 4.57,
+        "remove": 4.13,
+        "background": 4.14,
+        "style": 4.85,
+        "hybrid": 3.63,
+        "action": 4.50,
+        "overall": 4.30
+      },
+      "comparison": "论文表中总分低于 UniWorld-V2 4.49 与 Qwen-Image-Edit [2509] 4.35，高于 Qwen-Image-Edit 4.27、GPT-Image-1 [High] 4.20 与 FLUX.1 Kontext [Pro] 4.00；Add 4.40 与 Extract 4.30 是其相对突出的分项。"
+    },
+    {
+      "benchmark": "GEdit-Bench-EN / GEdit-Bench-CN",
+      "protocol": "官方技术报告 Table 15；G_SC 衡量编辑指令/语义一致性，G_PQ 衡量视觉自然度/感知质量，G_O 为综合指标；英文与中文指令分别评测。结果来自未公开内部 checkpoint。",
+      "rank_reported": 3,
+      "metrics": {
+        "english_G_SC": 8.11,
+        "english_G_PQ": 7.72,
+        "english_G_O": 7.57,
+        "chinese_G_SC": 8.03,
+        "chinese_G_PQ": 7.80,
+        "chinese_G_O": 7.54
+      },
+      "comparison": "论文按其排序口径列为第 3；英文 G_O 7.57 略高于表中 Qwen-Image-Edit [2509] 的 7.54，中文 G_O 与其同为 7.54。没有公开 checkpoint 可供独立复核。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "S3-DiT 用同一单流主干联合建模文本、参考图语义 token 与参考/目标 VAE token；编辑时以对齐空间 RoPE、时间轴单位偏移和不同 clean/noisy time conditioning 区分参考图与目标图。",
+      "scope_boundary": "S3-DiT 是 Z-Image、Z-Image-Omni-Base、Z-Image-Turbo 与 Z-Image-Edit 共享的家族架构，不是 Edit 独有；SigLIP 2 参考图语义条件和 reference/target 坐标设计才是编辑分支的特定扩展。官方没有证明这是行业首次，也没有公开去除 SigLIP 2 或时间偏移的编辑消融。",
+      "evidence": "官方技术报告 Sec. 4.1、Fig. 10 与 Table 2 给出统一序列、编辑参考/目标坐标和 time conditioning、2-block modality processors，以及 6.15B/30-layer 配置；官方仓库架构图同时标注 Z-Image 与 Z-Image-Edit。",
+      "confidence": "高"
+    },
+    {
+      "claim": "用共享 omni-pre-training 加上可扩展编辑对构造，把昂贵编辑监督前移到大规模弱对齐 I2I 预训练；随后以 512²→1024² continued pre-training、T2I:I2I 高比例混合与任务均衡 SFT 得到专用 Edit。",
+      "scope_boundary": "图结构组合、视频帧对和可控文字渲染是训练数据工程组合，并非声明所有数据都是真实或都无需 expert model；论文的 purely real-world/no proprietary distillation 表述主要针对生成预训练，编辑对明确包含 expert-model 与渲染合成数据。官方未公开数据规模、对照消融或 Edit 专属 GPU-hours，因而不能量化每项策略的独立贡献。",
+      "evidence": "官方技术报告 Sec. 2.5 描述 expert-model 图结构组合/反向 pair、视频帧 CN-CLIP 筛选和可控文字渲染；Sec. 4.3 描述联合 T2I/I2I omni-pre-training；Sec. 4.7 给出 512² 数千步、1024²、建议 4:1 混合和最终任务均衡 SFT。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "Z-Image-Edit 的正式权重发布日期；截至 2026-07-19 仍为 To be released",
+    "官方 Hugging Face/ModelScope 模型 ID、权重文件体积、权重许可证与可运行代码路径",
+    "包含 Qwen3-4B、SigLIP 2、FLUX VAE 与 Prompt Enhancer 的端到端精确 parameter_total 与 parameter_active",
+    "SigLIP 2、FLUX VAE、文本 tokenizer 与 Prompt Enhancer 的精确 checkpoint/版本 ID",
+    "训练精度、内部推理精度、量化方案与 EMA 使用情况",
+    "训练图像/图文对/编辑对/视频帧对总数，以及各来源、许可、语言、真实/合成占比与去重后规模",
+    "Z-Image-Edit 专属 H800 GPU-hours、GPU/节点数、集群互联、wall-clock 时间、FLOPs、能耗与峰值内存",
+    "512² continued pre-training 的精确步数，以及 1024² continued pre-training 和最终 SFT 的步数",
+    "各阶段 batch size、学习率、优化器、权重衰减、调度器、数据混合比例实值与随机种子",
+    "Prompt Enhancer 的系统提示、推理链监督构造、在 ImgEdit/GEdit 各次评测中是否启用及其独立消融",
+    "官方可复现推理参数：scheduler、guidance scale、negative prompt、参考图数量上限、随机种子与支持的交互输入格式",
+    "正式最大输出分辨率/总像素/宽高比范围；1024²仅是明确的最终训练分辨率",
+    "任一指定硬件上的延迟、吞吐、显存，以及端到端 Prompt Enhancer 与参考图编码开销",
+    "Artificial Analysis Image Editing Elo、观测日期与 generation time",
+    "ImgEdit/GEdit 评测的完整 prompts、生成图、推理设置、随机种子和第三方独立复核",
+    "官方是否、何时以及以何种许可发布 Z-Image-Omni-Base；它是共享预训练起点，不等同已发布的生成向 Z-Image"
+  ],
+  "sources": [
+    {
+      "title": "Z-Image: An Efficient Image Generation Foundation Model with Single-Stream Diffusion Transformer (arXiv:2511.22699)",
+      "url": "https://arxiv.org/abs/2511.22699",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "Z-Image Technical Report (project-hosted PDF)",
+      "url": "https://zimage.net/Z_Image_Report.pdf",
+      "source_type": "official_technical_report_pdf"
+    },
+    {
+      "title": "Tongyi-MAI/Z-Image official repository and current Model Zoo",
+      "url": "https://github.com/Tongyi-MAI/Z-Image",
+      "source_type": "official_github"
+    },
+    {
+      "title": "Z-Image initial detailed README snapshot (Z-Image-Edit marked To be released)",
+      "url": "https://github.com/Tongyi-MAI/Z-Image/blob/eb2730c0d5356e0592ace0224a205b00465ac9b6/README.md",
+      "source_type": "official_github_launch_snapshot"
+    },
+    {
+      "title": "Z-Image official Hugging Face collection",
+      "url": "https://huggingface.co/collections/Tongyi-MAI/z-image",
+      "source_type": "official_model_collection"
+    },
+    {
+      "title": "Tongyi-MAI/Z-Image foundation model card",
+      "url": "https://huggingface.co/Tongyi-MAI/Z-Image",
+      "source_type": "official_model_card_for_family_boundary"
+    },
+    {
+      "title": "Tongyi-MAI/Z-Image-Turbo model card",
+      "url": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo",
+      "source_type": "official_model_card_for_turbo_boundary"
+    },
+    {
+      "title": "Decoupled DMD: CFG Augmentation as the Spear, Distribution Matching as the Shield (arXiv:2511.22677)",
+      "url": "https://arxiv.org/abs/2511.22677",
+      "source_type": "official_preprint_for_turbo_only_method_boundary"
+    },
+    {
+      "title": "Distribution Matching Distillation Meets Reinforcement Learning (DMDR, arXiv:2511.13649)",
+      "url": "https://arxiv.org/abs/2511.13649",
+      "source_type": "official_preprint_for_turbo_only_method_boundary"
+    },
+    {
+      "title": "Artificial Analysis Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_dynamic_leaderboard_absence_check"
+    }
+  ],
+  "notes": "Z-Image-Edit 是官方论文已训练并定量评测的内部模型，不是 rumor，因此 entry_kind=model；但它也不是截至核验日已发布的 open-weight model。版本关系必须按官方训练图理解：共享 256² low-res pre-training 与 omni-pre-training 先产生 generation/editing 通用起点（当前仓库称 Z-Image-Omni-Base，仍待发布）；生成分支经 SFT 得到当前已开放的 Z-Image；该生成模型再经 Decoupled-DMD 与 DMDR few-step/reward post-training 得到 8-step、无 CFG 的 Z-Image-Turbo；编辑分支则经 512²→1024² continued pre-training 和编辑 SFT 得到 50-step、带 CFG 的 Z-Image-Edit。官方 README 的简写“fine-tuned on Z-Image”不能用来把 Turbo 的蒸馏/RL 或当前 Z-Image 的生成权重细节直接继承给 Edit。comparison_eligible=true 仅限论文公开的 ImgEdit/GEdit 结果，可在相同 benchmark 口径下比较；由于权重、推理配置和第三方验证缺失，必须标注 vendor-reported/unreleased，不可进入 AA Elo、速度、显存或可复现开放模型排行。history_eligible=true 以 2025-11-27 的正式研究披露为历史节点，不表示权重发布；候选文章的 2025-11-26 是 Turbo 权重首发/家族上线日期。"
+}

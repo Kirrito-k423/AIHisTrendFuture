@@ -87,10 +87,20 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /value\.startsWith\("未知"\) \? "未知"/);
   assert.match(source, /: "未知"/);
   assert.match(source, /https:\/\//);
+
+  const research = JSON.parse(await readFile(new URL("../app/generative-research.json", import.meta.url), "utf8"));
+  assert.equal(research.length, 27);
+  assert.equal(research.filter((item) => item.entry_kind === "model").length, 24);
+  assert.equal(research.filter((item) => item.entry_kind === "method").length, 3);
+  assert.ok(research.every((item) => item.unknown_fields && item.sources?.length && item.novelty_claims?.length));
+  assert.ok(research.every((item) => item.source_article === "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"));
+  assert.ok(research.some((item) => item.slug === "nextstep-1-1" && item.modality === "T2I"));
+  assert.ok(research.some((item) => item.slug === "self-forcing" && item.entry_kind === "method"));
 });
 
 test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async () => {
   const source = await readFile(new URL("../app/model-catalog.ts", import.meta.url), "utf8");
+  const research = await readFile(new URL("../app/generative-research.json", import.meta.url), "utf8");
   assert.ok((source.match(/id: /g) ?? []).length >= 50);
   assert.match(source, /2022-11-30/);
   assert.match(source, /Qwen3\.7/);
@@ -102,6 +112,11 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /modality: "text→video"/);
   assert.match(source, /aaIntelligence/);
   assert.match(source, /primarySourceUrl/);
+  assert.match(source, /\.\.\.generativeResearchCatalog/);
+  assert.match(research, /Qwen-Image-2/);
+  assert.match(research, /GLM-Image/);
+  assert.match(research, /Step-Video-T2V 30B/);
+  assert.match(research, /Seedance 2\.0/);
 });
 
 test("metric charts use interactive ECharts with linear axes and sortable tables", async () => {
@@ -133,7 +148,7 @@ test("comparison page renders source-backed structured text fields side by side"
   const comparisonSource = await readFile(new URL("../app/components/ComparisonExplorer.tsx", import.meta.url), "utf8");
   const definitionBlock = dataSource.match(/export const structuredFieldDefinitions = \[([\s\S]*?)\] as const;/)?.[1] ?? "";
 
-  assert.equal((definitionBlock.match(/label:/g) ?? []).length, 23);
+  assert.equal((definitionBlock.match(/label:/g) ?? []).length, 26);
   assert.match(dataSource, /historyEventIdByCatalogId/);
   assert.match(dataSource, /已检查当前主来源，尚未找到可核验披露/);
   assert.match(comparisonSource, /StructuredComparison/);
@@ -159,6 +174,13 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /拖动排序/);
   assert.match(html, /开创 \/ 关键方案/);
   assert.match(html, /训练算法 \/ 机制/);
+  assert.match(html, /输出规格/);
+  assert.match(html, /生成速度/);
+  assert.match(html, /生成榜单 Elo/);
+  assert.match(html, /Qwen-Image-2/);
+  assert.match(html, /GLM-Image/);
+  assert.match(html, /Seedance 2\.0/);
+  assert.match(html, /Step-Video-T2V 30B/);
   assert.match(html, /Agent Swarm/);
   assert.match(html, /Muon Split/);
   assert.match(html, /Prefix Tree Merging/);

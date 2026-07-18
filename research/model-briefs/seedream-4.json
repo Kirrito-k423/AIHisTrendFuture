@@ -1,0 +1,258 @@
+{
+  "slug": "seedream-4",
+  "name": "Seedream 4.0",
+  "family": "Seedream",
+  "entry_kind": "model",
+  "modality": "Omni",
+  "organization": "ByteDance Seed",
+  "release_date": "2025-09-09",
+  "release_date_basis": "ByteDance Seed 官方发布博客明确标注日期为 2025-09-09，并称 Seedream 4.0 当日正式发布。API 版本号后缀 250828 表示更早的模型快照，不等同于公众发布日期；技术报告 v1 于 2025-09-24 提交，也晚于产品发布，因此本条采用官方发布博客日期。",
+  "access": "闭源托管模型。中国区可通过豆包、即梦和火山方舟体验或调用 doubao-seedream-4-0-250828；国际用户可通过 BytePlus ModelArk 调用 seedream-4-0-250828。官方未发布可下载权重或本地推理包。模型同时支持文生图、单图/多图输入的生成与编辑、以及成组多图输出。Seedream 4.0 专属 BytePlus 产品页记录多图输入为 2-10 张，且输入参考图数与最终输出图数之和不超过 15；发布博客和技术报告则展示/描述可处理十余张参考图，属于能力展示而非更宽松的 API 合同。",
+  "license": "模型权重许可证未知且不适用：官方未发布权重。托管调用受火山方舟/BytePlus 的服务条款、区域可用性与内容政策约束，API 可用不代表开放权重或开源许可。",
+  "official_model_ids": [
+    "doubao-seedream-4-0-250828",
+    "seedream-4-0-250828"
+  ],
+  "parameter_total": "未知。官方技术报告只称 DiT 容量显著扩大、架构可扩展，未披露参数总量；不能由价格、速度、版本号或后续 4.5 的 scaling 表述反推。",
+  "parameter_active": "未知。官方未披露稠密/MoE 结构或每次推理激活参数口径。数据合成管线使用 MoE 模型不意味着生成主干本身是 MoE。",
+  "weight_size": "未知。无公开权重文件，无法核验文件体积。",
+  "precision": "训练精度未知。推理加速系统披露了硬件感知的自适应 4/8-bit 混合量化、离线平滑、逐层搜索与 PTQ，但这不是单一固定的公开权重精度，也未披露各层位宽分配。",
+  "architecture": "以高效、可扩展的潜空间 Diffusion Transformer（DiT）为生成主干，配合高压缩率 VAE 显著减少高分辨率图像 token。统一框架在 DiT 中采用 causal diffusion，将文生图、单图编辑、多图编辑/组合纳入同一生成管线；后训练阶段再接入一个经微调的视觉语言 Prompt Engineering 模型进行多模态理解与条件构造。官方没有公开 DiT 的层数、宽度、参数量、块类型、归一化/门控细节或 VAE 的具体压缩倍率，因此“高效架构”只能保留在系统级描述。",
+  "attention_or_sequence_design": "官方仅披露在 DiT 框架内使用 causal diffusion，以支持统一的 T2I 与编辑后训练，并允许单图/多图输入及单图/多图输出。技术报告未给出因果掩码的精确定义、文本/参考图/目标图 token 排列、注意力类型、位置编码、跨图分段方式或 KV 缓存覆盖范围；不得把 SeedEdit 3.0 或 Seedream 4.5 的未明确细节直接移植为 4.0 事实。",
+  "vae_or_tokenizer": "自研高压缩率 VAE，用于显著降低潜空间图像 token 数量，从而支持 1K-4K 原生分辨率训练与生成。官方未披露压缩倍率、潜变量通道数、VAE 参数量、重建损失、码本（若有）或重建指标。",
+  "text_encoder_or_conditioner": "系统包含基于 Seed1.5-VL 训练的端到端 VLM Prompt Engineering（PE）模型。它接收文本、单张或多张参考图，生成参考图/目标图描述并执行任务路由、提示词改写（auto-thinking）和最佳宽高比估计；思考预算会随任务复杂度动态调整，输出再作为 DiT 条件。官方未披露 DiT 内部文本编码器身份、上下文长度、PE 模型参数量，以及托管服务在每种模式下是否始终启用 PE。",
+  "training_hardware": "GPU 集群，具体型号未知。报告明确提到 per-GPU 利用率、torch.compile、手写 CUDA kernel 与算子融合，可确认使用 CUDA GPU，但未披露 NVIDIA GPU 型号。",
+  "training_hardware_scale": "未知。官方未披露 GPU、节点或服务器数量、累计 GPU 时、峰值算力、集群互联、能耗或训练成本。",
+  "training_data_scale": "预训练使用数十亿图文对，覆盖多种分类体系和知识密集概念；官方未给出精确图像/图文对数量、token 数、存储体积或各阶段样本量。后训练编辑数据只称为“大量”，未量化。",
+  "training_data_composition": "预训练数据覆盖数百个垂直场景。知识类数据分为自然与合成两部分：自然图像包括从内部教材、研究文章和小说 PDF 中收集的高质量图表，经低质量分类器与难度分类器过滤/分级；合成公式图由 OCR 输出与可用的 LaTeX 源码生成，并改变布局、符号密度与分辨率。通用管线还使用文本质量分类、结合语义与低层视觉 embedding 的去重、更细粒度 captioning 以及更强的跨模态 embedding。官方发布博客另披露编辑数据管线包含视频抽帧、HTML 数据检索/过滤和 MoE 模型数据合成。CT/SFT 编辑样本通常由参考图、目标图、编辑指令以及两图 caption 构成，并使用三种详细程度的 caption 做增强；数据来源授权结构、语言比例、自然/合成占比和具体过滤阈值均未知。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "低分辨率 DiT 预训练",
+      "description": "在多宽高比数据上以平均约 512² 分辨率训练 DiT。精确目标函数、步数、batch size 和持续时间未披露。"
+    },
+    {
+      "stage": 2,
+      "name": "高分辨率预训练/微调",
+      "description": "将模型提升到更高的原生分辨率区间，整体报告口径覆盖 1K-4K；高压缩 VAE 与高效 DiT 使最高 4K 训练可行。各分辨率桶、采样比例和课程长度未披露。"
+    },
+    {
+      "stage": 3,
+      "name": "Continuing Training（CT）联合后训练",
+      "description": "在文生图、单图编辑、多图参考与多图输出任务上联合训练，主要增强编辑指令遵循与基础多任务能力；使用大量参考图-目标图-指令数据。"
+    },
+    {
+      "stage": 4,
+      "name": "Supervised Fine-Tuning（SFT）联合后训练",
+      "description": "继续联合 T2I 与编辑任务，强化特定艺术品质，并显著改善参考图与编辑结果的一致性。"
+    },
+    {
+      "stage": 5,
+      "name": "RLHF 人类偏好对齐",
+      "description": "使用多个维度的奖励模型对输出进行人类偏好对齐；奖励模型构成、算法变体、权重和样本规模未披露。"
+    },
+    {
+      "stage": 6,
+      "name": "PE 模型训练与推理加速后训练",
+      "description": "基于 Seed1.5-VL 训练端到端多模态 PE 模型；生成 DiT 另经过 adversarial distillation post-training（ADP）和 adversarial distribution matching（ADM）以实现稳定的少步采样，随后结合混合量化。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "低分辨率 DiT 预训练",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "高分辨率预训练/微调",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "CT",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "SFT",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "RLHF",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "ADP/ADM 与量化",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "预训练采用多阶段、多宽高比/多分辨率 DiT 训练，但基础扩散目标、噪声日程和优化器未公开。多模态后训练在 CT、SFT、RLHF 全阶段联合 T2I 与编辑任务，并通过 causal diffusion 统一条件路径。编辑数据以三档 caption 作为增强，RLHF 使用多维奖励模型。加速后训练先进行带混合判别器的 ADP 获得稳定初始化，再以可学习的扩散判别器执行 ADM；其目标是为每个样本学习优化、自适应轨迹，降低 NFE 并避免固定散度匹配造成的不稳定。部署侧再采用自适应 4/8-bit PTQ；PE 模型使用带 KV-cache 损失和辅助 logits 交叉熵的推测解码。",
+  "training_infra": "大规模 DiT 训练系统使用 Hybrid Sharded Data Parallelism（HSDP）分片权重，明确称无需 tensor parallelism 或 expert parallelism；通过及时释放 hidden states、activation offloading 和增强 FSDP 支持控制显存。性能侧结合 torch.compile、手写 CUDA kernel 与算子融合，并用全局贪心样本分配和异步流水线平衡变长序列的每卡负载。容错侧包含模型/优化器/dataloader 周期 checkpoint、启动前节点健康检查和初始化开销优化。框架版本、HSDP/FSDP 具体分片度、吞吐、互联和 checkpoint 周期未披露。",
+  "inference_hardware": "未知。火山方舟和 BytePlus 均为托管端点，官方未披露服务端 GPU/加速器型号、卡数、显存、批处理配置或租户隔离方式。报告只说明自研算子适配不同位宽和硬件，并未给出可复现的单机硬件配置。",
+  "inference_performance": "官方最新 4.0 技术报告摘要（arXiv v3）自报在不使用 LLM/VLM PE 模型时，生成一张 2K 图像最快约 1.8 秒；2025-09 的纯 4.0 v2 HTML 曾写 1.4 秒，版本间存在差异，因此该数字应视为厂商系统级最佳延迟而非稳定 API SLA。报告还称架构按计算 FLOPs 衡量相对 Seedream 3.0 在训练和推理上超过 10 倍加速，少步方案可在 10 步以内达到传统约 50 步采样的质量。未披露上述延迟的硬件、batch、精度、图像比例、网络/排队时间或重复次数。Artificial Analysis 于 2026-07-19 对 BytePlus 端点的动态观测为过去 14 天每图端到端生成时间中位数约 12.1507 秒，包含 URL 返回时的图片下载，不能与官方裸模型最佳延迟直接互换。",
+  "max_output_resolution": "最高 4K 档。官方技术报告称原生支持 1K-4K；BytePlus 的 Seedream 4.0 专属模型页给出 1K-4K 和总输出像素上限 4096×4096。当前 API 预设示例包括 4096×4096（1:1）、5504×3040（16:9）和 6240×2656（21:9）；因此“4K”是像素预算/预设档位，不表示所有比例的最长边都固定为 4096。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1185.8,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis 动态模型页/比较数据快照；Elo 会随新增盲评投票继续变化）",
+  "generation_time_seconds": 12.1507198810577,
+  "generation_time_context": "Artificial Analysis 对“Seedream 4.0, BytePlus”的动态观测，2026-07-19 抓取；数值为过去 14 天每张图片端到端 API 生成时间中位数，供应商返回 URL 时包含图片下载时间。页面未披露服务端硬件、分辨率混合、采样步数、排队拆分或批处理，因此不能解释为 DiT 内核延迟。静态图像模型的 max_output_duration_seconds 与 native_fps 不适用，故为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Image Arena Quality Elo",
+      "variant": "Seedream 4.0",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_elo": 1185.8,
+        "quality_elo_ci95_lower": 1178.8,
+        "quality_elo_ci95_upper": 1192.8
+      },
+      "scope": "第三方动态人类偏好盲评的综合模型页快照；分数与区间会持续变化。"
+    },
+    {
+      "benchmark": "Artificial Analysis Text-to-Image Leaderboard",
+      "variant": "Seedream 4.0",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1186,
+        "rank": 16,
+        "rank_interval": "15-20",
+        "votes": 14461
+      },
+      "scope": "第三方动态 T2I 人类偏好榜单快照；票数和排名在抓取期间仍有小幅变化。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Editing Leaderboard",
+      "variant": "Seedream 4.0",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1183,
+        "rank": 22,
+        "rank_interval": "19-24",
+        "votes": 10609
+      },
+      "scope": "第三方动态图像编辑人类偏好榜单快照；与 T2I Elo 属于不同赛道，不应互换或直接合并。"
+    },
+    {
+      "benchmark": "MagicBench 4.0",
+      "variant": "Seedream 4.0 厂商自建人类评估",
+      "observed_at": "2025-09 technical report",
+      "metrics": {
+        "t2i_prompts": 325,
+        "single_image_editing_prompts": 300,
+        "multi_image_editing_prompts": 100,
+        "languages_per_prompt": [
+          "Chinese",
+          "English"
+        ],
+        "multi_image_gsb_margin_vs_gpt_image_1_and_gemini_2_5": "almost 20%"
+      },
+      "scope": "厂商自建基准；报告称多图编辑的 GSB 综合指标比两项竞品高近 20%，但正文未提供完整逐模型数值表、置信区间、评审协议或公开复现脚本。"
+    },
+    {
+      "benchmark": "DreamEval",
+      "variant": "Seedream 4.0 自动评估",
+      "observed_at": "2025-09 technical report",
+      "metrics": {
+        "generation_scenarios": 4,
+        "subtasks": 128,
+        "prompts": 1600,
+        "reported_finding": "T2I 和单图编辑在 Easy/Medium 上较强，Hard 尤其单图编辑明显下降；best-of-4 优于其平均表现"
+      },
+      "scope": "厂商提出的细粒度 VQA 自动评估；正文披露规模与定性观察，但没有足够文本化数值支持在本条中转录完整分数。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "在单一 DiT/causal-diffusion 管线中统一文生图、单图编辑、多图编辑/组合，并在 CT、SFT、RLHF 各后训练阶段持续联合训练；同一模型可接收文本、单图或多图并输出单图或一致的组图。",
+      "scope_boundary": "可靠边界是 Seedream 4.0 相对 Seedream 3.0 与 SeedEdit 3.0 的家族整合和联合后训练贡献，不是“行业首个统一生成编辑模型”的已验证结论。发布时技术材料支持十余张参考图的能力展示，而 4.0 专属 API 合同保守写 2-10 张；当前通用文档把 4.0/4.5 合并后的 14 张上限不用于宣称 4.0 首发能力。",
+      "evidence": "ByteDance Seed 官方发布博客明确说明把 Seedream 3.0 T2I 与 SeedEdit 编辑整合到统一架构，并在 CT/SFT/RLHF 全阶段联合训练；纯 4.0 技术报告 v2 进一步披露 causal diffusion、单/多图输入输出及多图编辑评估，且报告展示超过十张输入图仍保持结构稳定。",
+      "confidence": "高"
+    },
+    {
+      "claim": "通过高效可扩展 DiT 与高压缩 VAE 大幅减少高分辨率 token，再以 ADP/ADM 少步蒸馏、硬件感知 4/8-bit 混合量化和 PE 推测解码组成端到端加速系统，使统一模型能够原生训练/生成 1K-4K 图像。",
+      "scope_boundary": "“超过 10 倍”是厂商以计算 FLOPs 相对 Seedream 3.0 的口径；2K 约 1.8 秒是未披露硬件且排除 LLM/VLM PE 的最佳系统数据，不能当作公开硬件上的可复现 SLA。官方没有披露 VAE 压缩倍率、DiT 参数量或独立消融，不能把收益精确归因到某一组件，也不应借用 Seedream 4.5 的 scaling/质量结论。",
+      "evidence": "官方 4.0 技术报告的架构、预训练和加速章节明确列出高压缩 VAE、高效 DiT、ADP、ADM、自适应 4/8-bit PTQ 与 PE speculative decoding，并报告 1K-4K 原生分辨率、相对 3.0 超过 10 倍 FLOPs 加速及 2K 最快约 1.8 秒；ByteDance Seed 发布页和 BytePlus 4.0 模型页独立确认最高 4K 输出。",
+      "confidence": "中高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "DiT 的精确层数、隐藏维度、块设计、参数总量与激活参数量",
+    "模型权重文件、权重体积与权重许可证",
+    "训练精度、各层部署位宽分配、量化校准集与量化误差",
+    "causal diffusion 的精确注意力掩码、图文 token 顺序、位置编码和多图分段机制",
+    "VAE 的压缩倍率、潜变量通道、参数量、训练目标和重建指标",
+    "DiT 内部文本编码器、上下文长度，以及 PE 模型的参数量和逐请求启用策略",
+    "训练 GPU 型号、数量、节点规模、累计 GPU 时、互联、能耗和成本",
+    "预训练图文对与编辑对的精确数量、来源占比、授权结构、语言分布、合成比例和过滤阈值",
+    "各预训练/CT/SFT/RLHF/ADP/ADM 阶段的优化步数、batch size、wall-clock 时间与 FLOPs",
+    "基础扩散目标、噪声日程、优化器、学习率，以及 RLHF 算法和奖励模型权重",
+    "训练框架版本、并行度、吞吐、通信库、checkpoint 频率和故障恢复统计",
+    "官方 1.8 秒/旧 v2 1.4 秒 2K 延迟测试的硬件、分辨率比例、batch、精度、重复次数和排队边界",
+    "MagicBench 4.0 与 DreamEval 的完整逐模型分数、样本、评审协议、置信区间和公开复现代码",
+    "Seedream 4.0 首发 API 与后续托管更新之间是否改变过参考图上限；4.0 专属页面为 10，当前合并 API 文档为 14"
+  ],
+  "sources": [
+    {
+      "title": "Seedream 4.0 Officially Released: Beyond Drawing, Into Imagination",
+      "url": "https://seed.bytedance.com/en/blog/seedream-4-0-officially-released-beyond-drawing-into-imagination",
+      "source_type": "official_release_blog"
+    },
+    {
+      "title": "Seedream 4.0",
+      "url": "https://seed.bytedance.com/en/seedream4_0",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "Seedream 4.0: Toward Next-generation Multimodal Image Generation (v2, pure 4.0 report)",
+      "url": "https://arxiv.org/html/2509.20427v2",
+      "source_type": "official_technical_report_versioned"
+    },
+    {
+      "title": "Seedream 4.0: Toward Next-generation Multimodal Image Generation (current arXiv record and version history)",
+      "url": "https://arxiv.org/abs/2509.20427",
+      "source_type": "official_technical_report_version_history"
+    },
+    {
+      "title": "seedream-4.0 - ModelArk BytePlus",
+      "url": "https://docs.byteplus.com/en/docs/ModelArk/1824718",
+      "source_type": "official_model_documentation"
+    },
+    {
+      "title": "Image generation API - ModelArk BytePlus",
+      "url": "https://docs.byteplus.com/en/docs/ModelArk/1541523",
+      "source_type": "official_api_documentation_current_grouped_versions"
+    },
+    {
+      "title": "ImageGenerations - 火山方舟 API 文档",
+      "url": "https://api.volcengine.com/api-docs/view?action=ImageGenerations&serviceCode=ark&version=2024-01-01",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Seedream 4.0 - Model Elo, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/image/models/bytedance-seed_seedream-4-0",
+      "source_type": "independent_benchmark_model_page"
+    },
+    {
+      "title": "Text to Image Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/text-to-image",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "Idea2StableDiffusion",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue"
+    }
+  ],
+  "notes": "Seedream 4.0 是已公开、仍有官方托管 API、同时具备官方技术报告与第三方动态榜单的闭源统一图像模型，因此 comparison_eligible 与 history_eligible 均为 true；modality 记为 Omni，是因为同一模型 ID 覆盖 T2I、编辑、多图参考/组合和多图输出。版本边界尤其重要：官方发布日为 2025-09-09；arXiv v1/v2 是 2025-09 的纯 4.0 报告，而 2025-12 的 v3 注释已改为“Seedream 4.0/4.5 Technical Report”。本条用 v2 确认架构、数据和训练流程，只把当前记录中的 1.8 秒作为明确仍指向 4.0 的性能修订，并记录 v2 的 1.4 秒差异；没有把 4.5 的整体 scaling、增强多图主体保持、小字排版、专属 MagicBench 4.5 或版本 ID 倒灌到 4.0。参考图数量也分开表述：4.0 技术能力展示为十余张，4.0 专属 BytePlus API 页为最多 10 张，当前把 4.0/4.5 合并的通用 API 页为最多 14 张；历史比较采用前两者，不将合并文档的 14 张解释为首发能力。Artificial Analysis 数字是 2026-07-19 动态快照，应始终与观察日期一起展示。"
+}

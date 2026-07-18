@@ -1,0 +1,222 @@
+{
+  "slug": "hunyuanimage-3",
+  "name": "HunyuanImage 3.0",
+  "family": "HunyuanImage",
+  "entry_kind": "model",
+  "modality": "T2I",
+  "organization": "Tencent Hunyuan Foundation Model Team（腾讯混元）",
+  "release_date": "2025-09-28",
+  "release_date_basis": "arXiv v1 于 2025-09-28 16:14:10 UTC 提交；腾讯官方 GitHub/Hugging Face 发布记录均写明 2025-09-28 开源推理代码和模型权重。Hugging Face 仓库元数据的 createdAt 为 2025-09-25，但那是仓库创建时间，不作为公开发布日期。",
+  "access": "开放权重与推理代码。基础 T2I 检查点可从 Hugging Face 下载并本地运行，腾讯官网另有在线体验；官方 GitHub 提供 Transformers、本地多 GPU、FlashAttention/FlashInfer 与后续 vLLM 推理路径。这里的“开放”是 open-weight，而不是 OSI 式无地域、无用途限制的开源许可。",
+  "license": "Tencent Hunyuan Community License Agreement（Hunyuan Image 3.0，release date 2025-09-28）。许可地域明确排除欧盟、英国和韩国；发布时前一自然月全部产品/服务 MAU 超过 1 亿的许可方需另向腾讯申请授权；不得用模型或输出改进除腾讯混元或其衍生模型之外的其他 AI 模型，并受可接受使用政策、分发通知和服务提供者披露义务约束。",
+  "official_model_ids": [
+    "tencent/HunyuanImage-3.0"
+  ],
+  "parameter_total": "官方口径为 over 80B / 80B total；Hugging Face 仓库 safetensors 元数据显示精确发布参数数为 83,009,199,459（其中 BF16 81,748,524,512，F32 1,260,674,947）。",
+  "parameter_active": "官方称每 token 约 13B 参数激活。主干为 64 experts、top-8 路由并带 1 个 shared MLP；13B 是 MoE 主干的官方近似口径，是否包含 VAE、ViT 与投影器的执行参数未单独拆分。",
+  "weight_size": "官方 Hugging Face 的 32 个 model-*-of-0032.safetensors 分片合计 168,540,402,060 bytes（168.540 GB / 156.965 GiB）；模型索引记录 83,009,199,459 个参数。",
+  "precision": "公开检查点为混合 BF16/F32：Transformer 配置 torch_dtype=bfloat16；VAE 配置为 float32、推理 autocast 为 float16；ViT 配置为 float32。Hugging Face 元数据统计 BF16 81,748,524,512 参数、F32 1,260,674,947 参数。训练精度未披露，不能由发布 dtype 反推。",
+  "architecture": "以 Hunyuan-A13B decoder-only MoE LLM 为统一主干的原生多模态、混合离散—连续生成架构。文本与推理 token 通过自回归 next-token prediction 建模；图像不离散量化为 AR code，而是在同一 Transformer 中对连续 VAE latent 进行扩散/flow-based 预测。公开配置为 32 层、hidden size 4096、64 experts、每 token 激活 8 个 routed experts 并带 shared MLP，官方总参数 80B+、激活约 13B。论文中的完整原生模型覆盖语言建模、图像理解、交错图文和生成，但 2025-09-28 公开检查点经过仅面向图像生成的微调/后训练，首发能力为 T2I。",
+  "attention_or_sequence_design": "Generalized Causal Attention 将 LLM 的因果注意力与图像段内全注意力统一：文本 token 只能看此前多模态 token；当前生成图像段的 image token 可看此前多模态上下文，并可双向看同一图像段内所有 image token。多 Gen-Image 训练序列会在下三角掩码中为先前生成图像挖“洞”，避免后续 token 读取这些训练时噪声图；推理时一次只有一个 Gen Image，已生成图转为条件图。位置编码为与原 LLM 1D RoPE 向后兼容的 Generalized 2D RoPE。公开主干配置另给出 32 attention heads、8 KV heads、head dim 128、QK norm 与 max_position_embeddings=22,800。",
+  "vae_or_tokenizer": "文本使用 Hunyuan Tokenizer，并扩展图像尺寸、宽高比和生成/理解所需 special tokens；公开 config 的 vocab_size 为 133,120。图像使用内部 Hunyuan Image VAE，将像素压到 32-channel 连续 latent，空间下采样 16×；公开 VAE 类为 AutoencoderKLConv3D，但本条目只讨论静态图像路径。相较常见 8× VAE 再做 2× patchification，论文主张直接 16× VAE 更简单且生成质量更好。",
+  "text_encoder_or_conditioner": "没有独立 CLIP/T5 文本编码器；prompt、可选 CoT/改写文本和控制 special tokens 由 Hunyuan-A13B 主干及 Hunyuan Tokenizer 原生处理，文本部分按 AR next-token objective 建模并作为连续图像扩散的序列上下文。首发基础检查点本身不会自动重写 prompt；官方示例中的 DeepSeek prompt enhancement 是可选外部腾讯云前处理，不属于该 83B 权重。条件图像采用双视觉编码器：16×/32-channel VAE latent 与 vision encoder 特征拼接；公开配置把后者具体化为 SigLIP2 SO400M patch16 NaFlex。VAE 特征经 timestep-modulated residual block 投影到主干空间，ViT 特征经两层 MLP 投影，并把 timestep embedding 注入序列。",
+  "training_hardware": "未披露。技术报告没有给出 GPU/加速器型号；公开推理所需 NVIDIA GPU 不能当作训练硬件证据。",
+  "training_hardware_scale": "未披露训练节点数、GPU/加速器数、互联、累计加速器时或训练 FLOPs。",
+  "training_data_scale": "初始池超过 100 亿张原始图像，三阶段过滤最终保留不足 45%，形成接近 50 亿张图像的训练集；另构建超过 1 亿个图像对与多图样本以学习交错关系。论文还说明 Stage I 从 billions of images 学习；文本-only、MMU、CoT、SFT、偏好与 RL 数据的精确样本/token 规模未披露。",
+  "training_data_composition": "图像过滤依次覆盖技术质量（低于 512px、坏文件、曝光/饱和问题、MD5 去重）、水印/logo/大段文字/拼图/边框/AIGC 检测、清晰度与美学评分，以及 embedding cluster 去重；并补充知识增强、文字相关、风格化和图形设计数据。图像对来自超过 20 亿个图像 cluster 的关系挖掘；多图数据还来自互联网交错图文与视频镜头关键帧。caption 为中英双语分层 schema，覆盖短到超长、风格、镜头、灯光、构图和实体，组合增强长度约 30—1000 词，并用 OCR/IP agent 双向校验。推理数据含 T2T 与 T2T-to-Image，场景覆盖摄影、艺术、UI/海报、知识问答、科学可视化及 Wikipedia infographic。具体来源清单、授权比例、语言比例和各阶段配比未公开。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Progressive pre-training I",
+      "description": "VAE resolution anchor 256px、ViT anchor 512px；冻结 ViT，训练 Transformer；联合 T2I、LM、MMU，以大 batch 从数十亿图像和 text-only 数据学习图文 latent 对齐。"
+    },
+    {
+      "stage": 2,
+      "name": "Progressive pre-training II",
+      "description": "VAE 256px、ViT 512px；冻结 Transformer，仅以 MMU 数据微调 ViT 与 aligner，提高视觉理解。"
+    },
+    {
+      "stage": 3,
+      "name": "Progressive pre-training III",
+      "description": "VAE 512px、ViT 512px；联合训练 ViT 与 Transformer，任务扩展为 T2I、LM、MMU、INTL；缩小数据量并提高高质量样本占比，加入图像编辑和 image-to-image 等交错数据。"
+    },
+    {
+      "stage": 4,
+      "name": "Progressive pre-training IV",
+      "description": "VAE 1024px、ViT 512px；联合训练 ViT 与 Transformer，任务为 T2I、LM、MMU、INTL、CoT；使用短边至少 1024px 的高分辨率子集，并加入 T2T/T2TI reasoning 数据，reasoning token 仍按 AR 建模。"
+    },
+    {
+      "stage": 5,
+      "name": "Image-generation instruction tuning",
+      "description": "在原生多模态预训练后，使用 instruction template 联合 T2I、LM、CoT，专门面向文本生成图像能力调优。"
+    },
+    {
+      "stage": 6,
+      "name": "SFT",
+      "description": "使用人工标注、严格筛选的风景、人像、动物、OCR 等高质量图像，多阶段逐步提高样本质量。"
+    },
+    {
+      "stage": 7,
+      "name": "DPO",
+      "description": "从 SFT 模型生成图像并标注高/低质量配对，以偏好信号抑制结构畸变并提升视觉吸引力。"
+    },
+    {
+      "stage": 8,
+      "name": "MixGRPO",
+      "description": "以混合 ODE—SDE 采样把 GRPO 扩展到 flow-based 模型，结合开源和专有 reward model 优化美学、构图、灯光、真实性、图文对齐、畸变与 artifact。"
+    },
+    {
+      "stage": 9,
+      "name": "SRPO",
+      "description": "梯度引导在线强化训练；向 latent 注入噪声并一步去噪，在轨迹初段使用正/负文本的可微 reward，改善真实感、皮肤质感、颜色与灯光一致性。"
+    },
+    {
+      "stage": 10,
+      "name": "ReDA",
+      "description": "内部 Reward Distribution Alignment，使生成输出分布接近由多类别高质量图像定义的高奖励分布，进一步提升真实感与清晰度。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "Progressive pre-training I—IV",
+      "wall_clock_time": "未披露",
+      "optimization_steps": "未披露"
+    },
+    {
+      "stage": "Image-generation instruction tuning 与 SFT",
+      "wall_clock_time": "未披露",
+      "optimization_steps": "未披露"
+    },
+    {
+      "stage": "DPO、MixGRPO、SRPO、ReDA",
+      "wall_clock_time": "未披露",
+      "optimization_steps": "未披露"
+    }
+  ],
+  "training_algorithms": "统一主干中，离散文本与 reasoning token 使用 autoregressive next-token prediction，连续 VAE image latent 使用 diffusion/flow-based prediction；训练采用按分辨率、任务和冻结模块变化的 progressive curriculum。后训练依次使用人工精选 SFT、图像偏好 DPO、混合 ODE—SDE 的 MixGRPO、梯度引导在线 SRPO 与内部 ReDA。论文没有披露基础扩散/flow objective 的完整公式与噪声调度、optimizer、学习率、batch size、CFG dropout、reward 权重或 RL 超参数。",
+  "training_infra": "论文只概括为支持大规模训练与推理的 efficient infrastructure，没有披露训练框架、并行维度、通信库、checkpoint/容错、吞吐或集群拓扑。公开仓库的 PyTorch 2.8/Transformers、FlashAttention、FlashInfer 与 vLLM 属于推理实现，不应反推训练基础设施。",
+  "inference_hardware": "官方基础 HunyuanImage-3.0 表格建议至少 3×80GB GPU，并明确推荐多 GPU；测试环境要求 Python 3.12+、CUDA 12.8、PyTorch 2.8.0。官方没有指定推荐卡一定是 H100/A100，也未给出单卡 full-precision 配置。",
+  "inference_performance": "基础检查点默认 50 个 diffusion inference steps、guidance scale 5.0、flow shift 3.0。官方称 FlashAttention + FlashInfer 优化最高可达约 3× 加速，但未给出绑定具体硬件、分辨率与 batch 的绝对 latency/throughput；FlashInfer 首次编译可能约 10 分钟，不是稳态单图生成时间。vLLM 加速于 2025-10-30 后续加入，不能当作 2025-09-28 首发性能。",
+  "max_output_resolution": "公开推理路径默认以 1024 为 resolution-group base：方图为 1024×1024，宽高比覆盖约 1:4—4:1，最大单边 2048，极端候选约 512×2048 或 2048×512；官方 CLI 也明确示例 1280×768。没有官方证据支持把最大输出写成 2048×2048，任意自定义尺寸会被映射到候选 resolution group。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1119,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis 动态 Text-to-Image Leaderboard 当日页面值；95% CI 约 ±8，分数会随新增盲测投票变化）",
+  "generation_time_seconds": null,
+  "generation_time_context": "未记录可比的绝对生成时间。官方只给出最高约 3× 的相对优化说法；Artificial Analysis 当前静态 leaderboard 对精确基础模型给出 Elo 与价格，但核验页面未给出可可靠提取的 14 天 median generation time。不得用 2026-01 的 Instruct 变体、社区量化测试或首次 FlashInfer 编译时间代替。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Official GSB human evaluation",
+      "variant": "HunyuanImage 3.0 base T2I",
+      "metrics": {
+        "prompts": 1000,
+        "professional_evaluators": "over 100",
+        "relative_win_rate_vs_HunyuanImage_2_1_percent": 14.10,
+        "relative_win_rate_vs_Seedream_4_0_percent": 1.17,
+        "relative_win_rate_vs_Nano_Banana_percent": 2.64,
+        "relative_win_rate_vs_GPT_Image_percent": 5.00
+      },
+      "source_scope": "腾讯自报 Good/Same/Bad 人评；每个 prompt 各模型只生成一次、采用对手默认设置。relative win rate 并非绝对胜率，也不是第三方盲榜 Elo。"
+    },
+    {
+      "benchmark": "SSAE",
+      "variant": "English and Chinese prompts",
+      "metrics": {
+        "prompts": 500,
+        "semantic_key_points": 3500,
+        "fine_grained_categories": 12,
+        "published_numeric_overall": "正文未给精确数值，Figure 6 仅以雷达图展示"
+      },
+      "source_scope": "腾讯自建 Structured Semantic Alignment Evaluation，以 LLM 解析语义点并经人工修订，再由 CoT MLLM 做 0/1 匹配；论文仅声称各细分维度与领先模型相当，缺少可精确抄录的总体表格数值。"
+    },
+    {
+      "benchmark": "Artificial Analysis Text-to-Image Arena",
+      "variant": "HunyuanImage 3.0 (Fal), base",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_elo": 1119,
+        "confidence_interval_95_percent": "approximately -8/+8",
+        "votes": 5830,
+        "open_weights": true
+      },
+      "source_scope": "第三方动态盲测榜单；Elo、名次、置信区间与票数会继续变化，且 fal.ai 托管配置不必然等于官方本地默认参数。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "在同一个 Hunyuan-A13B decoder-only MoE 主干中统一离散文本 AR 与连续图像扩散：文本/CoT 做 next-token prediction，VAE image latent 以 diffusion/flow 方式并行去噪，而不是另接独立 DiT 或把图像离散化后逐 token AR。",
+      "scope_boundary": "这是 HunyuanImage 3.0 的核心统一主干设计，不等于“图像本身是自回归生成”。论文明确引用 Transfusion、JanusFlow 等先例，因此不能写成行业首次。2025-09-28 公开的是经图像生成专项后训练的 T2I 模块，不是完整通用聊天/理解产品。",
+      "evidence": "技术报告 Sections 1、3.1 明确写出 hybrid discrete-continuous strategy 和共享 LLM backbone；公开 config/权重验证 32 层、64 experts、top-8、约 83.0B 参数，generation config 验证 50-step diffusion/flow 推理。",
+      "confidence": "高"
+    },
+    {
+      "claim": "条件图像同时使用连续 VAE latent 与语义 vision-encoder 特征，并在单序列中拼接；VAE 分支用时间步调制残差块投影、ViT 分支用两层 MLP 投影，再配合 Generalized Causal Attention 与向后兼容的 2D RoPE 支撑理解、生成和交错上下文。",
+      "scope_boundary": "双编码器是条件图像/完整原生多模态设计；首发 base 检查点官方能力表只列 T2I，不能据此把 2025-09-28 条目分类成 Edit/Omni。编辑与多图融合的公开 Instruct 权重是 2026-01-26 的后续独立变体。论文没有提供双编码器与时间步调制残差块各自贡献的消融表。",
+      "evidence": "技术报告 Sections 3.1.1—3.1.3 逐项描述 dual encoder、timestep-modulated residual block、two-layer MLP、Generalized Causal Attention 与 Generalized 2D RoPE；公开 config 进一步给出 VAE 16×/32-channel、SigLIP2-SO400M、ViT aligner depth=2 与 cond_image_type=vae_vit。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "训练 GPU/加速器型号、节点与设备数量、互联、累计加速器时、FLOPs、能耗和峰值内存",
+    "训练框架、数据/张量/流水线/专家并行度、通信库、吞吐、checkpoint 与容错方案",
+    "四阶段预训练、instruction tuning、SFT、DPO、MixGRPO、SRPO、ReDA 的 wall-clock 时间、优化步数与 batch size",
+    "训练精度、optimizer、学习率/调度、扩散或 flow objective 的完整公式、噪声调度、CFG dropout 与后训练 reward 权重/超参数",
+    "接近 50 亿图像与超过 1 亿图像对/多图样本的精确最终计数、来源清单、授权结构、语言比例、AIGC/合成占比与各训练阶段配比",
+    "text-only、MMU、CoT/T2T/T2TI、人工 SFT、DPO preference 与 RL 数据的规模",
+    "约 13B active 是否以及如何计入 VAE、ViT、projector；各组件精确参数拆分",
+    "绑定明确 GPU 型号、GPU 数、分辨率、batch 和实现版本的官方绝对 latency、吞吐与峰值显存",
+    "基础模型在 Artificial Analysis 对应 fal.ai 快照的当前 14 天 median generation time",
+    "SSAE Figure 6 各维度及 Mean/Global Accuracy 的精确原始数值表",
+    "官方支持的所有输出 resolution 候选与超出默认 1024 resolution group 后的质量/显存边界"
+  ],
+  "sources": [
+    {
+      "title": "HunyuanImage 3.0 Technical Report (arXiv v1)",
+      "url": "https://arxiv.org/html/2509.23951v1",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "Tencent-Hunyuan/HunyuanImage-3.0",
+      "url": "https://github.com/Tencent-Hunyuan/HunyuanImage-3.0",
+      "source_type": "official_github"
+    },
+    {
+      "title": "tencent/HunyuanImage-3.0 model card",
+      "url": "https://huggingface.co/tencent/HunyuanImage-3.0",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "Hugging Face repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/tencent/HunyuanImage-3.0?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "HunyuanImage-3.0 public config.json",
+      "url": "https://huggingface.co/tencent/HunyuanImage-3.0/blob/main/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "HunyuanImage-3.0 generation_config.json",
+      "url": "https://huggingface.co/tencent/HunyuanImage-3.0/blob/main/generation_config.json",
+      "source_type": "official_inference_config"
+    },
+    {
+      "title": "HunyuanImage-3.0 tokenizer_wrapper.py resolution groups",
+      "url": "https://huggingface.co/tencent/HunyuanImage-3.0/blob/main/tokenizer_wrapper.py",
+      "source_type": "official_inference_source"
+    },
+    {
+      "title": "Tencent Hunyuan Community License Agreement for Hunyuan Image 3.0",
+      "url": "https://huggingface.co/tencent/HunyuanImage-3.0/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "Artificial Analysis Text-to-Image Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/text-to-image",
+      "source_type": "independent_dynamic_benchmark"
+    }
+  ],
+  "notes": "候选文章把本条目标为 T2I/统一多模态；二者分别对应公开能力与底层架构，并不冲突。为横向模型时间线，modality 采用 2025-09-28 实际公开基础检查点的 T2I，而在 architecture 中保留其 native multimodal 来源。论文 v1 结论也明确写明 this release only includes the text-to-image ability；2026-01-26 才发布 HunyuanImage-3.0-Instruct 与 Distil，加入图像编辑、多图融合、self-rewrite 和 CoT，这些后续权重不应回填为首发能力。comparison_eligible=true，因为有可下载官方权重、推理代码、明确参数口径、官方评测与第三方动态盲榜；history_eligible=true，因为论文和开源公告日期均可核验。参数和权重不是传闻：官方权重仓库包含 32 个 safetensors 分片，实际约 168.54 GB。"
+}

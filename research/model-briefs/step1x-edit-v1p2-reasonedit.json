@@ -1,0 +1,241 @@
+{
+  "slug": "step1x-edit-v1p2-reasonedit",
+  "name": "Step1X-Edit-v1p2 (ReasonEdit-S)",
+  "family": "Step1X-Edit",
+  "entry_kind": "model",
+  "modality": "Edit",
+  "organization": "StepFun",
+  "release_date": "2025-11-26",
+  "release_date_basis": "StepFun 官方 GitHub News 与 Hugging Face 模型卡均写明 Step1X-Edit-v1p2 于 2025-11-26 发布；Hugging Face API 的仓库 createdAt 为 2025-11-26T06:12:18Z。ReasonEdit 论文的 arXiv 首次提交时间是 2025-11-27，因此输入文章标注的 2025-11-27 更接近论文日期，不是最终权重的最早公开日期。",
+  "access": "开放权重，可从 Hugging Face 下载完整 Diffusers 检查点；官方 Step1X-Edit 仓库提供用法，并指向专用 diffusers 的 step1xedit_v1p2 分支。Hugging Face 还显示 fal 推理入口，但本条目的可复现依据是公开权重而非托管 API。",
+  "license": "Apache-2.0",
+  "official_model_ids": [
+    "stepfun-ai/Step1X-Edit-v1p2"
+  ],
+  "parameter_total": "Hugging Face 模型页标注 12B，仓库 API 对主 DiT 精确统计为 12,442,484,544 个 BF16 参数。完整发布包还包含 Qwen2.5-VL text_encoder（权重张量 16,584,333,312 bytes，约 8.292B BF16 参数）与约 0.168B 参数的 VAE；按发布组件估算整条流水线约 20.9B。12B 与约 20.9B 分别对应主生成器和完整流水线口径，不应混用。",
+  "parameter_active": "未以统一口径披露。架构不是 MoE；一次完整 thinking–editing–reflection 推理会按阶段调用稠密 Qwen2.5-VL reasoner、Connector、DiT 与 VAE，且反思可重复多轮，但官方没有发布 active-parameter 统计。",
+  "weight_size": "41,804,832,060 bytes（41.805 GB / 38.934 GiB），为 Hugging Face 官方仓库全部 safetensors 文件体积之和：text_encoder 16.584 GB、transformer 24.885 GB、VAE 0.335 GB；不含 tokenizer、配置和示例图。",
+  "precision": "官方仓库标注 Tensor type 为 BF16，quick start 也以 torch.bfloat16 加载；训练精度和是否采用混合精度未披露。",
+  "architecture": "Reasoner–Connector–Generator 架构。Reasoner 是 Qwen2.5-VL-7B-Instruct，负责理解参考图、指令、候选编辑结果并生成 reasoning/reformat/reflection 文本与隐藏状态；2 层 Connector 将 3584 维 MLLM 表示映射到 4096 维；Generator 是从 Step1X-Edit-v1.1 初始化的 flow-matching DiT，官方配置含 19 个双流层、38 个单流层、24 个注意力头、head dimension 128、64 输入/输出通道。相比早期 Step1X-Edit 将冻结 MLLM 仅作参考图与指令编码器并单次解码，v1p2 对 MLLM 的图像编辑 reasoning 能力做专门训练，随后训练 DiT 适配其表示，最终联合微调，并在推理时交错执行 thinking、editing 与 reflection。",
+  "attention_or_sequence_design": "Qwen2.5-VL 配置为 hidden size 3584、28 层、28 个注意力头；Connector 为 2 层、32 头、hidden size 4096。DiT 配置为 19 个 joint blocks 加 38 个 single blocks，24 头、每头 128 维，joint_attention_dim 4096，RoPE axes dims [16, 56, 56]。v1p2 的主要新增不是一种新的 DiT 注意力，而是多阶段训练后的 MLLM reasoning 序列与 DiT 去噪序列在轮次层面交错：Thinking 先生成具体可执行指令，MLLM 隐藏状态经 Connector 条件化 DiT；Reflection 再读取编辑结果并决定成功、继续修正或失败。",
+  "vae_or_tokenizer": "AutoencoderKL，4 级 encoder/decoder block，16 个 latent channels，约 8× 空间压缩；随后把 2×2 latent patch 打包成 DiT 的 64 通道 token。官方 VAE 配置 sample_size=1024、scaling_factor=0.3611、shift_factor=0.1159，并启用 mid-block attention。文本/多模态处理器为 Qwen2.5-VL Processor 与其 tokenizer；官方推理实现将 MLLM 条件序列上限设为 2048 token。",
+  "text_encoder_or_conditioner": "Qwen2.5-VL-7B-Instruct 既是多模态条件编码器，也是 Reasoner。Thinking 以参考图和原始指令为输入，将含糊、抽象或多目标请求改写/分解为具体可执行指令；这更接近面向编辑的指令推理，而不是把自由文本 CoT 插进每个扩散去噪步。Reflection 则用同一 MLLM 对目标描述、单图一致性评分与输入图/编辑图审查进行级联推理，输出 <#Think> 后接 <#Success>、<#Reflection> 加二次编辑指令，或 <#Failed>。训练时第一阶段对 MLLM 注意力线性层做 LoRA、冻结 DiT；第二阶段冻结 MLLM 训练 DiT；第三阶段联合优化两者。",
+  "training_hardware": "NVIDIA H800。Reasoning Learning 明确使用 32 张 H800；Edit Learning 明确使用 128 张 H800；Unified Tuning 的 GPU 型号和数量没有单独说明。",
+  "training_hardware_scale": "阶段 1：4 节点 × 8 H800，共 32 GPU、16 小时（512 H800 GPU-hours）。阶段 2：16 节点 × 8 H800，共 128 GPU、38.9 小时（约 4,979.2 H800 GPU-hours）。阶段 3：20 小时，但论文未给 GPU 数量，因此不能计算其 GPU-hours；已明确部分合计约 5,491.2 H800 GPU-hours。",
+  "training_data_scale": "Reasoning 数据包括 200k Thinking Pairs 与 180k Reflection Triples。Thinking Pairs 从 500k 图像-指令池筛选/改写；Reflection 数据从 500k 编辑对起步，并用四种编辑方法额外生成 500k 中间图，最终人工筛得 180k。Edit Learning 另使用 14.4M 内部 T2I 样本与 2.4M 图像编辑样本，共 16.8M。各池之间是否重叠、第三阶段精确混合量与唯一图像总数未披露。",
+  "training_data_composition": "Thinking Pairs 把含糊、口语化、抽象指令映射为具体命令：500k 初始指令中 112k 被分为复杂、388k 为简单；筛出 62k 复杂指令简化对与 88k 简单指令抽象化对，再加入 50k 不需改写的简单指令，合计 200k。Reflection Triples 由 <输入图、初次编辑图、目标图> 及目标描述、一致性评分、反思指令、修正后图像和 VIEScore 构成；180k 有效样本中 success/reflection/failed 约为 3:1:1，VIEScore 由 GPT-4.1 评估。生成学习数据由 14.4M 广覆盖 T2I 与 2.4M 直接编辑样本组成。数据均为内部/自动构造与人工筛选混合，原始来源、许可、语言分布和去重细节未公开。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Reasoning Learning",
+      "description": "冻结 DiT，在 Qwen2.5-VL 注意力模块的线性层加入 LoRA；用 200k Thinking Pairs 与 180k Reflection Triples，以 next-token prediction 学习面向编辑的显式 Thinking 和 Reflection。50,000 steps，初始学习率 1e-4。"
+    },
+    {
+      "stage": 2,
+      "name": "Edit Learning",
+      "description": "冻结已适配的 MLLM，只训练 DiT，使生成器适配新的 reasoning 条件表示；以 flow-matching loss 同时训练 T2I 与直接图像编辑，数据为 14.4M T2I 加 2.4M 编辑样本。28,000 steps，学习率 1e-5。"
+    },
+    {
+      "stage": 3,
+      "name": "Unified Tuning",
+      "description": "联合微调 MLLM 与 DiT，以 L_joint=L_FM+0.1×L_NTP 对齐理解和生成；使用 FlexAttention 与 packed data 支持理解/生成混合训练，尤其处理 Reflection Triples。12,000 steps，学习率 6e-6。论文没有说明 MLLM 在本阶段是仅更新 LoRA 还是解冻更多参数。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "Reasoning Learning",
+      "optimization_steps": 50000,
+      "wall_clock_time": "16 小时"
+    },
+    {
+      "stage": "Edit Learning",
+      "optimization_steps": 28000,
+      "wall_clock_time": "38.9 小时"
+    },
+    {
+      "stage": "Unified Tuning",
+      "optimization_steps": 12000,
+      "wall_clock_time": "20 小时"
+    }
+  ],
+  "training_algorithms": "三阶段渐进优化：阶段 1 用 attention-linear LoRA 与标准 Next Token Prediction；阶段 2 用 conditional flow matching，同一 DiT 混训 T2I 与编辑；阶段 3 用 L_FM+0.1×L_NTP 联合损失。学习率依次为 1e-4、1e-5、6e-6。数据构造还用高级 VLM 做分类、双向标注、目标描述、单图一致性评价和反思，再经人工筛选；180k Reflection Triples 用 GPT-4.1 计算 VIEScore。优化器、batch size、weight decay、学习率调度、梯度裁剪与训练精度未披露。",
+  "training_infra": "阶段 1/2 分别在 4/16 个节点上运行，每节点 8 张 H800。最终混合训练使用 FlexAttention 与 packed data。分布式训练中，MLLM 和 Connector 使用 sequence parallelism 与 DeepSpeed Ulysses；DiT 同时使用 tensor parallelism 与 sequence parallelism。互联拓扑、通信库版本、容错、checkpoint 频率、吞吐和第三阶段集群规模未披露。",
+  "inference_hardware": "官方 quick start 把完整 BF16 pipeline 放到 CUDA 设备，但没有给出 v1p2 专属 GPU 型号、GPU 数量、最低/峰值显存或 CPU offload 基准。约 38.9 GiB 的 safetensors 只是磁盘权重体积，不等同于实际最低显存。",
+  "inference_performance": "官方模型卡示例在 1024 级别输入上使用 50 个去噪步、true CFG 6，并开启 thinking 与 reflection；专用 diffusers 分支的函数默认值是 28 步、最多 3 次编辑尝试。Thinking 增加一次 MLLM 指令重写，Reflection 每轮还包括目标描述、单图一致性评分、双图反思与候选评分，并可能再次运行完整 DiT，因此端到端成本随轮数变化，不能用单次 DiT 时间代表。官方仓库称可选 RegionE 可让 Step1X-Edit 推理提速 2.5×且无精度下降，但没有给出 v1p2 的固定硬件、分辨率、thinking/reflection 模式和绝对秒数，故不填可比延迟。",
+  "max_output_resolution": "原生计算约 1,048,576 像素：官方实现默认 size_level=1024，方图为 1024×1024；非方图保持长宽比并将尺寸对齐到 16 的倍数。生成后实现会把结果插值回原输入图尺寸，所以文件像素尺寸可以更大，但不代表原生生成了更多细节。官方未声明超过该约 1MP 计算桶的正式质量上限。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1089,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis Image Editing Arena 动态榜单抓取日；榜单显示排名 50、排名区间 49–52、5,797 次投票，分数会随新投票变化）",
+  "generation_time_seconds": null,
+  "generation_time_context": "截至 2026-07-19，官方论文、模型卡与 Artificial Analysis 编辑榜单都没有给出可归因于 Step1X-Edit-v1p2 的标准化端到端秒数。论文分数区分 base、thinking、thinking+reflection，而公开实现最多执行 3 轮，导致延迟高度依赖启用模式和停止轮次；Artificial Analysis 也未公开该 Elo 条目的运行模式与硬件。静态图像模型的 max_output_duration_seconds 与 native_fps 不适用。",
+  "benchmark_scores": [
+    {
+      "benchmark": "GEdit-Bench",
+      "protocol": "论文 Table 1；Semantic Consistency、Perceptual Quality、Overall 由基于 GPT-4.1 的 VIEScore 自动评估。",
+      "variants": {
+        "base": {
+          "semantic_consistency": 7.77,
+          "perceptual_quality": 7.65,
+          "overall": 7.24
+        },
+        "thinking": {
+          "semantic_consistency": 8.02,
+          "perceptual_quality": 7.64,
+          "overall": 7.36
+        },
+        "thinking_plus_reflection": {
+          "semantic_consistency": 8.18,
+          "perceptual_quality": 7.85,
+          "overall": 7.58
+        }
+      },
+      "comparison": "完整模式较本模型 base 的 overall 提升 4.7%；相同论文表中 Step1X-Edit-v1.1 为 7.66/7.35/6.97。"
+    },
+    {
+      "benchmark": "KRIS-Bench",
+      "protocol": "论文 Table 1；GPT-4o 按 Visual Consistency、Visual Quality、Instruction Following 和 Knowledge Plausibility 评分，并汇总 Factual、Conceptual、Procedural Knowledge。",
+      "variants": {
+        "base": {
+          "factual_knowledge": 58.23,
+          "conceptual_knowledge": 60.55,
+          "procedural_knowledge": 46.21,
+          "overall": 56.33
+        },
+        "thinking": {
+          "factual_knowledge": 59.79,
+          "conceptual_knowledge": 62.76,
+          "procedural_knowledge": 49.78,
+          "overall": 58.64
+        },
+        "thinking_plus_reflection": {
+          "factual_knowledge": 62.44,
+          "conceptual_knowledge": 65.72,
+          "procedural_knowledge": 50.42,
+          "overall": 60.93
+        }
+      },
+      "comparison": "完整模式较本模型 base 的 overall 提升 8.2%；Step1X-Edit-v1.1 为 53.05/54.34/44.66/51.59。"
+    },
+    {
+      "benchmark": "ImgEdit-Bench",
+      "protocol": "GPT-4.1 在 instruction adherence、editing quality、detail preservation 三维给 1–5 分，后两者受 instruction adherence 上限约束；表中报告 Overall。",
+      "metrics": {
+        "base_overall": 4.22,
+        "thinking_overall": 4.18,
+        "thinking_plus_reflection_overall": 4.4
+      },
+      "comparison": "完整模式较 base 提升 4.3%；thinking 单独启用在该较简单基准上并未提高 overall，说明不能把所有 reasoning 开关视为单调增益。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Editing Arena",
+      "variant": "Step1X-Edit-v1p2",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1089,
+        "rank": 50,
+        "rank_interval": "49–52",
+        "votes": 5797
+      },
+      "scope": "第三方动态盲评。榜单没有披露是否启用 thinking/reflection、最大轮数或推理硬件，因此该 Elo 不能直接当作论文 thinking+reflection 检查点的复现分数。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "把冻结的 MLLM 条件编码器升级为面向编辑训练的原生 Reasoner：先利用 Qwen2.5-VL 世界知识将抽象、含糊或复合指令变成具体可执行编辑，再以其隐藏状态条件化 DiT。",
+      "scope_boundary": "Thinking 是图像编辑前的自回归指令重写/分解，不是扩散每一步内部生成可见 CoT，也不应宣称为行业首次；论文的贡献是把它与 Step1X-Edit 的生成器通过专门 reasoning 数据和三阶段训练做成一个可联合优化的模型。",
+      "evidence": "ReasonEdit 论文 Sec. 3.1–3.2 给出 200k Thinking Pairs、MLLM attention LoRA、NTP loss、随后 DiT 适配与最终联合训练；Table 3 中 KRIS Overall 从 base 56.33 提升到仅 thinking 的 58.64。公开 pipeline 的 thinker.think 会在 DiT 前输出 reformat_prompt。",
+      "confidence": "高"
+    },
+    {
+      "claim": "以多轮、单图先验辅助的 Reflection 闭环审查编辑结果：先生成目标描述，再独立评估候选图与目标描述的一致性，最后结合输入图、候选图和指令输出成功、可修正或失败；可修正时生成只针对当前结果的二次指令并再次编辑，最后按语义/质量分数选择最佳轮。",
+      "scope_boundary": "这不是一次免费后处理：每轮需要多次 MLLM 调用并可能重跑完整 DiT，公开实现默认最多 3 次尝试。Reflection 仍可能误判，论文只证明其在所报基准和数据流程上的增益；不能外推为通用无幻觉验证器。",
+      "evidence": "论文 Sec. 3.1 与 Fig. 3 描述 target description→consistency score/reason→<#Success>/<#Reflection>/<#Failed>，180k Reflection Triples 和约 3:1:1 标签比；Table 3 中仅 reflection 为 59.39，thinking+reflection 达 60.93。官方引用的 v1p2 pipeline 公开 max_try_cnt=3、二次编辑与最佳轮选择逻辑。",
+      "confidence": "高"
+    },
+    {
+      "claim": "三阶段训练把理解与生成冲突拆解为 Reasoning Learning、Edit Learning、Unified Tuning，使同一个 MLLM–DiT 系统既学习显式 reasoning，又保持基础生成/编辑能力。",
+      "scope_boundary": "该阶段化范式是 ReasonEdit 的工程方案，不代表首次使用 LoRA、flow matching、联合损失、FlexAttention 或 packed training；第三阶段究竟解冻 MLLM 全量参数还是继续只更新适配器未写清。",
+      "evidence": "论文 Sec. 3.2.2–3.2.3 明确给出三阶段冻结策略、NTP/flow-matching/联合损失、训练步数、学习率与 H800 规模；Table 2 的 KRIS Overall 从预训练生成器 51.59 逐步达到统一调优 60.93。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "parameter_active 的统一统计口径；官方 12B 是主 DiT，完整流水线约 20.9B",
+    "训练精度、优化器及 betas、weight decay、batch size、全局 batch、学习率调度、梯度裁剪",
+    "Unified Tuning 阶段的 GPU 数量、节点数、GPU-hours，以及 MLLM 是更新 LoRA 还是解冻更多参数",
+    "完整训练 FLOPs、能耗、峰值显存、互联拓扑、通信库版本、容错与 checkpoint 频率",
+    "14.4M T2I 与 2.4M 编辑数据的原始来源、许可、语言分布、合成占比、去重和安全过滤",
+    "Thinking/Reflection 初始 500k 数据池之间是否重叠、唯一图像总数和 Unified Tuning 的精确数据混合比",
+    "v1p2 在指定 GPU、1024 级别、28/50 步及 base/thinking/reflection 各模式下的绝对延迟、吞吐和峰值显存",
+    "论文基准完整推理超参数、每个样本平均/最大反思轮数、reasoning token 数和失败重试统计",
+    "超过约 1MP 原生计算桶的正式支持与质量上限；输出回缩放尺寸不等于原生分辨率",
+    "Artificial Analysis 的执行后端、thinking/reflection 开关、最大轮数、种子和硬件",
+    "RegionE 所称 2.5× 加速在 v1p2 thinking+reflection 端到端流程上的绝对秒数与复现实验条件"
+  ],
+  "sources": [
+    {
+      "title": "REASONEDIT: Towards Reasoning-Enhanced Image Editing Models (CVPR 2026 paper)",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Yin_ReasonEdit_Towards_Reasoning-Enhanced_Image_Editing_Models_CVPR_2026_paper.pdf",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "REASONEDIT arXiv record (2511.22625)",
+      "url": "https://arxiv.org/abs/2511.22625",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "stepfun-ai/Step1X-Edit official repository and release news",
+      "url": "https://github.com/stepfun-ai/Step1X-Edit",
+      "source_type": "official_github"
+    },
+    {
+      "title": "stepfun-ai/Step1X-Edit-v1p2",
+      "url": "https://huggingface.co/stepfun-ai/Step1X-Edit-v1p2",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "Step1X-Edit-v1p2 repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/stepfun-ai/Step1X-Edit-v1p2?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Step1X-Edit-v1p2 model index",
+      "url": "https://huggingface.co/stepfun-ai/Step1X-Edit-v1p2/blob/main/model_index.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Step1X-Edit-v1p2 transformer config",
+      "url": "https://huggingface.co/stepfun-ai/Step1X-Edit-v1p2/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Step1X-Edit-v1p2 Qwen2.5-VL config",
+      "url": "https://huggingface.co/stepfun-ai/Step1X-Edit-v1p2/blob/main/text_encoder/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Step1X-Edit-v1p2 VAE config",
+      "url": "https://huggingface.co/stepfun-ai/Step1X-Edit-v1p2/blob/main/vae/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Step1X-Edit-v1p2 dedicated Diffusers implementation",
+      "url": "https://github.com/Peyton-Chen/diffusers/tree/step1xedit_v1p2/src/diffusers/pipelines/step1x_edit",
+      "source_type": "officially_referenced_inference_implementation"
+    },
+    {
+      "title": "Step1X-Edit: A Practical Framework for General Image Editing",
+      "url": "https://arxiv.org/abs/2504.17761",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "Artificial Analysis Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_benchmark"
+    }
+  ],
+  "notes": "版本边界：Step1X-Edit-v1.0 于 2025-04-25 开放，v1p1/v1.1 于 2025-07-09 加入 T2I 并改善编辑；v1p2-preview 于 2025-09-08 首次公开 reasoning edit 能力；本条目只记录 2025-11-26 发布的最终 Step1X-Edit-v1p2，它在论文中对应 ReasonEdit-S，不把 preview 或以 Qwen-Image-Edit 为底座的 ReasonEdit-Q 混入 official_model_ids。论文 arXiv 首发是 2025-11-27，故文章日期与模型权重日期相差一天。可比较性：开放权重、官方 GEdit/KRIS/ImgEdit 数值及 Artificial Analysis 动态盲评均存在，因此 comparison_eligible=true；但论文必须按 base、thinking、thinking+reflection 分模式比较，AA Elo 的未披露运行模式不能与论文完整循环直接等同。历史资格：最终权重、代码路径、许可、论文与清晰首发时间均可核验，因此 history_eligible=true。"
+}

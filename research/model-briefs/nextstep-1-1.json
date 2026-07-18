@@ -1,0 +1,200 @@
+{
+  "slug": "nextstep-1-1",
+  "name": "NextStep-1.1",
+  "family": "NextStep",
+  "entry_kind": "model",
+  "modality": "T2I",
+  "organization": "StepFun / 阶跃星辰（NextStep Team）",
+  "release_date": "2025-12-24",
+  "release_date_basis": "StepFun 官方 GitHub 的 News 明确记载 2025-12-24 发布 NextStep-1.1，并将其称为 text-to-image model。Hugging Face API 显示公开仓库创建于 2025-12-23T15:26:53Z、最后修改于 2025-12-23T16:14:45Z；这说明权重在 UTC 日期 12 月 23 日已经上传，但条目的公开发布日期采用官方公告日期 12 月 24 日，而不是线索文章只写到月份的“2512”。",
+  "access": "真实公开模型。完整后训练 checkpoint、独立 VAE、推理代码与 tokenizer 均可从 Hugging Face 的 stepfun-ai/NextStep-1.1 获取，ModelScope 也有官方镜像；另公开 NextStep-1.1-Pretrain 与 256px 中间 checkpoint。无需申请访问，支持本地 CUDA 推理，vLLM-Omni 已加入适配；Hugging Face 页面未提供官方 Inference Provider，亦未找到 StepFun 面向该 checkpoint 的官方托管 API。",
+  "license": "Apache License 2.0（StepFun 官方 GitHub 与 Hugging Face 模型卡标注）。模型包含从 FLUX.1-dev VAE 初始化并继续训练的图像 tokenizer；公开材料没有额外解释该上游初始化与最终 Apache-2.0 发布之间的许可证分析，商用方仍应自行复核完整依赖与素材合规。",
+  "official_model_ids": [
+    "stepfun-ai/NextStep-1.1",
+    "stepfun-ai/NextStep-1.1-Pretrain",
+    "stepfun-ai/NextStep-1.1-Pretrain-256px",
+    "stepfun-ai/NextStep-1-f8ch16-Tokenizer"
+  ],
+  "parameter_total": "Hugging Face safetensors 元数据给出主 checkpoint 精确总数 14,953,814,080（约 15B）；这包含密集 Qwen2.5-14B 系 Transformer 主干及生成相关头部，但不包含单独打包的 VAE checkpoint。家族论文以约数描述为 14B 自回归模型配 157M flow-matching head；独立 VAE 的精确参数总数未在官方模型卡中列出。",
+  "parameter_active": "主网络为密集模型而非 MoE，图像生成时会经过完整 Transformer 主干，并在每个视觉位置使用 157M、12 层、hidden size 1536 的 MLP flow-matching head；因此没有单独的 MoE active-parameter 口径。若要求含 VAE 的端到端精确激活参数量，官方未给出。",
+  "weight_size": "Hugging Face 后训练仓库的 13 个 FP32 safetensors 分片合计 59,815,331,784 bytes（55.71 GiB），独立 VAE checkpoint 为 335,365,010 bytes（0.31 GiB），二者合计约 56.02 GiB；仓库总占用约 60.18 GB（含资源与代码）。vLLM-Omni 在 BF16 加载口径下列出 model weights 28.1 GiB。",
+  "precision": "发布的 NextStep-1.1 主 safetensors 在 Hugging Face API 中全部记为 F32；模型 config 的 torch_dtype 与官方推理示例均为 bfloat16，实际推理通常在加载后转为 BF16。训练精度、GRPO 优化器状态精度及是否采用 FP32 master weights 未披露。",
+  "architecture": "纯自回归的统一文本-图像连续 token 生成器：以 decoder-only Qwen2.5-14B 初始化的 48 层密集 causal Transformer 为主干，同时处理离散文本 token 与连续图像 token；文本位置接标准 LM head，视觉位置接 image projection 与轻量 patch-wise flow-matching head。公开 config 为 hidden size 5120、intermediate size 13824、40 个 query heads、8 个 KV heads、head dim 128；视觉 flow head 为 12 层、width 1536 的 MLP。模型不是 T2V/视频 DiT，也不是用一个重型 diffusion decoder 一次生成整图，而是按视觉 patch 严格自回归地产生连续 latent token。",
+  "attention_or_sequence_design": "文本与图像 token 被串成一个因果序列，图像前后使用 <boi>/<eoi>，并加入图像 latent 网格尺寸元数据。主干使用标准 1D RoPE 而非 2D/多模态 RoPE；config 中为 48 层 GQA（40 query heads、8 KV heads），RoPE theta 1,000,000，max_position_embeddings 131,072，sliding window 关闭。图像 VAE latent 经 2×2 space-to-depth 后按网格展平；512×512 输出对应 32×32=1024 个连续视觉 token，逐 token 自回归生成。131K 配置长度不能被解读为已经训练或验证了超高分辨率输出。",
+  "vae_or_tokenizer": "连续图像 tokenizer/AutoencoderKL 由 FLUX.1-dev VAE 初始化，8×空间下采样、16 latent channels，并用 reconstruction 与 perceptual loss 继续训练；latent 按通道标准化，并在 tokenizer 训练时加入噪声扰动以获得更分散、鲁棒的 latent 空间。随后用 2×2 pixel shuffle/space-to-depth 将相邻 latent 合成 64 维 patch token，因此端到端视觉 token 的有效空间步长为 16 像素。官方独立 tokenizer 模型卡称改进版冻结 encoder、细化 decoder；NextStep-1.1 仓库内另含约 335 MB 的 VAE checkpoint。",
+  "text_encoder_or_conditioner": "没有独立 CLIP/T5 文本编码器。提示词使用随模型发布的 Qwen 系 tokenizer（config vocab size 152,064）转为离散 token，直接由同一个 Qwen2.5-14B 初始化的 causal Transformer 主干建模；每个图像位置的 Transformer hidden state 作为 flow-matching head 的条件。官方示例还支持正/负 prompt 与 text CFG，但这属于采样条件方式，不是额外文本编码器。",
+  "training_hardware": "未知。NextStep-1/1.1 论文、官方 1.1 后训练博客、模型卡和公开训练仓库均未披露实际训练所用 GPU/加速器厂商或型号。论文中的 H100 只用于理论推理延迟分析，不能当作训练硬件证据。",
+  "training_hardware_scale": "未知；未披露 GPU 数、节点数、互联拓扑、峰值集群规模、累计 accelerator-hours、训练 FLOPs、能耗或成本。公开示例 launcher 能在单机 8 卡 torchrun/DeepSpeed 上运行，但这只是复现入口，不代表原始训练集群。",
+  "training_data_scale": "1.1 专属续训数据的精确样本数与 token 数未披露。NextStep 家族论文披露基础语料包括 400B Step-3 文本 token、550M 过滤并中英重标注的图文对、约 1M 高质量 instruction-guided image-to-image 样本、80M video-interleaved 样本和 5M character-centric interleaved 样本；GitHub 进一步概括实际训练约使用 1B 张来自 proprietary in-house sources 的图像。1.1 博客只给出续训步数与“高质量 curated data”，不能据此推算唯一的数据量。",
+  "training_data_composition": "继承的家族语料由四类组成：文本语料；来自 web、多任务 VQA 和 text-rich documents 的图文对，经美学、水印、清晰度、OCR、语义对齐过滤并用 Step-1o-turbo 生成中英长描述；感知/控制/修复/编辑类 image-to-image 数据；以及视频帧、教程、角色叙事、多视角组成的 interleaved 数据。NextStep-1 论文公布旧训练阶段的典型比例为 20% text-only、60% image-text、20% interleaved，annealing 时加入 10% image-to-image；但 1.1 新增 300K+20K 步具体是否沿用完全相同比例未披露。GRPO 使用 prompt group 在线采样，奖励由 PickScore 与 OCR supervision 组合，具体 prompt 数、来源与过滤比例未知。",
+  "training_stages": [
+    {
+      "stage": 0,
+      "name": "图像 tokenizer 训练（家族继承）",
+      "description": "由 FLUX.1-dev VAE 初始化，在图文数据上用 reconstruction/perceptual objectives 训练；NextStep-1 论文给出 50K steps、总 batch 512，并在 latent 上做逐通道标准化与随机噪声正则。1.1 是否重新训练 tokenizer 未说明；公开流程从既有 NextStep-1 256px checkpoint 开始。"
+    },
+    {
+      "stage": 1,
+      "name": "256px 继续预训练",
+      "description": "从 NextStep-1 256px checkpoint 初始化，再进行 300K steps、256 分辨率、learning rate 1e-4 的继续预训练，使该阶段累计达到 500K steps。"
+    },
+    {
+      "stage": 2,
+      "name": "512px 预训练",
+      "description": "继续训练 20K steps at 512 resolution，以增强高分辨率生成能力；官方博客未给出该阶段 batch、token 数或 learning-rate schedule。"
+    },
+    {
+      "stage": 3,
+      "name": "高质量数据 annealing",
+      "description": "在高质量 curated data 上进行 20K steps annealing，得到公开的 NextStep-1.1-Pretrain；数据阈值与样本数量未在 1.1 博客中量化。"
+    },
+    {
+      "stage": 4,
+      "name": "NextStep-GRPO 全参数后训练",
+      "description": "不做额外 SFT，直接从 NextStep-1.1-Pretrain 进行 1000 次 GRPO 训练更新。官方描述为以 FlowGRPO 为起点、针对自回归连续 token 生成稳定化后的 NextStep-GRPO；采用 PickScore（人类偏好对齐）与 OCR（文字渲染）复合奖励，并进行 full-parameter fine-tuning。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "256px 继续预训练",
+      "optimization_steps": 300000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "512px 预训练",
+      "optimization_steps": 20000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "annealing",
+      "optimization_steps": 20000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "NextStep-GRPO",
+      "optimization_steps": 1000,
+      "wall_clock_time": "未知；官方表格仅给出 GRPO 次数，未说明一次 iteration 中的 prompt groups、样本数或 accelerator time"
+    }
+  ],
+  "training_algorithms": "预训练沿用统一 next-token objective：离散文本位置为 cross-entropy，连续图像 patch 为 flow-matching velocity MSE；家族公开权重比例为 CE:MSE=0.01:1。1.1 的“Flow-based RL”已由官方证实，不是传闻：后训练以 FlowGRPO 为起点，形成 NextStep-GRPO。稳定化措施包括：(1) token-by-token 采样后把完整文本-图像序列送回主干并行重算 log-prob，以消除 BF16 顺序采样与并行训练的数值差；(2) RL 训练时关闭 CFG，避免放大数值误差并保留探索；(3) 每 iteration 只优化一个 timestep，执行 one sampling step/one weight update 的严格 on-policy 更新；(4) 用 FlowCPS 形式计算 log-prob，避免除以小浮点数导致梯度爆炸；(5) 在线拒绝高均值（过易）或低标准差（探索塌缩）的 reward groups。复合奖励为 PickScore+OCR。GRPO 代码、完整超参数、KL/clip 系数及采样 group size 未公开。",
+  "training_infra": "公开预训练代码基于 PyTorch、Transformers、Diffusers 与 DeepSpeed 0.16.3，数据层使用 WebDataset，配置采用 Hydra/OmegaConf，支持 torchrun/smartrun 分布式启动、W&B/TensorBoard 记录和 DeepSpeed shard 转换。GitHub README 明确公开的是 NextStep-1 训练代码及 NextStep-1.1 后训练博客；仓库树中未见 GRPO/FlowCPS/reward 训练实现，因此 NextStep-GRPO 当前不能仅凭官方仓库完整复现。原始训练的 ZeRO stage、并行划分、通信库、checkpoint 频率、容错和存储系统未披露。",
+  "inference_hardware": "官方 Hugging Face 示例要求 CUDA 并以 BF16 加载。vLLM-Omni 官方文档在 512×512、batch size 1、基础单卡且不启用加速/优化的口径下，报告 peak VRAM 71.8 GiB、BF16 model weights 28.1 GiB；因此常规单卡部署实际需要约 80 GiB 显存级 GPU，或自行做并行/卸载。具体 GPU 型号不是该表口径的一部分。",
+  "inference_performance": "官方默认 512×512 示例按 1024 个视觉 token 严格自回归解码，每个 token 再执行 28 个 flow ODE sampling steps，串行开销较大。vLLM-Omni 已支持该模型并提供 CFG parallel 等机制，但官方文档没有给出实测 images/s 或端到端延迟。NextStep-1 家族论文只给出 H100 理论分析：1024 序列长度累计约 11.31 秒，其中不含 flow head 时约 7.83 秒；这不是 NextStep-1.1 的实测端到端结果，不能作为稳定速度承诺。",
+  "max_output_resolution": "官方模型卡与 vLLM-Omni 适配均明确演示/列出 512×512；训练博客也只确认最高进行到 512 resolution。推理代码接受可被有效步长整除的自定义 hw，但没有公开验证高于 512 的质量、显存或最大边界，因此可信的公开上限登记为 512×512，而非由 131K context 配置外推的更高分辨率。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "静态 T2I 模型，视频时长与 FPS 不适用。未找到 Artificial Analysis、Arena.AI 或官方可复现实测的 NextStep-1.1 端到端生成延迟；家族论文中的 11.31 秒是基于 H100 规格的理论累计延迟估算而非 1.1 实测，因此 generation_time_seconds 保持 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "NextStep-GRPO method validation on SD3.5-Medium",
+      "variant": "NextStep-GRPO（不是 NextStep-1.1 checkpoint 的模型质量得分）",
+      "observed_at": "2026-02-13 official post-training blog",
+      "metrics": {
+        "pickscore": 23.66,
+        "ocr": 0.96,
+        "flowgrpo_baseline_pickscore": 23.31,
+        "flowgrpo_baseline_ocr": 0.92
+      },
+      "scope": "StepFun 用相同 SD3.5-Medium base model 和相同奖励模型验证稳定化算法在标准 diffusion setting 中没有牺牲表现。该表支持 NextStep-GRPO 方法有效性，但不能当作 NextStep-1.1 的 GenEval、Elo 或跨模型质量分数。官方没有发布 1.1 checkpoint 独立的标准基准数表。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "用大型 causal Transformer 直接自回归建模连续图像 patch token，并只用 157M 的轻量 flow-matching head 把每个上下文 hidden state 变成下一连续视觉 token。",
+      "scope_boundary": "这是 NextStep 家族的核心架构创新，1.1 延续而非首次提出。它仍在每个视觉 token 内做多步 flow sampling；“纯自回归”指核心生成分布由 AR Transformer 按 patch 建模，不代表完全没有 flow/ODE 计算，也不等同于视频生成。",
+      "evidence": "NextStep-1 官方论文描述 14B causal Transformer、连续 16-channel VAE latent、2×2 patch 化和 157M/12-layer/1536-width flow head；NextStep-1.1 的公开 config、代码和权重形状与该架构一致。",
+      "confidence": "高"
+    },
+    {
+      "claim": "为自回归 flow 模型设计稳定的 NextStep-GRPO：通过并行重算 log-prob、关闭训练 CFG、严格单 timestep on-policy 更新、FlowCPS 数值形式与在线拒绝采样，抑制梯度尖峰、reward hacking 和 reward collapse。",
+      "scope_boundary": "官方已确认该算法用于 NextStep-1.1 的全参数后训练，因此“Flow-based RL”不是传闻；但细节直到 2026-02-13 的官方博客才公开。官方尚未发布 RL 代码、完整超参数或 NextStep-1.1 独立标准 benchmark 数表，不能据定性可视化声称普遍 SOTA。",
+      "evidence": "StepFun 官方 1.1 后训练博客逐项给出五项稳定化措施、PickScore+OCR 复合奖励及 1000 GRPO 更新，并展示 FlowGRPO 与 NextStep-GRPO 的训练动态对比；2025-12-24 官方 GitHub 公告和 HF 模型卡先行明确采用 Flow-based RL post-training。",
+      "confidence": "高（采用与算法描述）；中（跨模型质量领先程度）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "1.1 专属续训与 GRPO 的训练硬件型号、GPU/节点规模、互联、accelerator-hours、FLOPs、能耗和成本",
+    "NextStep-GRPO 的公开代码、optimizer、learning rate、batch/group size、clip/KL 系数、reward 权重、完整 prompt 数据和拒绝阈值",
+    "1.1 的 300K 256px、20K 512px 与 20K annealing 阶段各自精确样本数、token 数、数据混合比例、去重与授权构成",
+    "后训练 checkpoint 独立于 NextStep-1 的 GenEval、GenAI-Bench、DPG-Bench、WISE、OneIG-Bench 或可信 Elo 分数",
+    "可复现的 NextStep-1.1 端到端生成延迟、吞吐、功耗和多卡 scaling；家族论文只有 H100 理论估算",
+    "高于 512×512 的官方支持边界、训练覆盖范围、质量与显存数据",
+    "独立 VAE 的精确参数量、1.1 是否重新训练 tokenizer，以及后训练全模型精确 active-parameter 口径",
+    "发布的 FP32 权重是否源自训练 master weights、实际训练混合精度及 GRPO 数值精度配置",
+    "Flow-based RL 的完整消融数值；博客只公开 SD3.5-Medium 方法验证数表和 NextStep-1.1 定性训练曲线",
+    "面向 NextStep-1.1 checkpoint 的官方托管 API、价格、限流与服务端硬件"
+  ],
+  "sources": [
+    {
+      "title": "stepfun-ai/NextStep-1 official GitHub repository and release timeline",
+      "url": "https://github.com/stepfun-ai/NextStep-1",
+      "source_type": "official_github"
+    },
+    {
+      "title": "NextStep-1.1: Stable Post-Training Delivers Comprehensive Improvements",
+      "url": "https://stepfun-ai.github.io/NextStep-1/nextstep_1p1_blog/",
+      "source_type": "official_technical_blog"
+    },
+    {
+      "title": "stepfun-ai/NextStep-1.1",
+      "url": "https://huggingface.co/stepfun-ai/NextStep-1.1",
+      "source_type": "official_model_card_and_weights"
+    },
+    {
+      "title": "Hugging Face API metadata for stepfun-ai/NextStep-1.1 with blobs",
+      "url": "https://huggingface.co/api/models/stepfun-ai/NextStep-1.1?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "NextStep-1.1 released model config",
+      "url": "https://huggingface.co/stepfun-ai/NextStep-1.1/blob/main/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "NextStep-1.1 released generation pipeline",
+      "url": "https://huggingface.co/stepfun-ai/NextStep-1.1/blob/main/models/gen_pipeline.py",
+      "source_type": "official_inference_code"
+    },
+    {
+      "title": "NextStep-1: Toward Autoregressive Image Generation with Continuous Tokens at Scale (arXiv:2508.10711v2)",
+      "url": "https://arxiv.org/html/2508.10711v2",
+      "source_type": "official_family_paper"
+    },
+    {
+      "title": "stepfun-ai/NextStep-1.1-Pretrain",
+      "url": "https://huggingface.co/stepfun-ai/NextStep-1.1-Pretrain",
+      "source_type": "official_pretrain_model_card_and_weights"
+    },
+    {
+      "title": "stepfun-ai/NextStep-1-f8ch16-Tokenizer",
+      "url": "https://huggingface.co/stepfun-ai/NextStep-1-f8ch16-Tokenizer",
+      "source_type": "official_tokenizer_model_card_and_weights"
+    },
+    {
+      "title": "vLLM-Omni Text-to-Image documentation: NextStep-1.1",
+      "url": "https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/examples/offline_inference/text_to_image/",
+      "source_type": "official_inference_framework_documentation"
+    },
+    {
+      "title": "NextStep-1.1 on ModelScope",
+      "url": "https://modelscope.cn/models/stepfun-ai/NextStep-1.1",
+      "source_type": "official_model_mirror"
+    },
+    {
+      "title": "Apache License 2.0 for NextStep",
+      "url": "https://github.com/stepfun-ai/NextStep-1/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "Ideas around T2I2V models — miscategorized NextStep 1.1 clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/#2512-nextstep-11-%E9%98%B6%E8%B7%83%E6%98%9F%E8%BE%B0",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "核验结论：线索文章把“2512 NextStep 1.1 阶跃星辰”误放在 T2V (+Edit) 章节，且只写了“Flow-based RL?”。官方 GitHub、Hugging Face task tag、模型卡和推理代码均明确它是静态 text-to-image 模型，因此 modality 必须纠正为 T2I。它是有公开完整权重与代码的真实 model，不是 method 或 rumor；Flow-based RL 也已被官方 2026-02 技术博客证实并命名为 NextStep-GRPO。comparison_eligible=true 仅表示它可进入同口径 T2I 开放模型比较；它不应进入任何 T2V 排名，且缺少 1.1 独立标准 benchmark 时不能用 NextStep-1 论文旧分数冒充。history_eligible=true，因为连续视觉 token 的纯 AR 路线与针对 AR-flow 的稳定 on-policy RL 都是有明确公开证据的技术演进节点。"
+}

@@ -1,0 +1,198 @@
+{
+  "slug": "seedream-4-5",
+  "name": "Seedream 4.5",
+  "family": "Seedream",
+  "entry_kind": "model",
+  "modality": "Omni",
+  "organization": "ByteDance Seed",
+  "release_date": "2025-12-03",
+  "release_date_basis": "采用中国区公开发布/公测日 2025-12-03：同期报道明确称火山引擎于当日发布 Doubao-Seedream-4.5 并开启公测。ByteDance Seed 官方项目页未标发布日期；BytePlus 官方版本记录将 seedream-4-5-251128（版本快照日期为 2025-11-28）列在 2025 年 11 月版本更新中。输入线索文章标为 2025-12-04，可能对应其收录日、英文站上线日或时区差异；在缺少带日期的官方发布稿时，本条以可核验的中国区首次公开可用日为准，并保留这一日差异。",
+  "access": "闭源托管模型。可通过火山方舟使用 doubao-seedream-4-5-251128，通过 BytePlus ModelArk 使用 seedream-4-5-251128；ByteDance Seed 官方项目页还链接即梦/Dreamina 与 AIGC Arena 体验入口。官方 API 支持文生图、单图/多图到图、文生组图和参考图到组图，并支持流式输出；最多 14 张参考图，输入参考图数与最终输出图数之和不超过 15。没有官方可下载权重或本地推理包。",
+  "license": "模型权重许可证未知且不适用：官方未发布权重。托管调用受火山引擎/BytePlus 服务条款与内容政策约束，不能将 API 可用性解释为开放权重或开源许可。",
+  "official_model_ids": [
+    "doubao-seedream-4-5-251128",
+    "seedream-4-5-251128"
+  ],
+  "parameter_total": "未知。ByteDance Seed 只称 4.5 通过模型整体 scaling 获得提升，没有披露参数量；不得由版本号或前代模型反推。",
+  "parameter_active": "未知。官方未披露稠密/MoE 结构或每次推理激活参数口径。",
+  "weight_size": "未知。没有官方公开权重文件，无法核验文件体积。",
+  "precision": "未知。官方未披露 4.5 的训练精度、服务端推理精度或量化格式。",
+  "architecture": "4.5 的精确架构未公开。官方只披露它通过模型整体 scaling 提升能力，并以同一 API 模型支持 T2I、单/多图编辑与多图输出。需要特别注意：4.5 官方项目页的“Tech Report”按钮实际链接 Seedream 4.0 论文；该论文描述的是前代的高效 Diffusion Transformer、高压缩 VAE 与统一生成/编辑框架，不能据此断言 4.5 的层数、宽度、VAE 配置或训练流程完全相同。",
+  "attention_or_sequence_design": "未知。没有 4.5 专属技术报告或配置公开注意力类型、位置编码、文本/图像 token 排布、因果掩码或多图序列设计。多图主体识别与一致性是已公开能力，不等价于已公开其注意力机制。",
+  "vae_or_tokenizer": "未知。官方未披露 4.5 的 VAE/视觉 tokenizer 类型、压缩率、潜变量通道数或重建指标。Seedream 4.0 论文中的高压缩 VAE 只能作为家族前代背景，不能无条件移植到 4.5。",
+  "text_encoder_or_conditioner": "未知。API 提供 standard prompt optimization mode，但官方未披露 4.5 使用的文本编码器、VLM/LLM 提示增强器、参数规模、上下文长度或它是否总在服务端启用。",
+  "training_hardware": "未知",
+  "training_hardware_scale": "未知",
+  "training_data_scale": "未知。4.5 没有专属技术报告；不能把 Seedream 4.0 论文披露的数十亿图文对直接视为 4.5 的训练数据规模。",
+  "training_data_composition": "未知。官方未披露 4.5 的数据来源、图文/编辑/多图样本配比、语言构成、授权结构、合成数据比例、过滤或去重方法。项目页展示人像、海报、Logo、商品视觉、密集文字与多图组合案例，仅能说明目标能力，不足以反推训练集组成。",
+  "training_stages": [
+    {
+      "stage": "未披露",
+      "name": "Seedream 4.5 训练流程",
+      "description": "官方仅以“模型整体 scaling”概括升级，没有披露预训练、继续训练、SFT、偏好优化、蒸馏或量化的具体阶段。前代 Seedream 4.0 的 CT/SFT/RLHF 与推理加速流程不可直接当作 4.5 事实。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "全部训练阶段",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "未知。没有 4.5 专属资料披露训练目标、优化器、学习率、损失函数、偏好优化算法、蒸馏方法或量化方案；官方页面链接的 Seedream 4.0 论文不能证明 4.5 沿用相同算法。",
+  "training_infra": "未知。未披露训练框架、加速器类型/数量、并行策略、互联、吞吐、容错或能耗。",
+  "inference_hardware": "未知。BytePlus/火山方舟是托管端点，官方没有公开服务端 GPU/加速器型号、数量、显存或单租户配置；也没有官方本地运行配置。",
+  "inference_performance": "官方未给出指定硬件上的纯模型延迟、吞吐、显存或采样步数。Artificial Analysis 于 2026-07-19 页面抓取时，对 BytePlus 端点报告过去 14 天每张图端到端 API 时间中位数 16.5081 秒；该口径包含供应商返回 URL 时的图片下载，且会随负载变化。不能用 Seedream 4.0 论文的 2K、1.8 秒数据代表 4.5。",
+  "max_output_resolution": "支持 2K 与 4K 档。BytePlus 官方 API 对 4.5 给出默认 2048x2048、自定义总像素范围 3,686,400 至 16,777,216、宽高比 1:16 至 16:1；4K 预设包括 4096x4096、5504x3040、3040x5504 和 6240x2656 等，因此“4K”是像素预算/预设档位而非所有比例均固定 4096 边长。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1162.99,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis 动态模型页抓取；分数会随新增盲评投票变化）",
+  "generation_time_seconds": 16.5081005096436,
+  "generation_time_context": "Artificial Analysis 对“Seedream 4.5, BytePlus”的动态观测，页面于 2026-07-19 抓取；数值为过去 14 天每张图端到端 API 生成时间中位数，并在供应商返回 URL 时包含图片下载时间。页面没有披露服务端硬件、分辨率混合、采样步数或排队拆分，不能解释为模型内核延迟。静态图像模型的 max_output_duration_seconds 与 native_fps 不适用，故为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Image Arena Quality Elo",
+      "variant": "Seedream 4.5",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "quality_elo": 1162.99,
+        "quality_elo_ci95_lower": 1155.99,
+        "quality_elo_ci95_upper": 1169.99
+      },
+      "scope": "第三方动态人类偏好盲评的模型综合质量页快照；页面值会继续变化。"
+    },
+    {
+      "benchmark": "Artificial Analysis Text-to-Image Leaderboard",
+      "variant": "Seedream 4.5",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1163,
+        "rank": 28,
+        "rank_interval": "23-30",
+        "votes": 10350
+      },
+      "scope": "第三方动态 T2I 人类偏好榜单快照；四舍五入后的 1163 与模型页 1162.99 是同一量级口径。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Editing Leaderboard",
+      "variant": "Seedream 4.5",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1185,
+        "rank": 20,
+        "rank_interval": "18-24",
+        "votes": 10306
+      },
+      "scope": "第三方动态图像编辑人类偏好榜单快照；与 T2I Elo 属于不同赛道，不应互换或直接合并。"
+    },
+    {
+      "benchmark": "MagicBench 4.5",
+      "variant": "Seedream 4.5 versus Seedream 4.0",
+      "observed_at": "官方项目页（访问于 2026-07-19）",
+      "metrics": {
+        "text_to_image_axes": [
+          "Overall(Elo)",
+          "Alignment",
+          "Structure",
+          "Aesthetics",
+          "Correction",
+          "Text_CN",
+          "Text_EN"
+        ],
+        "reported_result": "Seedream 4.5 在官方雷达图全部所示轴上高于 Seedream 4.0",
+        "numeric_values": "未提供"
+      },
+      "scope": "厂商内部基准的定性雷达图。图中没有数值刻度、样本量、提示词集、评审协议或置信区间，不能据图估算具体分数，也不能视为独立复现。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "通过整体 scaling 强化多图组合中的主体识别与参考细节保持，使模型能在多张输入图之间锁定目标，并更稳定地保留人脸、光影、色调与材质细节。",
+      "scope_boundary": "这是 Seedream 4.5 相对 4.0 的厂商升级主张与可用能力，不是“行业首次多图编辑”或新注意力机制的证据。统一生成/编辑、多参考输入在 Seedream 4.0 已存在；4.5 的独立贡献边界是该能力的规模化与质量增强，但官方未公布消融、参数增量或可复现实验来量化归因。",
+      "evidence": "ByteDance Seed 官方 4.5 项目页明确写出 overall scaling、multi-image 主体识别及参考图细节保持；BytePlus 官方版本记录亦列出编辑一致性、主体细节与光影/色调保持的提升。",
+      "confidence": "中高"
+    },
+    {
+      "claim": "面向成品级视觉设计增强密集文字、小字、海报与 Logo 的构图和排版渲染，并支持在编辑中替换、翻译或改变局部文字样式。",
+      "scope_boundary": "这是面向专业设计场景的能力增强，不构成“首个可靠生成密集文字的模型”之类首创结论。官方只给出案例与无数值 MagicBench 雷达图，没有公开 OCR 准确率、语言覆盖、长文本成功率或第三方文字专项基准；Artificial Analysis 当前文字与排版子榜也不支持把营销表述升级为绝对领先。",
+      "evidence": "官方项目页将 poster/layout/logo 与清晰小字列为重点能力，展示中英文翻译、局部文字颜色/字体修改、商品页与含密集小字海报案例；BytePlus 版本记录明确称 small-text generation 提升。",
+      "confidence": "中高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "Seedream 4.5 精确架构，以及其相对 4.0 的结构变更、层数、隐藏维度与参数扩展比例",
+    "parameter_total 与 parameter_active",
+    "权重体积、权重许可证、训练精度、服务端推理精度与量化格式",
+    "注意力/序列设计、位置编码、多图 token 排布与掩码机制",
+    "VAE/视觉 tokenizer 的压缩率、潜变量配置、参数量与重建指标",
+    "文本编码器、VLM/LLM 提示增强器的身份、规模、上下文长度与启用路径",
+    "训练硬件型号、数量、集群规模、累计加速器时、能耗与训练成本",
+    "训练数据总量、来源、授权结构、语言/任务配比、合成数据比例、去重与过滤流程",
+    "训练阶段、优化步数、batch size、wall-clock 时间、优化器、学习率、损失函数与后训练算法",
+    "训练框架、数据/张量/流水线并行策略、集群互联、吞吐、容错与 checkpoint 频率",
+    "服务端推理硬件、采样步数、批处理、显存、纯模型延迟与吞吐",
+    "MagicBench 4.5 的数值分数、样本量、提示词集、评审协议、误差条与可复现脚本",
+    "带官方时间戳的全球发布公告；当前中国区公开公测日与输入文章日期相差一天"
+  ],
+  "sources": [
+    {
+      "title": "Seedream 4.5",
+      "url": "https://seed.bytedance.com/en/seedream4_5",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "Seedream 4.5（中文官方项目页）",
+      "url": "https://seed.bytedance.com/zh/seedream4_5",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "Model releases - 2025",
+      "url": "https://docs.byteplus.com/en/docs/ModelArk/2172655",
+      "source_type": "official_release_history"
+    },
+    {
+      "title": "Image generation API",
+      "url": "https://docs.byteplus.com/en/docs/ModelArk/1541523",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "Model service billing",
+      "url": "https://docs.byteplus.com/docs/ModelArk/1099320",
+      "source_type": "official_pricing_documentation"
+    },
+    {
+      "title": "Seedream 4.0: Toward Next-generation Multimodal Image Generation",
+      "url": "https://arxiv.org/abs/2509.20427",
+      "source_type": "official_predecessor_technical_report_boundary_reference"
+    },
+    {
+      "title": "Seedream 4.5 - Model Elo, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/image/models/seedream-4-5",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "Text to Image Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/text-to-image",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "豆包图像创作模型 Seedream 4.5 发布，重点强化多图组合生成能力",
+      "url": "https://www.ithome.com/0/902/252.htm",
+      "source_type": "contemporaneous_secondary_release_report"
+    },
+    {
+      "title": "Idea2StableDiffusion",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue"
+    }
+  ],
+  "notes": "这是已公开、仍有官方托管 API 且具第三方动态榜单数据的闭源模型，因此 comparison_eligible 与 history_eligible 均为 true。模态记为 Omni，因为同一官方模型 ID 同时覆盖 T2I、单/多图编辑以及多图输出；在按赛道比较时应分别使用 T2I Elo 约 1163 与编辑 Elo 约 1185。最重要的证据边界是：Seedream 4.5 没有专属公开技术报告，官方“Tech Report”链接指向 4.0 论文，因此所有具体架构、训练数据、CT/SFT/RLHF、蒸馏、量化与 1.8 秒延迟信息都不能自动继承。4.5 的可靠结论主要是官方产品能力、API 约束、版本 ID 和动态第三方观测，而不是可复现的训练规格。"
+}

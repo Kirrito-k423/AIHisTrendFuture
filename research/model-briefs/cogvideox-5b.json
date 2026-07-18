@@ -1,0 +1,196 @@
+{
+  "slug": "cogvideox-5b",
+  "name": "CogVideoX-5B",
+  "family": "CogVideoX",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Zhipu AI / Tsinghua University THUDM",
+  "release_date": "2024-08-27",
+  "release_date_basis": "官方 CogVideo 仓库的更新日志与模型表均把 CogVideoX-5B 的开放权重发布日期列为 2024-08-27。Hugging Face 仓库的初始文件提交早至 2024-08-23，而论文 arXiv v1 为 2024-08-12；这里采用官方针对 5B 权重的公开发布日，而不是论文日期或仓库预上传日期。",
+  "access": "开放权重与推理代码。主模型可从 Hugging Face 直接下载，官方 GitHub 提供 SAT 与 Diffusers 推理/微调入口；无需申请即可用于许可范围内的学术研究。商业使用不是无条件开放：需登记取得基础商业许可，月访问量超过 100 万需联系许可方取得额外商业许可。",
+  "license": "CogVideoX License（自定义、非 OSI 许可证）。学术研究可免费使用；商业使用须登记取得基础商业许可，且基础许可下商业服务访问量不得超过每月 100 万。禁止军事或非法用途，以及危害中国国家安全和统一、公共利益或人身权益的用途；复制或重要部分须附版权与许可声明。仓库代码为 Apache-2.0，但 CogVideoX-5B Transformer 权重不是 Apache-2.0，不能混为一谈。",
+  "official_model_ids": [
+    "THUDM/CogVideoX-5b",
+    "zai-org/CogVideoX-5b"
+  ],
+  "parameter_total": "官方名称以 5B 指称视频扩散 Transformer；当前官方 Diffusers 权重索引的 BF16 tensor payload 为 11,140,566,144 bytes，对应精确 5,570,283,072 个 Transformer 参数。端到端流水线还包含 T5-v1_1-XXL encoder 的 4,762,310,656 参数，以及 3D causal VAE 的 215,583,907 参数，合计约 10,548,177,635（10.55B）参数。该合计不表示三者在每个扩散步同时激活。",
+  "parameter_active": "Expert Transformer 是稠密模型，不是带路由的稀疏 MoE；每个去噪步运行整套约 5.57B Transformer 主干。约 4.76B 的 T5 encoder 通常只在提示词编码阶段运行，约 0.216B 的 VAE 在 latent 编解码阶段运行，因此不存在官方统一的“每步端到端 active parameters”口径。",
+  "weight_size": "当前 zai-org/CogVideoX-5b Hugging Face 快照中的 safetensors 合计 21,527,719,772 bytes（21.528 GB / 20.049 GiB）：Transformer 两个 BF16 分片合计 11,140,682,592 bytes，T5 encoder 两个 BF16 分片合计 9,524,648,584 bytes，VAE 的 FP32 文件为 862,388,596 bytes。VAE 的 FP32 文件是 2024-11-23 后的当前仓库状态；不能把整个约 21.5 GB 都称为“5B 主干权重”。",
+  "precision": "官方说明 CogVideoX-5B 在 BF16 下训练并推荐 BF16 推理；官方 Diffusers 快照的 Transformer 与 T5 encoder 为 BF16。当前 VAE 文件为 FP32（2024-11-23 更新）。推理入口还支持 FP16、FP32、FP8 与 INT8 等运行/量化路径，但这些是部署选择，不代表首发训练精度；官方表明确不支持 INT4。",
+  "architecture": "Latent video diffusion Transformer。视频先经 3D causal VAE 压缩为空间-时间 latent，再以 2×2 空间 patch 展开为视频 token；T5 文本 embedding 与视频 token 一起送入 42 层 expert Transformer。官方 5B 配置为 48 个 attention heads、每头 64 维（hidden size 3072）、16 latent channels、最大文本长度 226、输入/输出通道均为 16，并使用旋转位置编码。模型没有 U-Net，也没有稀疏 MoE 路由。",
+  "attention_or_sequence_design": "采用 3D full attention，在时间与二维空间展开后的完整视频 token 上做全局建模，并让文本与视频序列在同一 Transformer 中深度交互。所谓“expert”主要指 expert adaptive LayerNorm：文本与视频模态使用分开的自适应归一化/调制参数，以缓解两种模态分布差异；它不是按 token 路由到不同 FFN 专家的 MoE。发布配置使用 RoPE、42 层、48 heads、head dimension 64；全注意力的二次复杂度也是长视频推理成本的重要来源。",
+  "vae_or_tokenizer": "AutoencoderKLCogVideoX，即 3D causal VAE。因果 3D 卷积同时沿时间与空间压缩，空间压缩率为 8×8、时间压缩率为 4×，latent channels 为 16；首帧采用因果边界处理，使 49 帧映射为 13 个 latent temporal slices。当前配置的 block channels 为 [128, 256, 256, 512]、每级 3 个 residual layers、scaling factor 0.7。官方当前 FP32 VAE 精确为 215,583,907 参数。论文把减少逐帧 2D VAE 带来的闪烁列为设计动机，但“几乎无损”是官方定性表述，不是严格无损编码。",
+  "text_encoder_or_conditioner": "T5-v1_1-XXL 的 encoder-only 用法：24 层、d_model 4096、64 heads、d_ff 10240，最大文本序列长度 226；官方快照精确 4,762,310,656 参数。模型只正式支持英语输入。官方还建议用 GLM-4、GPT-4 等外部 LLM 把短提示扩写成长描述以贴近训练 caption 分布，但该提示改写器不是 CogVideoX-5B checkpoint 的必需组成，也不应计入 5B 主干参数。",
+  "training_hardware": "未知。论文和官方模型卡未披露 CogVideoX-5B 原始预训练所用 GPU/加速器厂商及具体型号；公开的 A100/H100 数字是推理或后续微调基准，不能反推为原始训练硬件。",
+  "training_hardware_scale": "未知。未披露原始训练节点数、GPU 数、互联拓扑、累计 accelerator-hours、FLOPs、能耗或成本。",
+  "training_data_scale": "论文报告的数据处理起点约为 3500 万条网络视频，但未给出完整的逐级过滤后有效样本数、总视频小时数、去重后规模、每个训练阶段的样本/epoch 数或 token 数。最终高质量微调子集被描述为总训练集的 20%。",
+  "training_data_composition": "以互联网视频为主，先做去重、镜头切分与基础质量清洗，再按美学、运动、清晰度、文本/字幕、水印和语义等信号过滤；论文提到利用人工标注训练基于 Video-LLaMA 的过滤器。由于网络视频通常缺少精确文字，团队构建了多阶段 caption 管线：组合原始/短描述、帧级视觉描述与大语言模型汇总，训练专用视频 caption 模型，并用其为训练视频生成更长、更细致的描述；该模型后来以 CogVLM2-Caption 开放。官方未披露来源网站清单、许可构成、语言比例、真实/合成比例、人物数据占比或安全过滤统计。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "低分辨率与混合时长预训练",
+      "description": "先在较低分辨率视频上学习粗粒度语义、场景和运动，以降低早期训练成本；通过 mixed-duration training 与 Multi-Resolution Frame Pack 把不同时长/形状样本组织进批次，提高视频数据利用率。官方没有为 5B 单独披露此阶段的精确分辨率、帧率、步数和数据量。"
+    },
+    {
+      "stage": 2,
+      "name": "高分辨率渐进训练",
+      "description": "从低分辨率 checkpoint 继续提升到开放模型的高分辨率能力，强化细节；RoPE 分辨率迁移采用外推以更好保持相对位置与局部细节。最终开放 5B 的固定输出口径为 720×480、49 帧、8fps。阶段内部的全部 resolution curriculum 未披露。"
+    },
+    {
+      "stage": 3,
+      "name": "高质量视频微调",
+      "description": "从过滤后的训练数据中再选取约 20% 的高质量子集做最终微调，重点减少字幕、水印、低码率等脏数据带来的伪影。论文同时报告视觉质量略有提升、语义能力略有下降这一权衡。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "低分辨率与混合时长预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "高分辨率渐进训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "高质量视频微调",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "标准 latent diffusion 去噪训练配合 classifier-free guidance 路径；关键训练改动是 Explicit Uniform Sampling：把扩散 timestep 范围按 data-parallel rank 划分成区间，各 rank 在各自区间采样，使全局 timestep 覆盖更均匀，论文报告 loss 曲线更稳定且收敛更快。课程还包含混合时长、分辨率渐进训练、Multi-Resolution Frame Pack 与最终高质量微调。优化器、学习率、全局 batch、完整 noise schedule、CFG dropout、梯度裁剪及各阶段超参数未公开。",
+  "training_infra": "原始内部训练框架与并行方案未知。Explicit Uniform Sampling 明确依赖 data-parallel ranks，但论文未披露实际 data-parallel/sequence/tensor/pipeline parallel 组合、通信库、吞吐、checkpoint/容错策略。官方 SAT 与 Diffusers 代码可用于推理和后续微调，不足以证明原始大规模训练基础设施。",
+  "inference_hardware": "官方原生 SAT BF16 表给 CogVideoX-5B 约 26 GB 单卡显存；Diffusers 配合 sequential CPU offload、VAE slicing/tiling 等可降至约 5 GB 最低显存，并宣称可在 RTX 3060 等桌面 GPU 上运行，但代价是大量 CPU/RAM 交换和显著变慢。官方速度参考使用单张 NVIDIA A100 或 H100；低显存量化还支持 FP8/INT8。",
+  "inference_performance": "官方模型卡给 720×480、49 帧生成的近似参考为单张 A100 约 90 秒、单张 H100 约 45 秒；常用官方示例为 50 个采样步。开启 CPU offload、VAE tiling/slicing 等内存优化会降低显存但拖慢速度，关闭部分优化可快约 3-4 倍但峰值显存可能约为表中数值的 3 倍。不同 SAT/Diffusers、scheduler、量化与编译设置不可直接混成一个统一速度。",
+  "max_output_resolution": "720×480（开放的 2024-08 CogVideoX-5B 固定原生输出；宽高方向按实现约定）。论文摘要中的 1360×768 属于更大/未完全开放的 CogVideoX 系统能力，后来的 CogVideoX1.5 也支持该档位，均不应回填到本条目。",
+  "max_output_duration_seconds": 6,
+  "native_fps": 8,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": 45,
+  "generation_time_context": "官方模型卡近似值：单张 NVIDIA H100、720×480、49 帧、常用 50-step CogVideoX-5B 推理约 45 秒；同表单张 A100 约 90 秒。该值不是 Artificial Analysis 的统一服务端延迟，也未包含外部 prompt rewriting、可选插帧、超分、编码上传或排队时间。",
+  "benchmark_scores": [
+    {
+      "benchmark": "VBench / paper component evaluation",
+      "variant": "CogVideoX-5B",
+      "observed_at": "2024-08 technical report",
+      "metrics": {
+        "human_action": 96.8,
+        "scene": 55.4,
+        "dynamic_degree": 62.2,
+        "multiple_objects": 70.9,
+        "appearance_style": 24.4
+      },
+      "scope": "论文表格中的分维度机器评测；这些分项不能相加或平均成官方总分，也不等同于后来 VBench 版本或第三方重新运行。"
+    },
+    {
+      "benchmark": "Dynamic Quality and GPT-4o MTScore",
+      "variant": "CogVideoX-5B",
+      "observed_at": "2024-08 technical report",
+      "metrics": {
+        "dynamic_quality": 69.5,
+        "gpt4o_mtscore": 3.36
+      },
+      "scope": "论文同期对公开 T2V 模型的动态质量与多维文本对齐评测；prompt 集、生成设置和当时的比较模型范围决定了可比边界。"
+    },
+    {
+      "benchmark": "Paper human evaluation versus Kling",
+      "variant": "CogVideoX-5B",
+      "observed_at": "2024-08 technical report",
+      "metrics": {
+        "cogvideox_5b_total_score": 2.74,
+        "kling_total_score": 2.17,
+        "scale_max": 5
+      },
+      "scope": "论文报告的同期人工盲评汇总，不是公开持续更新的 Elo；评分受样本、提示词与评审协议限制。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "以 3D causal VAE 同时压缩空间与时间，在约 8×8×4 的压缩下减少视频 token 数并改善跨帧连续性。",
+      "scope_boundary": "3D/时序 VAE 并非 CogVideoX 首创；可核验的新意是它在本系统中的具体因果设计与开放权重。论文关于减少闪烁和高保真的结论是其评测/设计主张，不能解释为数学无损。",
+      "evidence": "CogVideoX 论文第 2 节与官方 VAE 配置/权重。",
+      "confidence": "高（结构与压缩率）；中高（质量因果归因）"
+    },
+    {
+      "claim": "提出带 expert adaptive LayerNorm 的文本-视频 expert Transformer，并用 3D full attention 联合建模完整时空视频 token 与文本条件。",
+      "scope_boundary": "“expert”不表示 MoE 路由、稀疏激活或只激活部分 5B 参数；它主要是模态专用的 adaptive LayerNorm/调制。3D full attention 也意味着随序列长度平方增长，不能把它描述为稀疏或线性注意力。",
+      "evidence": "CogVideoX 论文摘要、第 1-2 节，以及官方 CogVideoXTransformer3DModel 配置。",
+      "confidence": "高"
+    },
+    {
+      "claim": "把 mixed-duration、resolution progressive training、Multi-Resolution Frame Pack、20% 高质量微调与 Explicit Uniform Sampling 组合为面向长视频和多形状数据的渐进训练方案。",
+      "scope_boundary": "这些组件中渐进分辨率、数据 packing 和分层筛选各自已有先例；CogVideoX 的贡献是面向其 T2V 系统的组合与 EUS 采样设计。官方未公开训练步数、墙钟时间或完整消融，不能据此量化总训练成本节省。",
+      "evidence": "CogVideoX 论文第 3.2-3.3 节及训练消融描述。",
+      "confidence": "高（方案存在）；中（各组件独立增益与成本节省）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "原始预训练 GPU/加速器型号、数量、节点与互联拓扑",
+    "累计 accelerator-hours、训练 FLOPs、能耗、成本和墙钟时间",
+    "各训练阶段精确分辨率/时长课程、优化步数、epoch、batch 与样本消耗量",
+    "优化器、学习率、scheduler、梯度裁剪、CFG dropout 和全部训练超参数",
+    "约 3500 万起始视频经过各过滤阶段后的精确有效数量、总小时数和去重率",
+    "训练数据来源清单、许可证构成、语言比例、地域比例、真实/合成比例与安全过滤统计",
+    "内部训练框架、并行维度组合、吞吐、checkpoint 频率与容错策略",
+    "论文中 10 秒、16fps、1360×768 大系统与开放 5B checkpoint 的精确参数/训练关系",
+    "Artificial Analysis 对该固定开放权重版本的可核验 Elo 与观测日期",
+    "固定软件版本、是否编译、offload 细节完全一致时的可复现 A100/H100 端到端延迟与峰值显存"
+  ],
+  "sources": [
+    {
+      "title": "CogVideoX: Text-to-Video Diffusion Models with An Expert Transformer",
+      "url": "https://arxiv.org/abs/2408.06072",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "zai-org/CogVideo official repository and release history",
+      "url": "https://github.com/zai-org/CogVideo",
+      "source_type": "official_github_repository"
+    },
+    {
+      "title": "zai-org/CogVideoX-5b model card",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "CogVideoX-5B Transformer configuration",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "CogVideoX-5B Transformer safetensors index",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b/blob/main/transformer/diffusion_pytorch_model.safetensors.index.json",
+      "source_type": "official_weight_index"
+    },
+    {
+      "title": "CogVideoX-5B T5 encoder configuration",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b/blob/main/text_encoder/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "CogVideoX-5B T5 encoder safetensors index",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b/blob/main/text_encoder/model.safetensors.index.json",
+      "source_type": "official_weight_index"
+    },
+    {
+      "title": "CogVideoX 3D causal VAE configuration and weights",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b/tree/main/vae",
+      "source_type": "official_weight_repository"
+    },
+    {
+      "title": "The CogVideoX License",
+      "url": "https://huggingface.co/zai-org/CogVideoX-5b/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "Idea2StableDiffusion",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue"
+    }
+  ],
+  "notes": "本条目严格指 2024-08-27 开放的 CogVideoX-5B T2V checkpoint。论文摘要先介绍了可生成 10 秒、16fps、1360×768 的 CogVideoX 大系统，但同一论文明确说明当时开放模型为 720×480、约 6 秒、8fps；后者才是本条目的输出上限。2024-09-19 的 CogVideoX-5B-I2V 是后续独立 checkpoint，2024-11 的 CogVideoX1.5-5B 也是后续升级，二者能力不能回填。名称“5B”是约数且主要指视频 Transformer；当前权重索引可核算为 5.570B 主干，连同 T5 与 VAE 的端到端静态参数约 10.55B。comparison_eligible=true 是因为模型身份、权重、代码、固定输出规格与论文评测均可核验，不代表训练可复现；history_eligible=true 由官方发布日期和持续可访问的权重支持。"
+}

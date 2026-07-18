@@ -1,4 +1,5 @@
 import type { Fact, Source, TimelineEvent, TimelinePageData } from "./types";
+import { generativeResearchEvents } from "./generative-research";
 
 const ACCESSED = "2026-07-18";
 
@@ -1606,12 +1607,47 @@ export const historyData: TimelinePageData = {
       events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3],
     },
     {
-      id: "multimodal-training",
+      id: "t2i-training",
       group: "模型训练 / 02",
-      title: "生成 / Omni 训练",
-      description: "DiT、视频、语音与统一理解生成模型",
+      title: "T2I / 图像编辑",
+      description: "图像生成、统一编辑与图层分解模型",
       color: "violet",
-      events: [fluxDev, hunyuanVideo, wan21, qwenOmni, bagel, wan22, qwenImage, zImageTurbo, ltx23, cosmos3Super],
+      events: [
+        fluxDev,
+        qwenImage,
+        zImageTurbo,
+        ...generativeResearchEvents.filter((event) => !event.tags.includes("方法") && (event.tags.includes("T2I") || event.tags.includes("T2I / Edit") || event.tags.includes("Omni"))),
+      ],
+    },
+    {
+      id: "t2v-training",
+      group: "模型训练 / 03",
+      title: "T2V / 视频编辑",
+      description: "视频与同步音视频生成、编辑和长视频模型",
+      color: "violet",
+      events: [
+        hunyuanVideo,
+        wan21,
+        wan22,
+        ltx23,
+        ...generativeResearchEvents.filter((event) => !event.tags.includes("方法") && event.tags.includes("T2V")),
+      ],
+    },
+    {
+      id: "omni-training",
+      group: "模型训练 / 04",
+      title: "Omni 理解 / 生成",
+      description: "跨文本、图像、视频与音频的统一模型",
+      color: "violet",
+      events: [qwenOmni, bagel, cosmos3Super],
+    },
+    {
+      id: "generation-methods",
+      group: "模型训练 / 05",
+      title: "生成训练方法 / 论文",
+      description: "Tokenizer scaling、训练推理一致性与长视频蒸馏方法",
+      color: "green",
+      events: generativeResearchEvents.filter((event) => event.tags.includes("方法")),
     },
     {
       id: "extreme-inference",

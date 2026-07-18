@@ -1,0 +1,182 @@
+{
+  "slug": "qwen-image-layered",
+  "name": "Qwen-Image-Layered",
+  "family": "Qwen-Image",
+  "entry_kind": "model",
+  "modality": "Edit",
+  "organization": "Qwen Team, Alibaba Cloud",
+  "release_date": "2025-12-18",
+  "release_date_basis": "官方 GitHub News 将研究论文公开日期标为 2025-12-18；arXiv 记录的首次提交时间为 2025-12-17 17:12:42 UTC。可下载模型与权重在 2025-12-19 发布，因此本字段采用候选条目的首次公开研究日期，并在 access 与 notes 中单列权重发布日期。",
+  "access": "开放权重。官方 I2L（image-to-multi-RGBA）权重 Qwen/Qwen-Image-Layered 于 2025-12-19 在 Hugging Face 与 ModelScope 发布；代码与模型采用 Apache-2.0。官方说明该检查点专门针对图像到多 RGBA 图层分解微调，虽可文本条件推理，但 text-to-multi-RGBA 能力有限。",
+  "license": "Apache-2.0",
+  "official_model_ids": [
+    "Qwen/Qwen-Image-Layered"
+  ],
+  "parameter_total": "20B（Hugging Face 官方模型页的 Model size 标注；页面未给出组件级参数拆分）",
+  "parameter_active": "未知（官方材料未单列 active parameters）",
+  "weight_size": "57,699,272,568 bytes（57.699 GB / 53.737 GiB），为 Hugging Face 官方仓库所有 safetensors 的总文件体积：transformer 40.861 GB、text_encoder 16.584 GB、vae 0.254 GB；这是发布文件体积，不用于反推训练精度或训练硬件。",
+  "precision": "公开仓库页面标注 Tensor type 为 BF16，官方 quick start 也以 torch.bfloat16 加载；训练精度未知。",
+  "architecture": "基于 Qwen-Image 的端到端 flow-matching 扩散模型。核心为 60 层 VLD-MMDiT（Variable Layers Decomposition MMDiT），24 个注意力头、head dimension 128、2× 空间 patchification，联合处理文本、条件 RGB 图像潜变量与可变数量的目标 RGBA 图层潜变量；官方 transformer config 启用 use_layer3d_rope。",
+  "attention_or_sequence_design": "每个 VLD-MMDiT block 对文本 h 与视觉信息 z_I、x_t 使用两套独立参数进行预处理，并在注意力计算时沿序列维拼接三者，以直接建模层内与层间交互。Layer3D RoPE 将 Qwen-Image 的 MSRoPE 扩展出 layer-height-width 三轴；目标层索引从 0 递增，条件输入图像使用 layer index -1 以与生成层区分。官方 config 的 RoPE 轴维为 [16, 56, 56]。",
+  "vae_or_tokenizer": "RGBA-VAE：将 Qwen-Image VAE 编码器首个卷积与解码器最后一个卷积由 3 通道扩展到 4 通道，同时用 RGB（alpha 固定为 1）与 RGBA 图像训练；RGB 与 RGBA 共用 16 维潜空间。每个 RGBA 图层独立编码，层维不压缩。VAE 目标组合重建损失、感知损失和正则化损失。文本 tokenizer 为 Qwen2Tokenizer。",
+  "text_encoder_or_conditioner": "Qwen2.5-VL（官方模型配置为 Qwen2_5_VLForConditionalGeneration，hidden size 3584、28 个语言层）编码文本条件，也可为输入图像自动生成整体描述。官方特别说明 prompt 描述整幅图内容（含被遮挡元素），并非逐层语义控制指令。",
+  "training_hardware": "未知",
+  "training_hardware_scale": "未知",
+  "training_data_scale": "未知（论文仅称收集了 large corpus of PSD files，未披露样本数、图像数、token 数或存储规模）",
+  "training_data_composition": "Stage 1 的 Text-to-RGB 与 Text-to-RGBA 使用内部数据集；Stage 2/3 的 Text-to-Multi-RGBA 与 Image-to-Multi-RGBA 使用作者构建的真实 PSD 多层图像数据集。处理流程用 psd-tools 提取图层，过滤模糊脸等异常图层，移除不影响最终合成图的无贡献图层，将空间不重叠图层合并以降低层数，并用 Qwen2.5-VL 为合成图生成文本描述；训练最大图层数设为 20。数据集样本量与来源许可细节未披露。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "Text-to-RGB → Text-to-RGBA",
+      "description": "替换为 RGBA-VAE，并在 Text-to-RGB 与 Text-to-RGBA 两任务上联合训练，使预训练 MMDiT 适配新的共享 RGB/RGBA 潜空间。"
+    },
+    {
+      "stage": 2,
+      "name": "Text-to-RGBA → Text-to-Multi-RGBA",
+      "description": "加入文本到多 RGBA 图层任务以适配新初始化的 layer 维；依照 ART 的思路联合预测最终合成图及其透明图层，所得模型称 Qwen-Image-Layered-T2L。"
+    },
+    {
+      "stage": 3,
+      "name": "Text-to-Multi-RGBA → Image-to-Multi-RGBA",
+      "description": "增加条件图像输入，将模型扩展为把给定 RGB 图像分解为多个 RGBA 图层，所得模型称 Qwen-Image-Layered-I2L；公开权重针对该任务微调。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": 1,
+      "optimization_steps": 500000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": 2,
+      "optimization_steps": 400000,
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": 3,
+      "optimization_steps": 400000,
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "MMDiT 采用 Rectified Flow / Flow Matching：标准高斯噪声、logit-normal 时间采样、速度预测 MSE。优化器为 Adam，学习率 1e-5。RGBA-VAE 使用重建损失、感知损失与正则化损失。三阶段采用渐进式多任务训练。未披露 Adam betas、权重衰减、批大小、学习率调度或训练精度。",
+  "training_infra": "未知（未披露训练框架、并行策略、通信库、集群拓扑、容错或吞吐）",
+  "inference_hardware": "官方 quick start 要求 CUDA 设备并以 torch.bfloat16 加载，但未指定 GPU 型号、GPU 数量、最低显存或推荐显存。",
+  "inference_performance": "官方示例使用 50 个推理步、true CFG 4.0、4 层输出和 640 分辨率；支持 640 与 1024 bucket，当前版本推荐 640。官方论文、博客、GitHub 与模型卡均未给出可复现实测延迟、吞吐或峰值显存。",
+  "max_output_resolution": "1024 bucket（约 1,048,576 像素；方形输入对应 1024x1024）。官方 pipeline 仅接受 640 或 1024，并按输入长宽比从 resolution² 目标面积计算、再对齐输出尺寸；640 为推荐设置。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "未知；官方来源没有在指定 GPU、层数、分辨率与推理步数下报告端到端耗时。max_output_duration_seconds 与 native_fps 对静态图像/图层输出不适用；截至核验日未找到 Artificial Analysis 对该图层分解检查点的 Elo 记录。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Crello image-to-multi-RGBA decomposition",
+      "protocol": "LayerD 的 order-aware Dynamic Time Warping 对齐；允许合并相邻图层。由于 Crello 与作者 PSD 数据分布差异显著，论文明确说明先在 Crello train set 上微调再评测。",
+      "metrics": {
+        "max_allowed_layer_merge": [0, 1, 2, 3, 4, 5],
+        "RGB_L1_lower_is_better": [0.0594, 0.0490, 0.0393, 0.0377, 0.0364, 0.0363],
+        "Alpha_soft_IoU_higher_is_better": [0.8705, 0.8863, 0.9105, 0.9121, 0.9156, 0.9160]
+      },
+      "comparison": "在全部 merge 设置下优于论文复现的 VLM+Hi-SAM、YOLO+Hi-SAM 与 LayerD；例如 merge=0 时 LayerD 为 RGB L1 0.0709、Alpha soft IoU 0.7520。"
+    },
+    {
+      "benchmark": "AIM-500 RGBA reconstruction",
+      "model_component": "RGBA-VAE based on Qwen-Image",
+      "metrics": {
+        "PSNR_higher_is_better": 38.8252,
+        "SSIM_higher_is_better": 0.9802,
+        "rFID_lower_is_better": 5.3132,
+        "LPIPS_lower_is_better": 0.0123
+      },
+      "comparison": "论文 Table 3 在四项指标上均优于 LayerDiffuse（SDXL）及 AlphaVAE（SDXL/FLUX）基线。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "RGBA-VAE 以一个四通道 VAE 统一 RGB 输入和 RGBA 输出的潜表示，避免输入/输出使用不同 VAE 造成的分布差距。",
+      "scope_boundary": "创新针对 RGB/RGBA 重建与图层分解的统一潜空间；不等同于逐层联合压缩，论文明确说明每层独立编码且层维不压缩。",
+      "evidence": "CVPR 2026 论文 Sec. 3.1 给出首/末卷积从 3 到 4 通道的改造、初始化与联合训练；AIM-500 上达到 PSNR 38.8252、SSIM 0.9802、rFID 5.3132、LPIPS 0.0123。",
+      "confidence": "高"
+    },
+    {
+      "claim": "VLD-MMDiT 结合 Layer3D RoPE，在一次联合扩散过程中支持可变数量 RGBA 图层，并通过拼接文本、条件图像和所有目标层序列直接建模层内/层间关系。",
+      "scope_boundary": "可变层数并不表示无限单次输出；训练最大层数为 20，官方演示的“无限分解”来自递归地再次分解某个输出层。",
+      "evidence": "论文 Sec. 3.2 与 Fig. 2 明确给出多模态序列拼接、layer-height-width 三轴 RoPE、条件图像 layer index=-1；Crello 消融中移除 Layer3D RoPE 后 merge=0 的 RGB L1 从 0.0594 退化到 0.2809、Alpha soft IoU 从 0.8705 降至 0.3725。",
+      "confidence": "高"
+    },
+    {
+      "claim": "三阶段、多任务训练将预训练 Qwen-Image 从 RGB 生成器渐进适配为 RGBA 生成器、多图层生成器和图像分层器。",
+      "scope_boundary": "公开检查点主要是 I2L；官方明确警告其 T2L 性能有限，因此不能把论文中的 T2L 研究模型能力无条件视为已发布检查点的强项。",
+      "evidence": "论文 Sec. 3.3 与 Sec. 4.2 描述三个阶段及 500K/400K/400K steps；Crello 消融去除多阶段训练时 merge=0 RGB L1 为 0.1649、Alpha soft IoU 为 0.6504，完整方案为 0.0594/0.8705。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "parameter_active：官方未披露 active parameter 口径",
+    "训练硬件型号、GPU/加速器数量、节点数与互联拓扑",
+    "训练精度；不得由 BF16 发布权重反推",
+    "内部 RGB/RGBA 数据集与 PSD 多层数据集的样本规模、数据来源许可及各阶段数据混合比例",
+    "各训练阶段的 wall-clock 时间、批大小、全局 batch、累计计算量/FLOPs 与能耗",
+    "训练框架、并行策略、优化器完整超参数和学习率调度",
+    "官方端到端推理延迟、吞吐、峰值显存及明确的参考 GPU",
+    "Artificial Analysis Elo 及观测日期",
+    "1024 bucket 以上是否受支持，以及任意长宽比的正式上限",
+    "独立的高质量 Qwen-Image-Layered-T2L 公共权重是否存在；官方 I2L 检查点仅声明有限 T2L 能力"
+  ],
+  "sources": [
+    {
+      "title": "Qwen-Image-Layered: Towards Inherent Editability via Layer Decomposition (CVPR 2026 paper)",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Yin_Qwen-Image-Layered_Towards_Inherent_Editability_via_Layer_Decomposition_CVPR_2026_paper.pdf",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "Qwen-Image-Layered arXiv record (2512.15603)",
+      "url": "https://arxiv.org/abs/2512.15603",
+      "source_type": "official_preprint"
+    },
+    {
+      "title": "QwenLM/Qwen-Image-Layered",
+      "url": "https://github.com/QwenLM/Qwen-Image-Layered",
+      "source_type": "official_github"
+    },
+    {
+      "title": "Qwen/Qwen-Image-Layered",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Layered",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "Qwen/Qwen-Image-Layered repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/Qwen/Qwen-Image-Layered?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Qwen-Image-Layered official model index",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Layered/blob/main/model_index.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Qwen-Image-Layered official transformer config",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Layered/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Qwen-Image-Layered official RGBA-VAE config",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Layered/blob/main/vae/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Diffusers QwenImageLayeredPipeline implementation",
+      "url": "https://github.com/huggingface/diffusers/blob/main/src/diffusers/pipelines/qwenimage/pipeline_qwenimage_layered.py",
+      "source_type": "official_inference_implementation"
+    },
+    {
+      "title": "Qwen-Image-Layered official announcement",
+      "url": "https://qwen.ai/blog?id=qwen-image-layered",
+      "source_type": "official_blog"
+    }
+  ],
+  "notes": "分类为 Edit，因为公开权重的主任务是把单张 RGB 图像分解为多个可编辑 RGBA 图层，而非通用 T2I；论文还研究 T2L，但官方模型卡明确限制。comparison_eligible=true 仅表示它可在图层分解与 RGBA 重建这一任务域内凭公开权重和论文指标比较，不应直接与通用 T2I/Edit 模型的审美、提示词遵循或 Artificial Analysis Elo 横向排名。release_date 使用 2025-12-18 的论文公开口径；真正开放权重日期为 2025-12-19。"
+}

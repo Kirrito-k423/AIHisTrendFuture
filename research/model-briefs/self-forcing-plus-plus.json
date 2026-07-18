@@ -1,0 +1,242 @@
+{
+  "slug": "self-forcing-plus-plus",
+  "name": "Self-Forcing++: Towards Minute-Scale High-Quality Video Generation",
+  "family": "Self-Forcing",
+  "entry_kind": "method",
+  "modality": "T2V",
+  "organization": "ByteDance Seed、UCLA 与 University of Central Florida",
+  "release_date": "2025-10-02",
+  "release_date_basis": "arXiv:2510.02283 v1 于 2025-10-02 17:55:42 UTC 提交；项目页和官方仓库均指向该预印本。",
+  "access": "仅公开论文、项目演示页和复现算法说明，不能作为一个可直接选择或部署的 Self-Forcing++ 模型。官方 GitHub 仓库截至核验时只有 README 与演示素材，明确写着代码将稍后发布，且没有 Release、训练代码或 Self-Forcing++ 权重。作者称可在已公开的 Self-Forcing 代码上通过三项改动复现；上游 Wan2.1 和 Self-Forcing checkpoint 的可用性不等于 Self-Forcing++ checkpoint 已发布。",
+  "license": "论文在 arXiv 标为 CC BY-NC-SA 4.0。Self-Forcing++ 官方 GitHub 仓库未提供 LICENSE，代码和 Self-Forcing++ 权重也未发布，因此其软件/权重许可未知。上游 Wan2.1-T2V-1.3B 与 Self-Forcing 各自采用 Apache-2.0，但该许可不能自动转移到尚未发布的 Self-Forcing++ 成果。",
+  "official_model_ids": [],
+  "parameter_total": "论文实际评估的是一个内部 Self-Forcing++ checkpoint：以 Wan2.1-T2V-1.3B 为教师和底座，转换成因果自回归少步学生并继续训练；表中将学生生成器记为 1.3B 参数。端到端总参数（包括冻结的 UMT5 文本编码器、Wan-VAE、DMD critic/score model 等）未报告，不能把表中的 1.3B 当作完整推理或训练系统总参数。",
+  "parameter_active": "未按 active-parameter 口径报告。主生成 DiT 是稠密 1.3B 级模型而非 MoE，但每次推理的精确活跃参数量、是否计入文本编码器和 VAE均未知。",
+  "weight_size": "未知；没有发布 Self-Forcing++ 权重文件。上游 Wan-AI/Wan2.1-T2V-1.3B 仓库约 17.6 GB 的完整文件体积包含约 5.68 GB DiT、约 11.4 GB UMT5 编码器和约 508 MB VAE，不能作为未发布 Self-Forcing++ checkpoint 的文件大小。",
+  "precision": "未知。Self-Forcing++ 论文和官方仓库未披露训练精度、推理精度、混合精度、loss scaling 或最终权重 dtype；不能由上游 Wan2.1 的 BF16/F32 文件或 Self-Forcing 实现反推。",
+  "architecture": "方法不提出新的基础网络，而是使用 Wan2.1-T2V-1.3B Flow-Matching DiT 作为双向教师和初始化底座，将学生改成因果自回归、四步去噪的 chunk-wise 生成器。论文给出的去噪时间步为 1000、750、500、250，每次生成 3 个 latent frames。上游官方规格的 1.3B DiT 为 30 层、hidden size 1536、12 heads、FFN size 8960、latent 输入/输出通道 16；这些是 Wan2.1 底座规格，Self-Forcing++ 未发布配置供逐项验证。",
+  "attention_or_sequence_design": "学生使用因果注意力与滚动 KV cache；主实验的 cache/注意力窗口为 21 个 latent frames，约等于教师的 5 秒训练视野，每步生成 3 个 latent frames。训练时先自回归滚出远超 5 秒的序列，再从中均匀抽取一个连续的 21-latent-frame 窗口做教师 DMD；推理也使用同样的滚动 cache。与需要重算重叠帧的方法不同，它逐出最旧 KV、保留最近历史，不使用 attention sink、不重算重叠帧，也不依赖首帧 masking。Wan2.1 的位置编码最多支持 1024 个 latent frames；按 3 帧 chunk 使用到 1023 个。",
+  "vae_or_tokenizer": "继承上游 Wan-VAE：因果 3D VAE、16 通道连续 latent，官方称可流式编码/解码任意长度视频。Self-Forcing++ 未改动或重新训练 VAE，也未披露其内部评估所用 VAE 权重版本、精度或解码是否计入 17 FPS。",
+  "text_encoder_or_conditioner": "继承 Wan2.1 的 UMT5-XXL 多语文本编码器，并由 DiT 各层 cross-attention 注入文本条件。论文训练提示词来自与 Self-Forcing 相同的 filtered and LLM-extended VidProM；具体 UMT5 checkpoint 修订、最大 token 长度和提示扩写 LLM 未披露。",
+  "training_hardware": "未知；Self-Forcing++ 论文和官方仓库未报告加速器厂商或型号。上游 Self-Forcing 的 64×H100 训练记录不是 Self-Forcing++ 的硬件披露。",
+  "training_hardware_scale": "未知；未报告 GPU 数、节点数、互联、accelerator-hours、峰值显存或能耗。论文仅给 batch size 8 和相对训练预算 1×/4×/8×/20×/25×。",
+  "training_data_scale": "因果 ODE 初始化使用从 Wan2.1 教师采样的 16K ODE trajectories。初始化和训练提示来自 filtered and LLM-extended VidProM，但提示数量未报告。主 Self-Forcing++ 阶段使用自身生成的长 latent rollout 与教师分数，不使用真实视频；上游 Wan2.1 的预训练数据规模也未在本论文披露。",
+  "training_data_composition": "三类训练信号：Wan2.1 教师产生的 16K ODE 轨迹用于因果初始化；经筛选和 LLM 扩写的 VidProM 文本提示用于条件采样；学生自生成的长视频 latent 被重新加噪并抽取连续短窗，由同一个 Wan2.1-T2V-1.3B 教师提供分布匹配监督。可选 GRPO 阶段使用同一策略生成的成组轨迹和相邻帧相对光流幅度奖励。没有长视频真实数据集，也没有披露提示来源比例、语言比例、过滤规则或授权结构。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "少步生成器与因果 ODE 初始化",
+      "description": "以 Wan2.1-T2V-1.3B 为双向教师/底座，先得到四步生成器，再引入因果注意力；用教师采样的 16K ODE solution trajectories 训练学生复制 ODE 轨迹。这是 warm-up，不是 Self-Forcing++ 的长视野训练本体。"
+    },
+    {
+      "stage": 2,
+      "name": "长 rollout 的扩展 DMD",
+      "description": "学生使用 21-latent-frame rolling KV cache 自回归滚出超越教师 5 秒视野的长序列；将已去噪 latent 按 diffusion schedule 向后加噪，均匀抽取一个教师视野长度的连续窗口，以教师和学生 score 差执行 DMD。生成器/critic 更新比为 5，二者使用 AdamW；EMA 从论文所称 200 epochs 开始。"
+    },
+    {
+      "stage": 3,
+      "name": "可选光流奖励 GRPO 后训练",
+      "description": "为各非终止去噪步骤注入高斯噪声，按整条自回归轨迹计算策略概率和组相对 advantage，以相邻帧相对光流幅度作为平滑度代理奖励，抑制突然场景切换对应的光流尖峰。论文明确该阶段可选；4 分 15 秒能力在 GRPO 之前已经存在。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "少步蒸馏与 16K ODE 因果初始化",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知；仅披露 16K ODE trajectories"
+    },
+    {
+      "stage": "Self-Forcing++ 扩展 DMD",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知；仅披露 batch size 8、EMA 从 200 epochs 开始，以及相对预算 1×/4×/8×/20×/25×"
+    },
+    {
+      "stage": "可选 GRPO",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "核心为 backward-noise initialization + extended sliding-window Distribution Matching Distillation。学生先按真实推理路径和 rolling KV cache 生成长 clean-latent rollout，再重新加噪；从长度 N≫T 的 rollout 中均匀采样长度 T≈5 秒的连续窗口，以短视野双向 Wan2.1 教师和学生 score 的差最小化 reverse-KL/DMD。主训练 batch size 8，四个去噪时间步 1000/750/500/250，generator:critic 更新比 5:1，二者使用 AdamW，论文中的具体学习率和 Adam betas 因公式渲染缺失且仓库无代码，保持未知。可选 Flow-GRPO 风格后训练对每个非终止步骤随机化，以组内标准化 advantage 和光流代理奖励优化完整自回归轨迹。",
+  "training_infra": "作者称工作建立在 Self-Forcing、CausVid 与 Wan2.1 代码库上，且推理代码与 Self-Forcing 完全相同；但 Self-Forcing++ 代码尚未发布，因此 PyTorch/CUDA/FlashAttention 版本、并行策略、通信后端、gradient checkpointing、容错和存储流水线均未知。论文还指出自 rollout 顺序执行导致训练比 teacher forcing 慢，并把并行化训练列为未来工作。",
+  "inference_hardware": "Self-Forcing++ 论文没有重新声明速度测试硬件。表中 17.0 FPS 与上游 Self-Forcing 完全相同；上游 Self-Forcing 的该口径是在单张 NVIDIA H100 上测得，但只能作为推断背景，不能视为 Self-Forcing++ 论文明确披露。官方未给 RTX 4090/A100/H100 的 Self-Forcing++ 显存或耗时测试。",
+  "inference_performance": "论文自报 17.0 output FPS，和 CausVid、Self-Forcing 相同，高于 16 FPS 播放帧率；对表中原始 Wan2.1 的 0.78 FPS 是约 21.8×吞吐加速。这个加速来自继承的四步自回归蒸馏与 KV cache，不是 Self-Forcing++ 新增长训练方法带来的额外推理加速；项目页明确称推理代码与 Self-Forcing 完全相同。rolling KV cache 避免移动窗口时重算重叠帧，理论上让长视频每步成本保持有界。论文未说明 17 FPS 是否包含 UMT5、VAE 解码、I/O/warm-up，也未报告峰值显存或完整长视频 wall-clock。质量方面，5 秒 VBench total 仅从 Self-Forcing 83.00 到 83.11，长视频稳定性才是主要收益。",
+  "max_output_resolution": "论文实际评估分辨率未明确报告。底座 Wan2.1-T2V-1.3B 官方推荐 832×480（480P），可尝试 720P但稳定性较差；不能据此断言未发布的 Self-Forcing++ checkpoint 已在 720P 验证。",
+  "max_output_duration_seconds": 255,
+  "native_fps": 16,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "没有 Artificial Analysis 条目或官方完整生成耗时。作者展示的最大输出为 4 分 15 秒（255 秒），对应 1023/1024 个可用 latent positions、16 FPS 播放；表中 17 output FPS 若可恒定外推，纯生成吞吐约需 15 秒，但论文未给这一 wall-clock 测量且是否含文本编码、VAE 解码和 I/O 未知，因此 generation_time_seconds 保持 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "VBench 5-second, 946 prompts",
+      "metrics": {
+        "throughput_output_fps": 17.0,
+        "total_score": 83.11,
+        "quality_score": 83.79,
+        "semantic_score": 80.37,
+        "self_forcing_total_score": 83.0,
+        "wan2_1_total_score": 84.67
+      },
+      "source_scope": "论文 Table 1 的作者自报短视频结果。相对 Self-Forcing，total 仅 +0.11、quality +0.08、semantic +0.23；Self-Forcing++ 没有以牺牲明显短视频质量换长视野，但也未超过原始多步 Wan2.1 的 84.67 total。"
+    },
+    {
+      "benchmark": "VBench Long + Visual Stability, 50 seconds, 128 MovieGen prompts",
+      "metrics": {
+        "text_alignment": 26.37,
+        "temporal_quality": 91.03,
+        "dynamic_degree": 55.36,
+        "visual_stability": 90.94,
+        "framewise_quality": 60.82,
+        "self_forcing_visual_stability": 40.12,
+        "self_forcing_dynamic_degree": 34.35
+      },
+      "source_scope": "论文 Table 1/4。Visual Stability 是作者用 Gemini-2.5-Pro 评曝光/退化的新指标；20 个随机 MovieGen 视频由两位作者人工复核，六方法 Spearman 94.2%。VBench 的 framewise/temporal 指标会奖励停滞或过曝，论文明确要求谨慎解释。"
+    },
+    {
+      "benchmark": "VBench Long + Visual Stability, 75 seconds, 128 MovieGen prompts",
+      "metrics": {
+        "text_alignment": 26.31,
+        "temporal_quality": 91.0,
+        "dynamic_degree": 55.62,
+        "visual_stability": 86.1,
+        "framewise_quality": 60.67
+      },
+      "source_scope": "论文 Table 2/4 的作者自报结果；同一 128-prompt MovieGen 长视频集合。"
+    },
+    {
+      "benchmark": "VBench Long + Visual Stability, 100 seconds, 128 MovieGen prompts",
+      "metrics": {
+        "text_alignment": 26.04,
+        "temporal_quality": 90.87,
+        "dynamic_degree": 54.12,
+        "visual_stability": 84.22,
+        "framewise_quality": 60.66,
+        "self_forcing_text_alignment": 22.0,
+        "self_forcing_dynamic_degree": 26.41,
+        "self_forcing_visual_stability": 32.03
+      },
+      "source_scope": "论文 Table 2/4。相对 Self-Forcing，文本对齐约 +18.36%，dynamic degree 约 +104.9%，Visual Stability +52.19 分；这些是长视野作者评测，非第三方 arena。"
+    },
+    {
+      "benchmark": "50-second attention-window ablation (Visual Stability)",
+      "metrics": {
+        "causvid": 40.47,
+        "self_forcing_21_latent_window": 40.12,
+        "attention_15": 44.69,
+        "attention_12": 42.19,
+        "attention_9": 52.5,
+        "self_forcing_plus_plus": 90.94
+      },
+      "source_scope": "论文 Table 3。缩短窗口会让训练看到更多 cache 状态并有小幅收益，但因历史更短而增加不一致；完整 extended-DMD + rolling-cache 方法远高于单纯缩窗。该消融不能把 90.94 全部归因于某一个组件。"
+    },
+    {
+      "benchmark": "GRPO with optical-flow reward ablation",
+      "metrics": {
+        "numeric_quality_delta": null,
+        "reported_effect": "抑制相邻帧光流幅度的尖峰，减少突然场景切换"
+      },
+      "source_scope": "论文 Figure 5 仅给有/无 GRPO 的光流曲线与可视化，方差窗口为 8，没有给 VBench、Visual Stability、用户偏好或速度的数值增益。论文还明确 255 秒能力在 GRPO 前已出现，因此不能把分钟级能力归因于 GRPO。"
+    },
+    {
+      "benchmark": "NoRepeat Score on long videos",
+      "metrics": {
+        "self_forcing_plus_plus": 98.44,
+        "self_forcing": 100.0,
+        "causvid": 92.97,
+        "skyreels_v2": 95.31,
+        "riflex_best_published_reference": 89.0
+      },
+      "source_scope": "论文 Table 5，沿用 RIFLEx 指标。Self-Forcing++ 并未在该指标超过原始 Self-Forcing；结果只支持纯 KV-cache 自回归方法较不易周期重复，不等于具备长期事件记忆。"
+    },
+    {
+      "benchmark": "Relative training-budget scaling",
+      "metrics": {
+        "one_x": "仅能连贯生成约 5 秒，长推理出现闪烁和误差积累",
+        "four_x": "可在更长跨度保持主体语义",
+        "eight_x": "背景和主体细节改善，但运动仍有限且时间质量仍退化",
+        "twenty_x": "高保真稳定超过 50 秒",
+        "twenty_five_x": "展示 255 秒样例，作者称质量损失可忽略"
+      },
+      "source_scope": "论文 Figure 6 的单提示定性 scaling 展示；1×没有映射到绝对步数、GPU-hours 或数据量，25×的 255 秒不是多提示基准成功率。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "把 DMD 扩展到教师视野之外：在学生自生成、已积累误差的长 rollout 上向后加噪，均匀抽取教师可处理的连续短窗，让 5 秒双向教师纠正长时退化并把纠错知识蒸馏回学生。",
+      "scope_boundary": "创新是长 rollout 上的 backward-noise + sliding-window DMD 训练方法，不是新基础模型或新长视频数据集；教师仍只有 5 秒视野，主训练不使用真实长视频。它不能恢复被遮挡很久的对象或实现可靠的多事件叙事，论文也承认缺少长期记忆。",
+      "evidence": "50 秒 Visual Stability 从 Self-Forcing 的 40.12 提升到 90.94；100 秒从 32.03 提升到 84.22，dynamic degree 从 26.41 提升到 54.12。单纯把注意力窗缩到 9 latent frames 仅到 52.50，支持完整长 rollout 纠错优于缩窗替代方案。",
+      "confidence": "高（方法和作者实验口径内）；跨底座、跨分辨率与第三方复现未知"
+    },
+    {
+      "claim": "训练与推理统一使用 21-latent-frame rolling KV cache，并可选用基于相邻帧相对光流幅度的 GRPO 后训练，既避免重算重叠帧，又针对窗口推理中的突然跳变进行平滑优化。",
+      "scope_boundary": "rolling KV cache 延续并修正 Self-Forcing 的固定训练 cache/滚动推理 cache 不一致；17 FPS 与原 Self-Forcing 相同，Self-Forcing++ 没有证明额外推理加速。GRPO 是可选组件，只给光流曲线定性证据；分钟级能力在 GRPO 前已存在，且平滑奖励可能抑制真实快速运动的风险未量化。",
+      "evidence": "项目页说明推理代码与 Self-Forcing 完全相同且不重算重叠帧；论文 Figure 5 显示 GRPO 后光流尖峰受抑，但未给数值质量增益。NoRepeat 98.44 支持滚动 KV 路线不易周期重复，不过仍略低于 Self-Forcing 的 100.0。",
+      "confidence": "中高（rolling-cache 机制高；GRPO 质量增益仅中等，因缺数值消融和公开权重）"
+    }
+  ],
+  "comparison_eligible": false,
+  "history_eligible": true,
+  "unknown_fields": [
+    "Self-Forcing++ 官方 checkpoint、模型 ID、权重文件大小、下载地址与软件/权重许可证",
+    "Self-Forcing++ 训练硬件型号、GPU/节点数、互联、accelerator-hours、wall-clock、峰值显存和能耗",
+    "绝对训练步数/epochs 口径、1×预算的定义、25×对应的优化步数与计算量",
+    "训练与推理精度、混合精度、loss scaling、最终权重 dtype 和量化情况",
+    "论文公式渲染缺失的 generator/critic 学习率、AdamW betas、weight decay 及完整 DMD/GRPO 超参数",
+    "filtered and LLM-extended VidProM 的提示数量、筛选规则、扩写模型、语言分布、去重与授权组成",
+    "实际评估分辨率，以及 17 FPS 是否包含文本编码、VAE 解码、I/O、warm-up 和长序列 cache 管理",
+    "Self-Forcing++ 的端到端参数总量、活跃参数量、完整部署显存和 5/50/75/100/255 秒 wall-clock",
+    "GRPO group size、clip epsilon、训练步数、光流估计器、奖励公式/方向/归一化，以及数值化质量和速度影响",
+    "255 秒在多提示上的成功率、独立复现、第三方 benchmark、720P 长视频稳定性与超过 1024 latent positions 的方案",
+    "主表 checkpoint 是否包含 GRPO；论文只明确 255 秒能力在 GRPO 前存在，未逐表标注后训练状态",
+    "是否以及何时公开承诺中的完整训练代码、Self-Forcing++ 配置和权重"
+  ],
+  "sources": [
+    {
+      "title": "Self-Forcing++: Towards Minute-Scale High-Quality Video Generation (arXiv:2510.02283)",
+      "url": "https://arxiv.org/abs/2510.02283",
+      "source_type": "official_paper_and_submission_metadata"
+    },
+    {
+      "title": "Self-Forcing++ official project page",
+      "url": "https://self-forcing-plus-plus.github.io/",
+      "source_type": "official_project_page"
+    },
+    {
+      "title": "justincui03/Self-Forcing-Plus-Plus",
+      "url": "https://github.com/justincui03/Self-Forcing-Plus-Plus",
+      "source_type": "official_github_placeholder_and_reproduction_notes"
+    },
+    {
+      "title": "Self Forcing: Bridging the Train-Test Gap in Autoregressive Video Diffusion",
+      "url": "https://arxiv.org/abs/2506.08009",
+      "source_type": "official_upstream_paper"
+    },
+    {
+      "title": "guandeh17/Self-Forcing",
+      "url": "https://github.com/guandeh17/Self-Forcing",
+      "source_type": "official_upstream_code_and_checkpoint_documentation"
+    },
+    {
+      "title": "Wan-AI/Wan2.1-T2V-1.3B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B",
+      "source_type": "official_base_model_card_and_files"
+    },
+    {
+      "title": "Wan-Video/Wan2.1",
+      "url": "https://github.com/Wan-Video/Wan2.1",
+      "source_type": "official_base_model_repository"
+    },
+    {
+      "title": "CC BY-NC-SA 4.0 deed linked by arXiv",
+      "url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+      "source_type": "official_paper_license"
+    },
+    {
+      "title": "Ideas around T2I2V models — Self-Forcing++ index clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "分类结论：entry_kind=method，而不是可直接选择的模型。论文的实际评估 checkpoint 是作者内部训练的 1.3B Wan2.1-T2V-1.3B 因果四步 chunk-wise 学生：同一个 Wan2.1-T2V-1.3B 还充当教师；先用 16K ODE trajectories 做因果初始化，再做长 self-rollout 的扩展 DMD，最后可选光流奖励 GRPO。官方没有给这个 checkpoint 的模型 ID或权重，因此 official_model_ids 为空且 comparison_eligible=false；它仍是重要的长视频训练史节点，故 history_eligible=true。主要效果不是提高 5 秒画质或新增推理加速，而是在保持上游 17 FPS 推理结构时，把训练/推理 cache 状态对齐并显著降低 50–100 秒的过曝、变暗、冻结和误差积累。255 秒结果是位置编码极限附近的定性展示，不等于对任意提示稳定支持 4 分 15 秒。"
+}

@@ -1,0 +1,224 @@
+{
+  "slug": "step1x-edit",
+  "name": "Step1X-Edit（初版 / v1.0）",
+  "family": "Step1X-Edit",
+  "entry_kind": "model",
+  "modality": "Edit",
+  "organization": "StepFun",
+  "release_date": "2025-04-25",
+  "release_date_basis": "StepFun 官方 GitHub 在 2025-04-25 明确宣布发布 Step1X-Edit 推理代码与模型权重；arXiv v1 早一日于 2025-04-24 17:25:12 UTC 提交，Hugging Face API 显示仓库创建于 2025-04-23，但创建时间不能证明权重当时已公开，因此采用官方权重发布日。",
+  "access": "开放权重且开放推理代码，无登录门槛。初版 StepFun 仓库提供 step1x-edit-i1258.safetensors 与 vae.safetensors；完整运行还会从 Qwen/Qwen2.5-VL-7B-Instruct 加载冻结的 MLLM。初版不等同于 2025-07 的 v1.1，也不等同于 2025-09/11 的 v1p2-preview、v1p2 / ReasonEdit-S。",
+  "license": "Apache-2.0",
+  "official_model_ids": [
+    "stepfun-ai/Step1X-Edit",
+    "Qwen/Qwen2.5-VL-7B-Instruct（初版运行时依赖）"
+  ],
+  "parameter_total": "主 Step1X 检查点 step1x-edit-i1258.safetensors 可由 safetensors 头部精确核算为 12,427,800,385 个 BF16 参数，其中 Token Refiner/Connector 为 536,621,825，余下 DiT 与输入输出层为 11,891,178,560。VAE 为 83,819,683 个 FP32 参数；外部 Qwen2.5-VL-7B-Instruct 为 8,292,166,656 个 BF16 参数。完整可运行流水线合计 20,803,786,724 个参数。应同时保留 12.428B（Step1X 主检查点）和约 20.804B（含冻结 MLLM、VAE 的整条流水线）两个口径，不能混用。",
+  "parameter_active": "官方未发布统一 active-parameter 数字。各组件均为稠密模型而非 MoE；一次完整编辑会先后执行 Qwen2.5-VL、Token Refiner、DiT 去噪和 VAE 编解码，因此从流水线累计口径看会使用约 20.804B 参数，但它们并非在同一个前向中同时激活，不能把该数当作 MoE 风格的每 token active 参数。",
+  "weight_size": "初版 StepFun 主检查点 24,855,692,578 bytes，VAE 335,304,388 bytes，二者合计 25,190,996,966 bytes（25.191 GB / 23.461 GiB）。再加 Qwen2.5-VL-7B-Instruct 的 16,584,333,312 bytes，完整流水线为 41,775,330,278 bytes（41.775 GB / 38.906 GiB）。这些数字不包含 tokenizer、配置、示例和后来加入同一 HF 仓库的 v1.1/LoRA 文件。",
+  "precision": "公开初版 Step1X 主检查点全部为 BF16；Qwen2.5-VL-7B-Instruct 官方权重全部为 BF16；VAE 权重全部为 FP32，初版推理代码也把 VAE 保持为 FP32、其余主要模块按 BF16 加载。训练精度与混合精度策略未披露。",
+  "architecture": "冻结的 Qwen2.5-VL-7B-Instruct MLLM + 可训练 Token Refiner/Connector + FLUX 风格 flow-matching DiT + AutoencoderKL。参考图和编辑指令仅通过一次 Qwen 前向取得最后层隐藏状态；去掉系统前缀对应 token 后，3584 维序列进入 2 层、4096 隐藏维、32 头的 Token Refiner，并以均值池化后 3584→768 线性投影产生全局向量。主 DiT 隐藏维 3072、19 个双流块、38 个单流块、24 头、MLP ratio 4，结构与代码均明确修改自 FLUX。主检查点把 Connector 与 DiT 一起封装。",
+  "attention_or_sequence_design": "Qwen 条件序列最多保留 640 个隐藏状态 token；初版代码从 Qwen 最后层输出中跳过 217 个前缀位置。Token Refiner 使用 2 个带 AdaLN 门控的自注意力+MLP 块，隐藏维 4096、32 头，并按有效 token mask 做双向注意力。DiT 采用 FLUX 式 19 个 image/text 双流块后接 38 个拼接单流块，隐藏维 3072、24 头、每头 128 维，三轴 RoPE 维度为 [16, 56, 56]、theta=10000。目标噪声 latent token 与无噪参考 latent token沿序列维拼接，二者位置 ID 在 v1.0 中使用相同的空间坐标框架；每个去噪步只更新目标半段并保持参考半段不变。",
+  "vae_or_tokenizer": "修改自 FLUX 的 AutoEncoder：3 通道图像，基准通道 128，ch_mult=[1,2,4,4]，每层 2 个残差块，16 个 latent 通道，约 8× 空间压缩，scale_factor=0.3611、shift_factor=0.1159。latent 再按 2×2 patch 打包为 64 通道 DiT token，因此相对于像素空间的 token 网格约为 16× 压缩。VAE 有 83,819,683 个 FP32 参数。文本与多模态预处理使用 Qwen2.5-VL 的 AutoProcessor/tokenizer；没有独立 T5 tokenizer/encoder 参与初版条件编码。",
+  "text_encoder_or_conditioner": "Qwen2.5-VL-7B-Instruct 同时编码参考图与编辑指令，模型在 Step1X 训练中冻结。论文把其语义理解能力称为 reasoning，但初版公开实现调用一次普通前向并抽取最后层隐藏状态，不调用 generate，不产生显式思维链、重写指令或反思文本。Token Refiner 将 3584 维 Qwen 表示变成 4096 维紧凑条件序列以替代原 FLUX/DiT 的 T5 表示；全序列 masked mean 经线性层变为 768 维全局 guidance。真正的 instruction reasoning 与 reflection 循环属于后续 v1p2 / ReasonEdit-S。",
+  "training_hardware": "未披露。初版官方资料只公开了推理在单张 NVIDIA H800 上的测试，不应把该 H800 推理卡误写成训练硬件。",
+  "training_hardware_scale": "未披露训练 GPU 型号、GPU/节点数量、GPU-hours、互联拓扑或总算力。",
+  "training_data_scale": "数据流水线先生成超过 20M 个 <源图、编辑指令、目标图> 三元组，再经 MLLM 与人工筛选保留超过 1M 个高质量 Step1X-Edit-HQ 三元组；论文将筛选比例概括为约 20:1。GEdit-Bench 是另行构建的 606 例测试集，不属于这 1M 训练集口径。",
+  "training_data_composition": "覆盖 11 类真实编辑需求：主体添加、主体移除、主体替换、背景更换、颜色改变、材质修改、文本修改、动作改变、人像编辑/美化、风格迁移、色调变换。数据来自自有图像、互联网编辑案例、公共美化对、Koala-36M 视频帧及多种合成流水线；使用 Florence-2、SAM-2、ObjectRemovalAlpha、Qwen2.5-VL、Recognize Anything、FLUX-Fill、ZoeDepth、ControlNet、PPOCR、BiRefNet、RAFT、Step-1o 与 GPT-4o 等构造或标注，再经人工验证。标注采用中英双语、多轮冗余确认与上下文示例；原始来源比例、授权分布和去重细节未公开。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "T2I 基座与 MLLM 初始化",
+      "description": "主 DiT 从 StepFun 自有文本到图像模型初始化，以保留审美质量和视觉一致性；条件端从预训练 Qwen2.5-VL-7B-Instruct 初始化并在编辑训练中冻结。论文称基座可替换为 SD3/FLUX 类 T2I 模型，但没有披露该自有 T2I 基座的预训练数据、训练步数、损失、硬件或耗时。"
+    },
+    {
+      "stage": 2,
+      "name": "联合图像编辑训练",
+      "description": "在超过 1M 的高质量编辑三元组上，以 1e-5 学习率联合优化 Token Refiner/Connector 与下游 flow-matching DiT；目标图 latent 加高斯噪声，参考图 latent 不加噪，二者沿 token 序列拼接。初版论文没有再给出独立 SFT、RL、thinking 或 reflection 阶段。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "T2I 基座预训练/初始化",
+      "optimization_steps": "未披露",
+      "wall_clock_time": "未披露"
+    },
+    {
+      "stage": "Token Refiner + DiT 联合编辑训练",
+      "optimization_steps": "未披露",
+      "wall_clock_time": "未披露"
+    }
+  ],
+  "training_algorithms": "冻结 Qwen MLLM；联合训练 Token Refiner 与 FLUX 风格 flow-matching DiT，学习率 1e-5。目标 latent 注入高斯噪声，参考 latent 保持无噪并在序列维拼接，训练去噪/流场预测以生成目标图；文本条件由 MLLM 隐藏状态替代 T5。官方没有披露优化器、batch size、学习率调度、weight decay、梯度裁剪、损失公式细节、CFG dropout、训练步数或消融到各阶段的收益。后续 ReasonEdit 的 NTP、LoRA、联合损失与 reflection 数据均不属于初版。",
+  "training_infra": "未披露训练框架、分布式并行策略、集群拓扑、通信库、容错、checkpoint 周期或吞吐。初版公开仓库主要是推理与评测代码；FlashAttention、后来增加的 TeaCache/并行推理支持不能反推训练基础设施。",
+  "inference_hardware": "初版官方基准使用单张 NVIDIA H800，batch size=1，未做 CFG distillation；推荐 80GB 显存 GPU。测试系统为 Linux，PyTorch 2.3.1/2.5.1、CUDA 12.1，并使用 FlashAttention。",
+  "inference_performance": "官方初版、单 H800、batch=1、28 步、FlashAttention、无 CFG distillation：512×512 为 5 秒/42.5GB 峰值显存，768×768 为 11 秒/46.5GB，1024×1024 为 22 秒/49.8GB。初版默认 cfg_guidance=6、size_level=512；表格没有说明是否包含模型加载、首轮编译或文件 I/O，因此应视为官方推理基准而非跨平台端到端 SLA。",
+  "max_output_resolution": "1024×1024（初版官方正式测试的最高原生计算档位）。代码保持输入长宽比、按近似 512/768/1024 方形面积缩放到 16 的倍数，生成后再插值回原输入尺寸；因此输出文件可以沿用更大的原图尺寸，但不代表模型在该更大尺寸上原生生成了额外细节。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 846,
+  "aa_elo_observed_at": "2026-07-19；Artificial Analysis Image Editing Arena 动态榜单快照，Step1X-Edit 初版排名 65、约 ±10 Elo 区间、7,139 票。该值会随投票变化，且不能与 v1p2 的 1,089 Elo 混用。",
+  "generation_time_seconds": 22,
+  "generation_time_context": "初版官方单张 NVIDIA H800、batch=1、1024×1024、28 个去噪步、FlashAttention、无 CFG distillation 的推理时间；峰值显存 49.8GB。静态图像不适用 max_output_duration_seconds 与 native_fps。",
+  "benchmark_scores": [
+    {
+      "benchmark": "GEdit-Bench-EN（arXiv v1，VIEScore）",
+      "protocol": "606 个完整样例；Intersection subset 为所有模型均返回有效结果的 434 例。G_* 由 GPT-4.1 自动评估，Q_* 由 Qwen2.5-VL-72B 自动评估；SC=语义一致性，PQ=感知质量，O=总体分，均为 0-10、越高越好。",
+      "metrics": {
+        "intersection_subset": {
+          "G_SC": 7.183,
+          "G_PQ": 6.818,
+          "G_O": 6.813,
+          "Q_SC": 7.38,
+          "Q_PQ": 7.229,
+          "Q_O": 7.161
+        },
+        "full_set": {
+          "G_SC": 7.091,
+          "G_PQ": 6.763,
+          "G_O": 6.701,
+          "Q_SC": 7.332,
+          "Q_PQ": 7.204,
+          "Q_O": 7.104
+        }
+      },
+      "scope": "对应 2025-04 初版论文表格；后续 GitHub 为 v1.0/v1.1 对比而重跑的分数口径略有变化，比较时必须注明评估快照。"
+    },
+    {
+      "benchmark": "GEdit-Bench-CN（arXiv v1，VIEScore）",
+      "protocol": "606 个中文指令完整样例；Intersection subset 为 422 例。G_* 为 GPT-4.1、Q_* 为 Qwen2.5-VL-72B 自动评估。",
+      "metrics": {
+        "intersection_subset": {
+          "G_SC": 7.25,
+          "G_PQ": 6.855,
+          "G_O": 6.898,
+          "Q_SC": 7.347,
+          "Q_PQ": 7.327,
+          "Q_O": 7.232
+        },
+        "full_set": {
+          "G_SC": 7.204,
+          "G_PQ": 6.869,
+          "G_O": 6.861,
+          "Q_SC": 7.282,
+          "Q_PQ": 7.303,
+          "Q_O": 7.161
+        }
+      },
+      "scope": "对应 2025-04 初版 Step1X-Edit，而非后续 v1.1/v1p2。"
+    },
+    {
+      "benchmark": "GEdit-Bench User Preference",
+      "protocol": "55 名参与者对 Gemini 2 Flash、Doubao、GPT-4o 与 Step1X-Edit 做盲评，五档主观评分映射为 2/4/6/8/10。",
+      "metrics": {
+        "UP_IS": 6.544,
+        "UP_Full": 6.939
+      },
+      "scope": "论文自报用户研究；Intersection 与 Full 的样本处理口径不同，不应直接与 VIEScore 相加或平均。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Editing Arena",
+      "variant": "Step1X-Edit（初版）",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 846,
+        "rank": 65,
+        "elo_interval_approx": "±10",
+        "votes": 7139
+      },
+      "scope": "第三方动态盲评；榜单另有 Step1X-Edit-v1p2 和 v1p2-preview 条目，本数值只属于 2025-04 初版。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "以冻结 MLLM 的图文隐藏状态直接取代传统 T5 条件：Qwen2.5-VL 一次联合编码参考图与编辑指令，Token Refiner 将其变为适配 FLUX 风格 DiT 的局部条件序列，同时均值投影提供全局 guidance。",
+      "scope_boundary": "这里的 reasoning 指 MLLM 表征所带来的语义理解，不是显式思维链或测试时反思。初版不自回归生成重写提示词，也没有 thinking→editing→reflection 循环；这些能力只属于后续 v1p2 / ReasonEdit-S。Token Refiner、FLUX 块与 Qwen 本身也不是 StepFun 首创，创新范围是它们面向无 mask 通用编辑的组合与联合适配。",
+      "evidence": "arXiv v1 Sec. 3.2 明确给出 MLLM→Token Refiner→DiT 及替换 T5 的路径；2025-04 发布快照的 conditioner.py 只执行 Qwen forward 并取最后层 hidden_states，connector_edit.py 则给出 3584→4096、2 层、32 头 Token Refiner 与 768 维全局投影。",
+      "confidence": "高"
+    },
+    {
+      "claim": "采用 FLUX-Fill 启发的双图 token 拼接，把加噪目标 latent 与无噪参考 latent 沿序列维输入同一 FLUX 风格 DiT，并只更新目标半段，从而在无显式 mask 的统一模型里同时学习保真重建与指令编辑。",
+      "scope_boundary": "该机制是单轮条件生成，不包含结果验证、错误诊断或自动二次编辑；也不能据此宣称模型具备后续 ReasonEdit 的反思能力。其训练增益来自整套高质量数据、预训练初始化和联合训练，论文没有给出足以把全部增益单独归因于 token 拼接的消融。",
+      "evidence": "arXiv v1 Sec. 3.2 描述目标 VAE latent 加高斯噪声、参考 latent 不加噪并沿 token 长度拼接；初版 inference.py 的 prepare/denoise 代码可核验目标与参考各占一半序列且每步保持参考半段不变。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "训练 GPU/NPU 型号、节点数、加速器总数、GPU-hours 与能耗",
+    "T2I 基座预训练与编辑联合训练各自的优化步数、wall-clock 时间和 FLOPs",
+    "训练精度、优化器、batch size、学习率调度、weight decay、梯度裁剪与 checkpoint 策略",
+    "除学习率 1e-5 外的完整损失公式、flow-matching 时间采样、CFG dropout 与训练超参数",
+    "训练基础设施的张量/序列/数据/流水线并行度、通信库、容错与吞吐",
+    "20M 原始三元组与 1M HQ 子集中各来源、11 类任务、语言、真实/合成/自有数据的精确占比",
+    "训练数据的逐来源许可、版权状态、去重方法、过滤阈值、隐私处理与公开可获得性",
+    "StepFun 自有 T2I 初始化模型的精确身份、参数量、预训练数据与其相对最终检查点的改动范围",
+    "官方推理时间是否包含 Qwen 条件编码、VAE 编解码、预热、首轮 kernel 编译与主机 I/O 的逐项拆分",
+    "独立第三方在相同 H800、相同 28 步和相同尺寸下对官方 5/11/22 秒延迟的复现",
+    "GEdit-Bench 厂商自报分数之外的固定种子、完整提示词、生成图与独立复核快照的一一对应关系"
+  ],
+  "sources": [
+    {
+      "title": "Step1X-Edit: A Practical Framework for General Image Editing (arXiv v1 HTML)",
+      "url": "https://arxiv.org/html/2504.17761v1",
+      "source_type": "official_technical_report"
+    },
+    {
+      "title": "Step1X-Edit arXiv submission history",
+      "url": "https://arxiv.org/abs/2504.17761",
+      "source_type": "official_paper_metadata"
+    },
+    {
+      "title": "Step1X-Edit official GitHub release-day README snapshot",
+      "url": "https://github.com/stepfun-ai/Step1X-Edit/blob/9161ca8e6ed4ae8d08b1ce4cf1feab8706511795/README.md",
+      "source_type": "official_github_release_snapshot"
+    },
+    {
+      "title": "Step1X-Edit official release-day inference implementation",
+      "url": "https://github.com/stepfun-ai/Step1X-Edit/blob/9161ca8e6ed4ae8d08b1ce4cf1feab8706511795/inference.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "Step1X-Edit official release-day DiT implementation",
+      "url": "https://github.com/stepfun-ai/Step1X-Edit/blob/9161ca8e6ed4ae8d08b1ce4cf1feab8706511795/modules/model_edit.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "Step1X-Edit official release-day Token Refiner implementation",
+      "url": "https://github.com/stepfun-ai/Step1X-Edit/blob/9161ca8e6ed4ae8d08b1ce4cf1feab8706511795/modules/connector_edit.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "stepfun-ai/Step1X-Edit model card",
+      "url": "https://huggingface.co/stepfun-ai/Step1X-Edit",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "stepfun-ai/Step1X-Edit repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/stepfun-ai/Step1X-Edit?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Qwen2.5-VL-7B-Instruct safetensors index",
+      "url": "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct/blob/main/model.safetensors.index.json",
+      "source_type": "official_dependency_weight_index"
+    },
+    {
+      "title": "Step1X-Edit official GitHub current release chronology",
+      "url": "https://github.com/stepfun-ai/Step1X-Edit",
+      "source_type": "official_version_history"
+    },
+    {
+      "title": "ReasonEdit: Towards Reasoning-Enhanced Image Editing Models",
+      "url": "https://arxiv.org/abs/2511.22625",
+      "source_type": "official_followup_paper_for_scope_boundary"
+    },
+    {
+      "title": "Artificial Analysis Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_dynamic_benchmark_leaderboard"
+    }
+  ],
+  "notes": "本条目严格指 2025-04-25 开放的初版 Step1X-Edit（后来在项目历史中回称 v1.0）。它只做图像编辑；T2I 支持是 2025-07-09 的 v1.1 才新增。初版所谓 MLLM semantic reasoning 是一次冻结 Qwen 前向所得到的隐藏表示，不是可观察、可训练的思维链。2025-09 的 v1p2-preview 才首次宣布 instruction reasoning 与 reflective correction，2025-11 的 v1p2 / ReasonEdit-S 才公开 Thinking Pairs、Reflection Triples 与三阶段 Reasoning Learning/Edit Learning/Unified Tuning；这些数据、训练时间、硬件、thinking/reflection 基准和多轮推理均不得回填到本条目。初版权重、代码、公开基准和第三方 Arena 条目均可核验，因此 comparison_eligible 与 history_eligible 为 true；比较时主参数应优先报 12.428B Step1X 主检查点，并同时脚注完整 20.804B 流水线口径。"
+}

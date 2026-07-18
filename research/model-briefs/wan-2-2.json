@@ -1,0 +1,183 @@
+{
+  "slug": "wan-2-2",
+  "name": "Wan2.2-T2V-A14B",
+  "family": "Wan2.2",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "Alibaba Wan Team",
+  "release_date": "2025-07-28",
+  "release_date_basis": "官方 Wan2.2 GitHub 与 Hugging Face 模型卡的 Latest News 明确记载 2025-07-28 发布推理代码和模型权重。Hugging Face API 显示仓库对象创建于 2025-07-24，但本条目采用官方对外发布日，而不是预先创建仓库的日期。",
+  "access": "开放权重并公开推理代码。代表版本可从 Hugging Face/ModelScope 下载，官方仓库支持单卡卸载及多卡 FSDP + DeepSpeed Ulysses 推理；权重不是训练代码或训练数据的完整公开。",
+  "license": "Apache License 2.0。官方仓库和 Hugging Face 模型卡均标注 apache-2.0；生成内容仍须遵守适用法律和官方使用说明。",
+  "official_model_ids": [
+    "Wan-AI/Wan2.2-T2V-A14B",
+    "Wan-AI/Wan2.2-T2V-A14B-Diffusers"
+  ],
+  "parameter_total": "约 27B（两个约 14B 的去噪专家合计；官方采用 27B 口径，而不是把两个四舍五入后的 14B 简单写成 28B）",
+  "parameter_active": "约 14B/去噪步。任一 timestep 只运行高噪声或低噪声专家之一；这不是在同一步内按 token 同时混合多个专家。UMT5-XXL 与 VAE 不计入官方 A14B active-parameter 口径。",
+  "weight_size": "官方原生 Hugging Face 仓库的每个专家 safetensors 索引 metadata.total_size 为 57,153,966,336 bytes；双专家共约 114.31 GB（106.46 GiB）。再计入 11.36 GB 的 UMT5-XXL 编码器和 0.508 GB 的 Wan2.1 VAE，核心下载约 126.18 GB（117.51 GiB，未计很小的 tokenizer/配置文件）。Hugging Face API 的 usedStorage=240.51 GB 包含仓库版本存储，不应当作当前一次下载大小。",
+  "precision": "官方共享配置把 DiT param_dtype 和 UMT5 dtype 设为 torch.bfloat16，推理命令可用 --convert_model_dtype 转为 BF16；官方未披露训练混合精度、优化器状态精度或最终发布 shard 的逐 tensor dtype 清单。VAE 的推荐运行精度未在 Wan2.2 模型卡中单独量化说明。",
+  "architecture": "去噪阶段路由的双专家 Diffusion Transformer。高噪声专家和低噪声专家是两个结构相同、参数独立的 WanModel checkpoint：每个专家 40 层、隐藏维度 5120、FFN 维度 13824、40 个注意力头，latent 输入/输出通道 16，3D patch size 为 (1,2,2)。推理按 timestep/SNR 阈值选择单个专家：早期高噪声专家负责整体布局，后期低噪声专家细化局部与纹理。官方发布配置 boundary=0.875，在 1000-step 训练时间轴上对应实现中的切换边界 875；实际 40-step采样仍由 scheduler 映射到该时间轴。",
+  "attention_or_sequence_design": "每个专家采用全时空 self-attention（window_size=(-1,-1) 表示无局部窗口），对 Q/K 做 RMSNorm，并用三维 RoPE 分别编码时间、高度、宽度；每层另有对文本条件的 cross-attention、GELU FFN 和 timestep 调制。720P、81 帧 latent 经 Wan2.1 VAE 的 (4,8,8) stride 和 DiT 的 (1,2,2) patchification 后形成时空 token 序列。官方多卡实现支持 FSDP 与 DeepSpeed Ulysses sequence parallel。",
+  "vae_or_tokenizer": "代表版本 T2V-A14B 明确加载 Wan2.1_VAE.pth，而不是 Wan2.2 高压缩 VAE。其 VAE stride 为 T×H×W = 4×8×8、latent 通道 16；再经 DiT 的 1×2×2 patchification，进入 Transformer 的 token 网格相对像素视频总计缩小 4×16×16，但其中 VAE 本身的压缩率仍只能写 4×8×8。Wan2.2 家族同期 TI2V-5B 才使用 Wan2.2-VAE 的 4×16×16 VAE 压缩，并在额外 patchification 后达到 4×32×32 token 压缩；该 5B 口径不得归给 A14B。",
+  "text_encoder_or_conditioner": "核心文本条件器为 google/umt5-xxl（官方打包 models_t5_umt5-xxl-enc-bf16.pth），最大文本长度 512，BF16，WanModel 接收 4096 维文本表示并在各层 cross-attention。官方另提供可选 prompt extension：云端 qwen-plus，或本地 Qwen2.5-Instruct 系列；prompt extension 不是 T2V-A14B 权重本体。",
+  "training_hardware": "未知。官方 Wan2.2 发布页、模型卡、代码和沿用的 Wan2.1 技术报告均未给出 T2V-A14B 训练所用 GPU/加速器具体型号。",
+  "training_hardware_scale": "未知。未披露训练 GPU 数、节点数、互联拓扑、accelerator-hours、FLOPs、能耗或峰值集群规模。",
+  "training_data_scale": "绝对规模未知。官方只披露相对 Wan2.1 的增长：图像数据增加 65.6%，视频数据增加 83.2%；没有为 Wan2.2-T2V-A14B 给出样本数、视频小时数、token 数或各阶段数据量。Wan2.1 报告的“数十亿级”背景不能据此反推出 Wan2.2 的精确绝对规模。",
+  "training_data_composition": "官方称加入经过精细筛选的审美数据，并为光照、构图、对比度、色调等电影美学属性提供详细标签；更大的图像/视频语料用于提升动作、语义和审美泛化。没有公开数据源名单、公开视频与内部数据比例、语言分布、版权/授权构成、去重率、安全过滤比例、合成数据占比或 A14B 专属配方。",
+  "training_stages": [
+    {
+      "stage": "未知",
+      "name": "Wan2.2-T2V-A14B 训练流程",
+      "description": "官方只披露扩大并增强审美标注的数据、双专家按去噪阶段专门化，以及以 validation loss 比较不同专家组合；未公开预训练、专家初始化/分化、分辨率课程、监督微调或偏好对齐的明确阶段顺序。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "全部训练阶段",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "基础生成骨干沿用 Wan 的 diffusion/flow-matching 路线；公开推理实现使用 1000-step 时间轴、FlowUniPC 或 FlowDPM-Solver++，默认 40 个采样步。Wan2.2 新增的已证实机制是按 SNR/timestep 将去噪区间划给高噪声与低噪声专家，并用 validation-loss 消融验证双专家组合。官方未披露 A14B 的训练目标公式、噪声采样分布、专家初始化、优化器、学习率、batch size、CFG dropout、loss 权重或后训练算法，因此不能从推理 scheduler 反推出完整训练配方。",
+  "training_infra": "未知。公开仓库主要是推理实现；可确认推理侧使用 PyTorch、FSDP、DeepSpeed Ulysses，并在 Hopper GPU 上可部署 FlashAttention 3，但这些信息不能当作训练集群配置。",
+  "inference_hardware": "官方单 GPU 命令要求至少 80 GB VRAM，并建议结合 offload、BF16 转换和 T5 CPU 放置缓解显存；多 GPU 示例为 8 卡 FSDP + DeepSpeed Ulysses。官方效率表说明 Hopper 多卡测试使用 FlashAttention 3，但页面以图片呈现，未在正文逐项披露具体卡型/数值。TI2V-5B 可在 RTX 4090 上运行的说法不适用于代表版本 A14B。",
+  "inference_performance": "官方默认 40 个采样步，可生成 81 帧、16 fps 的 5 秒视频；发布页没有以可读文本给出 T2V-A14B 的统一端到端耗时。Artificial Analysis 在 2026-07-19 页面快照中给出 DeepInfra 代表端点近 14 天中位数 71.0768 秒，但该端点标签为 480p、16 fps，且 AA 内部标为 distilled/托管端点；它包含排队、轮询和下载，不能等同于官方本地原始 checkpoint 的 kernel latency。",
+  "max_output_resolution": "1280×720（720P；官方 T2V-A14B 同时支持 832×480/480P）",
+  "max_output_duration_seconds": 5,
+  "native_fps": 16,
+  "aa_elo": 1114.65,
+  "aa_elo_observed_at": "2026-07-19",
+  "generation_time_seconds": 71.076840833,
+  "generation_time_context": "Artificial Analysis 于 2026-07-19 抓取页面显示：DeepInfra 的 Wan 2.2 A14B 代表端点，480p、16 fps、5 秒配置或其 AA 最近可用配置，近 14 天端到端中位数 71.076840833 秒；p05=68.6640507247、p25=69.8792428925005、p75=73.2130103397499、p95=81.6757580782499。测量包含完成视频下载，且页面将该托管端点标为 distilled，因此不作为本地官方 BF16 权重的纯推理速度。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Text-to-Video Arena",
+      "metrics": {
+        "elo": 1114.65,
+        "elo_ci95_lower": 1106.65,
+        "elo_ci95_upper": 1122.65
+      },
+      "source_scope": "2026-07-19 页面快照；Elo 随用户投票动态变化，只能与同一时点、同一 T2V arena 口径比较。"
+    },
+    {
+      "benchmark": "Artificial Analysis API generation time",
+      "metrics": {
+        "median_seconds": 71.076840833,
+        "p05_seconds": 68.6640507247,
+        "p25_seconds": 69.8792428925005,
+        "p75_seconds": 73.2130103397499,
+        "p95_seconds": 81.6757580782499
+      },
+      "source_scope": "DeepInfra 托管代表端点，480p、16 fps、5 秒，近 14 天端到端测量；并非官方本地硬件 benchmark。"
+    },
+    {
+      "benchmark": "Wan-Bench 2.0",
+      "metrics": {
+        "reported_result": "官方称 T2V-A14B 在多数关键评价维度超过所比较的领先商业模型"
+      },
+      "source_scope": "官方自建 benchmark 的雷达图/定性结论；发布页正文未给出可机器读取的逐维数值、样本数、置信区间或完整评审协议，因此不转录图像近似值，也不视为独立第三方成绩。"
+    },
+    {
+      "benchmark": "MoE validation-loss ablation",
+      "metrics": {
+        "reported_result": "最终 Wan2.2 双专家组合的 validation loss 低于 Wan2.1 baseline、Wan2.1+高噪声专家、Wan2.1+低噪声专家三种设置"
+      },
+      "source_scope": "官方架构消融的定性排序；正文未公开曲线的精确最终数值、验证集规模或统计误差。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "把视频扩散的去噪时间轴拆给两个约 14B 的专用专家：高噪声专家负责早期全局布局，低噪声专家负责后期细节，从而以约 27B 总容量保持每步约 14B 的计算路径。",
+      "scope_boundary": "这是按 timestep/SNR 硬切换的 denoising-stage MoE，不是 LLM 常见的 token-level router，也不是每步同时融合两个专家。官方使用“introduces MoE architecture into video diffusion models”的发布措辞，但没有提供系统 prior-art 调查；因此可称 Wan2.2/A14B 的核心架构创新，不能据此无条件断言是全行业、所有视频扩散系统中的绝对首次。",
+      "evidence": "官方模型卡/GitHub 明确给出双专家职责、27B total/14B active、SNR 切换规则与 validation-loss 消融；公开配置和 text2video.py 进一步证实两个独立 checkpoint 只按 boundary 选择其一。",
+      "confidence": "高（机制与参数口径）；中（行业绝对首创边界）"
+    },
+    {
+      "claim": "通过显著扩大的图像/视频数据和带电影美学细粒度标签的精选数据，加强复杂运动、语义泛化和可控审美。",
+      "scope_boundary": "官方只给出相对增长 65.6%/83.2%，没有绝对数据量或可复现数据清单；“TOP performance”与优于商业模型是官方自评，不能仅由数据增长推导因果，也不能替代独立 benchmark。",
+      "evidence": "官方 Wan2.2 模型卡、GitHub 和 Alibaba Cloud 发布博客一致报告相对 Wan2.1 图像 +65.6%、视频 +83.2%，并列出光照、构图、对比度、色调等审美标签。",
+      "confidence": "高（官方披露的相对增长与数据设计）；中低（增长对各能力的独立因果贡献）"
+    },
+    {
+      "claim": "Wan2.2 家族另以高压缩 Wan2.2-VAE 支持一个统一 T2V+I2V 的 5B 高效变体。",
+      "scope_boundary": "该创新属于 Wan2.2-TI2V-5B：VAE 压缩 4×16×16、加 patchification 后 token 压缩 4×32×32、720P@24fps；不属于本条目代表版本 T2V-A14B。A14B 使用 Wan2.1 VAE，VAE 压缩仅 4×8×8，输出 16fps。",
+      "evidence": "官方发布页对 TI2V-5B 的高压缩设计作了单独说明；T2V-A14B 配置与 text2video.py 则明确加载 Wan2.1_VAE.pth、vae_stride=(4,8,8)。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "训练硬件型号、GPU/节点数量、互联、accelerator-hours、FLOPs、能耗与 wall-clock",
+    "Wan2.2 绝对图像数、视频数/小时数，以及 A14B 各阶段数据量与混合比例",
+    "训练数据源、许可构成、公开/内部比例、语言分布、去重、安全过滤及合成数据占比",
+    "完整训练阶段、每阶段 steps/epochs、batch size、优化器、学习率、noise/flow 采样、loss 与专家初始化方式",
+    "训练混合精度、optimizer/master weights 精度与最终 safetensors 逐 tensor dtype 的官方清单",
+    "官方本地 T2V-A14B 延迟表的可机器读取具体卡型、耗时、峰值显存、功耗和吞吐",
+    "Wan-Bench 2.0 的完整 prompts、逐维数值、评审人数、置信区间、统计显著性和可复现实现",
+    "审美数据细标签的生成/人工复核方法及各属性标签量",
+    "两个专家的精确非四舍五入参数量、共享参数（若有）与官方 27B 计数规则",
+    "官方训练代码和原始训练 checkpoint/optimizer state",
+    "A14B 在 720P 与 480P 下的官方逐配置成功率、端到端时间和峰值显存",
+    "相对 Wan2.1 数据增长对 MoE、审美标注和训练预算各自贡献的独立消融"
+  ],
+  "sources": [
+    {
+      "title": "Wan-Video/Wan2.2 official repository and model documentation",
+      "url": "https://github.com/Wan-Video/Wan2.2",
+      "source_type": "official_github_and_release_documentation"
+    },
+    {
+      "title": "Wan-AI/Wan2.2-T2V-A14B",
+      "url": "https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B",
+      "source_type": "official_model_card_and_weights"
+    },
+    {
+      "title": "Wan-AI/Wan2.2-T2V-A14B Hugging Face API metadata",
+      "url": "https://huggingface.co/api/models/Wan-AI/Wan2.2-T2V-A14B",
+      "source_type": "official_model_repository_metadata"
+    },
+    {
+      "title": "Wan2.2 T2V-A14B official configuration",
+      "url": "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/configs/wan_t2v_A14B.py",
+      "source_type": "official_source_code_configuration"
+    },
+    {
+      "title": "Wan2.2 shared inference configuration",
+      "url": "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/configs/shared_config.py",
+      "source_type": "official_source_code_configuration"
+    },
+    {
+      "title": "Wan2.2 text-to-video expert routing implementation",
+      "url": "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/text2video.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "Wan2.2 WanModel architecture implementation",
+      "url": "https://raw.githubusercontent.com/Wan-Video/Wan2.2/main/wan/modules/model.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "Wan: Open and Advanced Large-Scale Video Generative Models (arXiv:2503.20314)",
+      "url": "https://arxiv.org/abs/2503.20314",
+      "source_type": "official_upstream_wan2_1_technical_report"
+    },
+    {
+      "title": "Alibaba Releases Wan2.2 to Uplift Cinematic Video Production",
+      "url": "https://www.alibabacloud.com/blog/alibaba-releases-wan2-2-to-uplift-cinematic-video-production_602413",
+      "source_type": "official_organization_release_blog"
+    },
+    {
+      "title": "Wan 2.2 A14B Quality, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/video/models/wan-2-2-a14b",
+      "source_type": "independent_benchmark_dynamic_snapshot"
+    },
+    {
+      "title": "Ideas around T2I2V models — Wan2.2 index clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "代表版本选 Wan2.2-T2V-A14B，因为文章将 Wan2.2 置于 2025-07 的 T2V 时间线，而该版本是 2025-07-28 首发的专用文本生视频旗舰。同期其他首发变体包括 Wan2.2-I2V-A14B（相同 27B total/14B active 的双专家思路，专用于图生视频）和 Wan2.2-TI2V-5B（5B dense、统一 T2V+I2V、Wan2.2 高压缩 VAE、720P@24fps、面向消费级 GPU）；后续又扩展 S2V-14B、Animate 等，但不应反投影到 7 月首发代表版本。A14B 名称中的 A14B 表示 active 约 14B，不是总参数仅 14B。官方把架构称 MoE，但代码显示其本质是整个去噪阶段的二选一专家路由；对比时应以 27B 总容量、14B 每步激活同时呈现。"
+}

@@ -1,0 +1,247 @@
+{
+  "slug": "step-video-t2v-30b",
+  "name": "Step-Video-T2V 30B",
+  "family": "Step-Video",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "StepFun（阶跃星辰）",
+  "release_date": "2025-02-17",
+  "release_date_basis": "官方 Hugging Face model card 与 GitHub News 均写明 2025-02-17 发布 Step-Video-T2V 推理代码和模型权重；技术报告 arXiv v1 更早于 2025-02-14 提交。本条按可下载权重正式公开日记为 2025-02-17。",
+  "access": "开放权重、推理代码和评测集，无需申请即可从 Hugging Face 或 ModelScope 下载；官方还曾提供跃问在线视频入口。基础模型与 Turbo 蒸馏变体分别发布。本条描述基础 30B 模型，不把 Turbo 的少步推理性能混入基础模型数据。",
+  "license": "MIT。官方 Hugging Face 仓库 metadata 将模型标为 license: mit，官方 GitHub 仓库也附 MIT License；这里据此把已发布模型权重和代码记录为 MIT。",
+  "official_model_ids": [
+    "stepfun-ai/stepvideo-t2v"
+  ],
+  "parameter_total": "官方口径为 30B，明确指 48 层 Video DiT 主干。公开 BF16 DiT safetensors 的 tensor-data 总量为 58,684,956,800 bytes，对应 29,342,478,400 个 BF16 参数元素，与 30B 四舍五入口径一致。条件器不在 30B 口径内：公开 Step-LLM 约 19.58B 参数，Hunyuan-CLIP 约 0.98B，VAE v2 约 0.50B；官方没有给出统一的端到端系统总参数口径。",
+  "parameter_active": "30B Video DiT 是稠密 Transformer、不是 MoE；每次 DiT 去噪调用约 29.34B 主干参数全部参与。Step-LLM、Hunyuan-CLIP 和 Video-VAE 在文本编码与解码阶段另行运行，官方未发布把所有组件折算为单一 active-parameter 指标。",
+  "weight_size": "公开基础模型所需主要权重按 Hugging Face blob 大小计：Video DiT 58,685,045,912 bytes，Step-LLM 39,159,236,448 bytes，Hunyuan-CLIP 3,936,679,395 bytes，vae_v2 1,995,304,052 bytes；合计 103,776,265,807 bytes（103.78 GB / 约 96.65 GiB）。仓库还保留旧版 vae.safetensors，若把两个 VAE 都计入则全部权重文件约 104.81 GB；这不是单次推理必须同时加载的体积。",
+  "precision": "公开 Video DiT safetensors 张量为 BF16，Step-LLM config 也声明 BF16；Hunyuan-CLIP config/权重为 FP32，vae_v2 safetensors 张量为 FP32。官方推理采用混合组件精度，并推荐 80GB 级 NVIDIA GPU；没有披露原始大规模预训练的完整混合精度、归约精度或 loss-scaling 策略。",
+  "architecture": "基于 Flow Matching 的 latent text-to-video Diffusion Transformer。Video-VAE 先把视频压缩到时空 latent，30B DiT 以噪声 latent、文本嵌入和时间步为条件做速度预测，再由 ODE 采样和 VAE 解码生成视频。DiT 有 48 层、48 个 attention heads、head dim 128、FFN dim 24,576、GELU-approx 和 RMSNorm；每层在 self-attention 与 FFN 之间加入文本 cross-attention。AdaLN-Single 注入时间步条件。",
+  "attention_or_sequence_design": "使用统一的 3D full attention 同时建模时间、高度和宽度，而非分解的空间/时间 attention。采用 3D RoPE 以支持不同帧数和分辨率，QK-Norm 稳定训练，文本 cross-attention 接收沿序列维拼接的 Hunyuan-CLIP（1024 维）与 Step-LLM（6144 维）表示。公开 config 的 patch_size=1、latent in/out channels=64。报告称 4B 消融中 3D full attention 尤其在高动态视频上优于 spatial-temporal attention，但完整数值未公开。",
+  "vae_or_tokenizer": "自研 causal Video-VAE，时间压缩 8×、空间高宽各压缩 16×，即 8×16×16。编码器前段为三组 Causal Res3DBlock 与下采样，随后 MidBlock 结合卷积与 attention；深层采用双路径 latent fusion：一条用 causal 3D convolution + 3D pixel unshuffle 保留高频细节，另一条以 grouped channel averaging 保留低频结构，最后残差融合。VAE 联合支持图像与视频，训练先用 L1 reconstruction、Video-LPIPS 与 KL，再在收敛后加入 GAN loss。官方重建评测中 8×16×16 Video-VAE 在 1,000 段 50×480×768 测试视频上得到 SSIM 0.9776、PSNR 39.37、rFVD 3.61。",
+  "text_encoder_or_conditioner": "双语双编码器：Hunyuan-CLIP 是双向中英 CLIP 文本编码器，视觉对齐较强但报告称最大 77 tokens；Step-LLM 是内部预训练的单向中英 LLM 文本编码器，以 next-token prediction 训练并使用重设计 ALiBi positional embedding，公开 config 为 48 层、hidden size 6144、最长 16,384 tokens。两路输出沿序列维拼接后送入每个 DiT block 的 cross-attention。",
+  "training_hardware": "NVIDIA H800 GPU。报告明确描述训练数据中心和大规模单任务均基于 H800；未披露其他加速器参与核心预训练。",
+  "training_hardware_scale": "自建数据中心包含数千张 NVIDIA H800，节点以 rail-optimized RoCEv2 互联，每节点 1.6 Tbps；系统支持单个训练任务跨多个 GPU 集群使用数千张 GPU。报告没有给出每个训练阶段的确切 GPU 数、节点数或累计 GPU-hours。StepMind 在超过一个月的训练观察期实现超过 99% effective GPU training time。",
+  "training_data_scale": "构建的数据池为 2B video-text pairs 和 3.8B image-text pairs。公开的实际 seen-sample 课程为：256×256 T2I 预训练 253k iterations、累计看见 3.8B 图像；192×320 T2VI 预训练 430k iterations、累计 644M video clips；544×992 T2VI 预训练 46k iterations、表格合计 27.3M video clips。SFT 前自动筛选得到 30M 视频候选子集，但最终人工精选 SFT 集、DPO prompt/pair 数量没有披露。",
+  "training_data_composition": "原始视频先经 PySceneDetect/FFmpeg 切为单镜头，并移除每段首尾各 3 帧；随后按审美、NSFW、水印、字幕、饱和度、模糊和黑边打标，使用 Farneback optical flow 评估运动。内部 VLM 生成 short caption、dense caption，并混入部分 original title；内部 VideoCLIP + K-means 将视频分为超过 120,000 个概念簇，用 cluster size/centroid distance 去重和平衡；另用 CLIP score 过滤图文对齐。SFT 候选强调运动、真实感、审美、概念覆盖和准确 caption，最后由人工复核清晰度、审美、运动、转场、水印/字幕并精修描述。原始数据来源清单、授权构成和语言比例未披露。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "T2I pre-training（256×256）",
+      "description": "30B DiT 从头在图文对上训练，先学习概念、场景和空间关系；共 253k iterations，batch size/node 40，learning rate 1e-4，累计 3.8B seen images。作者称直接从视频起训在 4B 实验中收敛明显更慢。"
+    },
+    {
+      "stage": 2,
+      "name": "T2VI pre-training（192×320）",
+      "description": "图像和视频联合预训练，以低分辨率优先学习运动；六级逐步收紧的数据过滤在这一课程中分批使用。共 430k iterations，batch size/node 4，三个子阶段 learning rate 均为 6e-5，累计 644M seen video clips。"
+    },
+    {
+      "stage": 3,
+      "name": "T2VI pre-training（544×992 / 540p）",
+      "description": "升至 544×992 继续联合训练以学习细节；三个子阶段分别为 23k/17k/6k iterations，learning rate 2e-5/1e-5/1e-5，batch size/node 2/2/1，表格累计 27.3M seen video clips。训练使用 1、68、136、204 帧和 landscape/portrait/square buckets。"
+    },
+    {
+      "stage": 4,
+      "name": "T2V supervised fine-tuning",
+      "description": "去掉 T2I 数据，用少量高质量 text-video pairs 专门微调 T2V，降低预训练 checkpoint 的伪影和风格漂移。作者还采用同源或不同 SFT 数据 checkpoint averaging，称其稳定性优于 EMA。精确样本数、steps 与学习率未披露。"
+    },
+    {
+      "stage": 5,
+      "name": "Video-DPO",
+      "description": "由训练数据抽样 prompt 与人工合成 prompt 组成多样 prompt 集；每个 prompt 用不同 seed 生成多个视频，人工标注 preferred/non-preferred pair。正负样本固定初始噪声和时间步以稳定训练，在 Flow Matching 框架下改写 DiffusionDPO 目标；精确 pair 数、steps 与 learning rate 未披露。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "T2I pre-training（256×256）",
+      "wall_clock_time": "未知",
+      "optimization_steps": "253k iterations"
+    },
+    {
+      "stage": "T2VI pre-training（192×320）",
+      "wall_clock_time": "未知",
+      "optimization_steps": "430k iterations"
+    },
+    {
+      "stage": "T2VI pre-training（544×992）",
+      "wall_clock_time": "未知",
+      "optimization_steps": "46k iterations"
+    },
+    {
+      "stage": "T2V SFT",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "Video-DPO",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "主干以 Flow Matching/rectified-flow velocity prediction 训练，用 MSE 拟合从高斯噪声到干净 latent 的速度。课程式训练依次为 T2I、低分辨率 T2VI、高分辨率 T2VI、T2V SFT 和 Video-DPO，并结合分辨率/帧长 bucket 与分层数据过滤。Video-DPO 基于 DPO/DiffusionDPO，但扩展到 Flow Matching；作者通过减小 DPO 缩放项并提高学习率来避免梯度爆炸与极低学习率造成的慢收敛。VAE 则采用 L1 + Video-LPIPS + KL，收敛后加入 GAN loss。论文未披露主干优化器、weight decay、完整 timestep sampling 分布和梯度裁剪参数。",
+  "training_infra": "Step Emulator（SEMU）在开跑前估计资源与 TP/SP/CP/PP/VPP 组合；实际为简化和稳健性采用 8-way tensor parallelism + sequence parallelism + ZeRO-1，540p 阶段理论最优估计 MFU 约 36.47%，所选策略比理论最优低 0.88 个百分点，实测训练 MFU 32%。StepCCL 实现 TP 通信-计算重叠，早期图像/192p 阶段另用 DP all-gather/reduce-scatter overlap。VAE 使用 channels-last 获得最高 7× encode throughput，并支持 temporal/spatial multi-GPU parallel。VAE/文本编码 inference cluster 与 DiT training cluster 解耦，经 StepRPC 的 TCP/RDMA 传输 latent 与文本嵌入；StepTelemetry 做低开销全秩监控和数据统计，StepMind 负责故障检测、节点质量与自动恢复。",
+  "inference_hardware": "官方要求 NVIDIA CUDA GPU，公开表在 4 GPU 上测试，并推荐 80GB 显存 GPU。官方多 GPU 脚本支持 parallel=4 或 8、tensor parallel × Ulysses sequence parallel；文本编码和 VAE decoding 采用独立 API 服务，完整解耦部署需要在 DiT GPU 之外再有专用 GPU。官方另指向 DiffSynth-Studio 的单 GPU 量化方案，但该第三方方案不代表基础模型原生显存要求。",
+  "inference_performance": "官方基础模型、batch size 1、无 CFG distillation、50 steps：544×992×204 帧峰值 GPU memory 77.64 GB，FlashAttention 为 743 s，无 FlashAttention 为 1232 s；544×992×136 帧为 72.48 GB、408/605 s；当前 GitHub 还列出 768×768×204 帧为 78.55 GB、860/1437 s。官方最佳实践为基础模型 30-50 steps、CFG 9.0、time shift 13.0、204 帧。单独发布的 Turbo 蒸馏变体推荐 10-15 steps，但其耗时未混入本字段。",
+  "max_output_resolution": "官方论文与模型主张的原生长视频规格为 544×992（540p）；当前推理表也测试 768×768 方形输出，但论文没有把它声明为更高的标准长边输出档位。",
+  "max_output_duration_seconds": 8.16,
+  "native_fps": 25,
+  "aa_elo": 920,
+  "aa_elo_observed_at": "2026-07-19",
+  "generation_time_seconds": 743,
+  "generation_time_context": "官方 GitHub/Hugging Face 运行表：基础 Step-Video-T2V，544×992、204 frames、batch size 1、50 inference steps、启用 FlashAttention、无 CFG distillation，在官方 4-GPU 测试配置下为 743 秒，峰值 GPU memory 77.64 GB。无 FlashAttention 为 1232 秒。native_fps=25 来自官方 video_process.py 的默认 MP4 写出帧率，因此 204/25=8.16 秒是从官方帧数与代码默认值推导的容器时长，而不是论文单独声明的训练原生 FPS。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Text-to-Video Arena",
+      "metrics": {
+        "elo_exact": 919.63,
+        "elo_rounded": 920,
+        "appearances": 4747,
+        "confidence_interval_95_percent": "909.63-929.63"
+      },
+      "source_scope": "2026-07-19 读取 Artificial Analysis 官方 Text-to-Video leaderboard 页面首个当前总榜数据块；动态榜单会继续变化。"
+    },
+    {
+      "benchmark": "Step-Video-T2V-Eval vs HunyuanVideo",
+      "metrics": {
+        "prompts": 128,
+        "annotator_1_win_tie_loss": "59-22-47",
+        "annotator_2_win_tie_loss": "46-47-35",
+        "annotator_3_win_tie_loss": "54-41-33",
+        "instruction_following_aggregate": "1273-1221",
+        "motion_smoothness_aggregate": "1407-1327",
+        "physical_plausibility_aggregate": "1417-1238",
+        "aesthetic_appeal_aggregate": "1312-1238"
+      },
+      "source_scope": "官方自建 128 条中文 prompt、11 类别、三位人工标注者评测；冒号左侧为 Step-Video-T2V，右侧为 HunyuanVideo。不是独立第三方盲榜。"
+    },
+    {
+      "benchmark": "Movie Gen Video Bench human preference",
+      "metrics": {
+        "tagged_evaluations": 1289,
+        "vs_Movie_Gen_Video_win_tie_loss": "485-315-489",
+        "vs_HunyuanVideo_win_tie_loss": "615-313-361"
+      },
+      "source_scope": "官方报告使用 Movie Gen Video Bench，六位人工标注者；1,289 是带多标签后的评估数而非独立 prompt 数。结果显示与 Movie Gen Video 总体接近、优于 HunyuanVideo。"
+    },
+    {
+      "benchmark": "Video-VAE reconstruction",
+      "metrics": {
+        "test_videos": 1000,
+        "test_shape": "50×480×768",
+        "downsample_factor": "8×16×16",
+        "SSIM_higher_is_better": 0.9776,
+        "PSNR_higher_is_better": 39.37,
+        "rFVD_lower_is_better": 3.61
+      },
+      "source_scope": "官方报告 Table 15；跨多领域 1,000 段视频的 VAE 重建评测。"
+    },
+    {
+      "benchmark": "Video-DPO preference ablation",
+      "metrics": {
+        "prompts": 300,
+        "annotators_per_pair": 3,
+        "baseline_with_DPO_preference_percent": 55,
+        "baseline_preference_percent": 45
+      },
+      "source_scope": "官方报告对相同初始噪声下的 baseline 与 baseline+DPO 做人工偏好评测；包含 no-preference 各计 0.5 的规则。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "以 8×16×16 深压缩 Video-VAE 在极高压缩率下维持高重建质量，从而支持 30B 全注意力 DiT 训练 204 帧视频。",
+      "scope_boundary": "首创性限定在作者提出的双路径 causal video VAE 设计及其报告实验；3D causal convolution、pixel unshuffle、VAE、GAN loss 本身都是已有技术。204 帧能力也同时依赖集群规模和 DiT 系统优化，不能全归因于 VAE。",
+      "evidence": "官方 Table 15 在 8×16×16 下报告 SSIM 0.9776、PSNR 39.37、rFVD 3.61，并明显优于同压缩率 Cosmos-VAE 的 0.8862/34.82/40.33；论文和模型卡均确认最长 204 帧。",
+      "confidence": "高（官方架构与自报数值明确；跨数据集独立复现有限）"
+    },
+    {
+      "claim": "将基于人工视频偏好的 Video-DPO 扩展到 Flow Matching 视频生成，降低伪影并改善一致性、视觉质量和 prompt alignment。",
+      "scope_boundary": "DPO 与 DiffusionDPO 并非新提出；创新主要是视频样本配对、相同初始噪声/时间步对齐和 Flow Matching 目标适配。偏好数据规模与超参数未公开，不能据此声称普遍优于其他后训练方法。",
+      "evidence": "官方 300-prompt、每对三人评测中 baseline+DPO 获得 55% 对 45% 偏好，并报告 prompt alignment 改善。",
+      "confidence": "中高（有受控自报消融，但无独立复现和完整训练细节）"
+    },
+    {
+      "claim": "发布时以约 30B 的开放权重 T2V DiT、3D full attention、中英双语条件和最长 204 帧构成当时规模最大的开源视频生成基线之一。",
+      "scope_boundary": "“largest/strongest open-source”是 2025-02 时间点与作者所选比较对象下的声明；30B 只指 DiT，不含约 20B Step-LLM 等条件器，也不意味着后续年份仍保持最大或最强。",
+      "evidence": "论文、GitHub 和公开 BF16 safetensors 共同验证约 29.34B DiT；官方发布完整权重与 MIT metadata，Step-Video-T2V-Eval 与 Movie Gen Bench 人评显示其对当时开放模型有竞争力。",
+      "confidence": "高（规模、开放权重和帧数）；中（最强质量主张受自建评测范围限制）"
+    },
+    {
+      "claim": "构建面向数千 H800 的解耦视频训练系统，结合 8-way TP、SP、ZeRO-1、RPC 数据预处理集群和全栈遥测，在长视频 540p 阶段实现 32% 实测 MFU 与超过 99% 有效 GPU 训练时间。",
+      "scope_boundary": "这是系统工程贡献而非生成模型算法首创；32% MFU 与 99% effective time 来自内部 H800/RoCEv2 环境，不能外推到其他硬件或复现集群。",
+      "evidence": "技术报告系统章节给出并行策略、SEMU MFU 表、实测 32% MFU、数千 H800/1.6Tbps 节点网络，以及超过一个月观察期的 99% effective GPU time。",
+      "confidence": "高（官方披露详尽）；中（内部基础设施无法独立核验）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "各预训练、SFT 和 Video-DPO 阶段的确切 GPU 数、节点数、wall-clock 时间、累计 GPU-hours、总 FLOPs、能耗与成本",
+    "主干大规模预训练的优化器、weight decay、完整学习率 schedule、timestep sampling 分布、梯度裁剪和混合精度/loss-scaling 细节",
+    "2B video-text 与 3.8B image-text 数据池的原始来源清单、授权/版权构成、语言比例、地域分布、真实/合成比例和完整去重统计",
+    "30M 自动过滤 SFT 候选集最终经人工筛选后实际使用的样本数、训练 steps、batch 和 checkpoint averaging 配方",
+    "Video-DPO 的 prompt 数、偏好 pair 数、迭代轮数、beta/缩放项、learning rate、训练时长及奖励模型是否用于最终公开 checkpoint",
+    "官方所谓 30B 之外所有端到端组件的权威统一参数总数和统一 active-parameter 口径",
+    "论文所称视频训练原生采样 FPS；本条 native_fps=25 仅由官方 MP4 写出代码默认值核验",
+    "官方推理表中 77.64 GB 峰值是单卡峰值还是多卡聚合口径的明确文字定义，以及具体 4 张 GPU 型号",
+    "基础模型 30-50 step 与 Turbo 10-15 step 在同一硬件、同一分辨率下的完整端到端耗时对比",
+    "Artificial Analysis 动态 Elo 的长期固定快照；本条只能记录 2026-07-19 观察值"
+  ],
+  "sources": [
+    {
+      "title": "Step-Video-T2V Technical Report: The Practice, Challenges, and Future of Video Foundation Model",
+      "url": "https://arxiv.org/html/2502.10248",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "arXiv submission record for Step-Video-T2V (2502.10248)",
+      "url": "https://arxiv.org/abs/2502.10248",
+      "source_type": "official_preprint_metadata"
+    },
+    {
+      "title": "stepfun-ai/Step-Video-T2V",
+      "url": "https://github.com/stepfun-ai/Step-Video-T2V",
+      "source_type": "official_github_and_inference_benchmark"
+    },
+    {
+      "title": "Step-Video-T2V MIT License",
+      "url": "https://github.com/stepfun-ai/Step-Video-T2V/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "stepfun-ai/stepvideo-t2v model card",
+      "url": "https://huggingface.co/stepfun-ai/stepvideo-t2v",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "stepfun-ai/stepvideo-t2v repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/stepfun-ai/stepvideo-t2v?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Official transformer config",
+      "url": "https://huggingface.co/stepfun-ai/stepvideo-t2v/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Official Step-LLM text encoder config",
+      "url": "https://huggingface.co/stepfun-ai/stepvideo-t2v/blob/main/step_llm/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "Official video output processing code",
+      "url": "https://github.com/stepfun-ai/Step-Video-T2V/blob/main/stepvideo/utils/video_process.py",
+      "source_type": "official_inference_code"
+    },
+    {
+      "title": "Artificial Analysis Text-to-Video Leaderboard",
+      "url": "https://artificialanalysis.ai/video/leaderboard/text-to-video",
+      "source_type": "independent_dynamic_leaderboard"
+    },
+    {
+      "title": "Ideas around T2I2V models — source index clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "本条是已正式发布的 T2V 模型，故 entry_kind=model、comparison_eligible=true、history_eligible=true。核心可比口径是基础 30B Video DiT，而不是把约 19.58B Step-LLM 与其他条件器也算进“30B”。最长输出按论文为 544×992、204 帧；官方写出代码默认 25fps，故推导时长为 8.16 秒（通常口语化为约 8 秒）。论文训练表的 540p 三行 seen samples 相加与 Total 均为 27.3M；正文另一处出现 25.3M，应视为文本笔误，本条采用表格和后文再次确认的 27.3M。基础模型官方 50 步耗时与 Turbo 蒸馏变体的 10-15 步建议严格分开。Artificial Analysis 动态榜单在 2026-07-19 页面首个当前总榜数据块显示 Elo 919.63（取整 920），该值不是发布时成绩，未来会变化。"
+}

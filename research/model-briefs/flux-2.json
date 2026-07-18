@@ -1,0 +1,248 @@
+{
+  "slug": "flux-2",
+  "name": "FLUX.2 [dev]",
+  "family": "FLUX.2",
+  "entry_kind": "model",
+  "modality": "Omni",
+  "organization": "Black Forest Labs",
+  "release_date": "2025-11-25",
+  "release_date_basis": "Black Forest Labs 的 FLUX.2 官方发布博客标注 November 25, 2025；官方 flux2 GitHub News 同样记载 25.11.2025 发布 FLUX.2 [dev]。本条以首个公开发布日而非后续 Hugging Face 文件更新时间、量化版或 [klein]/[max] 上线日为准。",
+  "access": "开放权重但需门控接受条款：black-forest-labs/FLUX.2-dev 的仓库与模型卡公开可见，下载权重前需登录 Hugging Face、同意共享联系信息并接受 FLUX Non-Commercial License 与 AUP。BFL 提供 Apache-2.0 官方推理代码，本地可运行；fal.ai、Replicate、Runware、Together AI、DeepInfra 等合作方提供托管 API。商业自托管需向 BFL 获取单独商业许可。",
+  "license": "FLUX Non-Commercial License（发布时称 FLUX.2-dev Non-Commercial License）适用于 FLUX.2 [dev] 权重；允许的模型使用以个人、科研和非商业用途为主，模型卡另说明输出可在许可证约束下用于个人、科研和商业目的。FLUX.2 VAE 权重及官方推理代码分别以 Apache-2.0 发布；这不改变 32B DiT 权重的非商业许可。商业自托管另有付费许可。",
+  "official_model_ids": [
+    "black-forest-labs/FLUX.2-dev",
+    "flux.2-dev",
+    "flux2-dev.safetensors"
+  ],
+  "parameter_total": "32B 指 rectified-flow / flow-matching Transformer 主干，而不是含文本条件器的整套流水线。官方模型卡将其表述为 32 billion parameter rectified flow transformer，BF16 单文件为 64.4 GB；条件侧另耦合一个 24B Mistral-3 VLM。按名义规模相加，DiT+条件器约为 56B，另有 VAE，但 BFL 没有发布统一的端到端系统总参数数，因此不把“56B+”写成官方参数口径。",
+  "parameter_active": "主干是稠密 32B Transformer，推理去噪步中不存在公开的 MoE 稀疏激活路径；文本编码阶段另运行稠密 24B Mistral 条件器，VAE 在编码/解码阶段运行。官方未发布把不同阶段折算在一起的 active-parameter 总数。",
+  "weight_size": "官方 Hugging Face BF16 文件：FLUX.2 [dev] DiT 单文件 64.4 GB；Mistral 文本编码器 10 个分片合计约 48.0 GB；VAE 336 MB。完整 BF16 推理组件逻辑体积约 112.8 GB（不重复计算同仓库内 single-file 与 Diffusers 分片的同一 DiT）。官方/合作量化版另有 FP8、NF4/4-bit 等更小版本。",
+  "precision": "官方原始 Hugging Face 权重标记为 BF16，官方加载代码也将 DiT 转为 torch.bfloat16；VAE 在官方 4-bit 示例中仍为 BF16。BFL/NVIDIA/ComfyUI 另提供优化 FP8 实现，Hugging Face Diffusers 提供 DiT 与文本编码器的 4-bit/NF4 运行方案；这些量化版不等同于原始发布精度。训练精度未披露。",
+  "architecture": "32B latent rectified-flow / flow-matching Transformer，在同一 checkpoint 中统一文本生图、单参考图编辑和多参考图编辑。官方实现的 FLUX.2 [dev] 配置为 hidden size 6144、48 个注意力头、8 个 double-stream MM-DiT blocks、48 个 single-stream parallel blocks、MLP ratio 3.0、context input dim 15360、DiT latent input/output channels 128，并使用 guidance embedding。文本与图像在双流块中保留各自 MLP/归一化分支但联合计算 attention；之后拼接成单序列进入单流块。",
+  "attention_or_sequence_design": "8 个双流 MM-DiT 块先分别投影文本与图像 token，再拼接 Q/K/V 做联合注意力；48 个单流块处理拼接后的统一序列。单流块以一个无 bias 的 linear1 同时产生 attention QKV 与 SwiGLU 风格 FF 输入，再把 attention 输出和激活后的 FF 输出拼接给一个无 bias 的 linear2，因此属于 fully parallel transformer block。时间/引导产生的 AdaLN-Zero shift/scale/gate 在顶层各计算一次，并在全部双流块或全部单流块间共享；官方实现中 input projections、attention/FF projections 与 modulation linear 均禁用 bias。位置编码是 4 轴 RoPE（axes_dim=[32,32,32,32]，theta=2000）；文本最大 512 token。多参考图以独立参考 token 序列加入，并可在后续去噪步复用参考 K/V。这里的“共享调制、无 bias、fully parallel”来自官方源码和 Hugging Face 发布技术博客；BFL 发布博客未给出这些低层细节，也没有公开消融证明它们各自造成多少质量或速度提升。",
+  "vae_or_tokenizer": "全新的 FLUX.2 AutoencoderKLFlux2，BFL 称其从头重训 latent space，以改善 learnability-quality-compression 三难权衡。官方代码显示：8x 空间下采样、32 个 VAE latent channels、基础通道 128、ch_mult=[1,2,4,4]、每级 2 个 residual blocks；编码取 posterior mean，不在参考推理中采样。随后把 2x2 latent patch 重排为 128 通道并以无 affine、带 running statistics 的 BatchNorm 归一化，使 DiT 看到 H/16 x W/16 的 128-channel token grid；解码时逆变换。VAE 权重 336 MB、Apache-2.0。BFL 未公开其训练数据规模、损失权重、训练步数或可复现的完整 VAE 基准表。",
+  "text_encoder_or_conditioner": "24B Mistral-3 VLM 作为条件器，为 DiT 提供世界知识与上下文理解；当前 BFL 官方推理代码精确加载 mistralai/Mistral-Small-3.2-24B-Instruct-2506 作为 model、用 Mistral-Small-3.1-24B-Instruct-2503 的 processor，取第 10/20/30 层 hidden states 后拼接为 15360 维条件，最大长度 512 token。发布日的 Hugging Face 技术博客写作 Mistral Small 3.1，而 BFL 发布博客只写 Mistral-3 24B，因此小版本应以“当前官方实现为 3.2 model、3.1 processor；发布文案的小版本存在差异”表述。可选 prompt upsampling 也可使用同一 Mistral-Small-3.2-24B-Instruct-2506，但它是可选前处理，不应与 DiT 内部条件器另算成第二个 24B 模型实例。",
+  "training_hardware": "未知",
+  "training_hardware_scale": "未知；BFL 未披露训练 GPU/加速器型号、数量、集群规模、累计 accelerator-hours、能耗或成本。官方仓库所说 GB200/CUDA 12.9 是推理代码测试环境，不是训练硬件证据。",
+  "training_data_scale": "未知；未披露图文对、编辑对、多参考组、图像数、token 数、存储量或去重后有效样本规模。",
+  "training_data_composition": "公开资料只足以确认能力覆盖文本生图、单图与多图参考编辑，以及安全数据处理边界。模型卡称预训练数据针对多类 NSFW 与已知 CSAM 做过滤，并与 Internet Watch Foundation 合作过滤已知 CSAM；没有公开数据集名称、来源占比、许可构成、语言/审美/真实与合成数据比例、编辑任务配比或去重流程。能力展示（摄影、排版、logo、UI、产品图）不能反推训练集组成。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "从头预训练 FLUX.2 base",
+      "description": "Hugging Face 发布技术博客称 FLUX.2 是新架构且 pre-training done from scratch；BFL 发布博客称 [dev] derived from the FLUX.2 base model。BFL 没有公开 base 的优化步数、分辨率课程、batch、优化器或数据配比。"
+    },
+    {
+      "stage": 2,
+      "name": "从头训练新的 FLUX.2 latent space / VAE",
+      "description": "BFL 明确称 latent space re-trained from scratch，目标是在相同时间改善 learnability 与 image quality，并优化 compression 权衡；具体损失、数据、步数和与主干联合/分离训练顺序未知。"
+    },
+    {
+      "stage": 3,
+      "name": "Guidance distillation",
+      "description": "官方模型卡和仓库模型矩阵确认 FLUX.2 [dev] 做了 guidance distillation，但没有 step distillation；官方默认仍为 50 个推理步（28 步是质量/速度折中建议）。教师 checkpoint、蒸馏目标、步数与超参数未知。"
+    },
+    {
+      "stage": 4,
+      "name": "Safety fine-tuning / targeted post-training mitigations",
+      "description": "模型卡称在外部红队评估反馈后进一步安全微调，再对拟发布 checkpoint 做约 2,800 prompts 的最终第三方 T2I/I2I 风险评估。后续 BFL 安全博客将 FLUX.2 家族的 targeted post-training mitigation 概括为把漏洞率降低 77%-98%，但未公开 [dev] 单独的原始绝对率或训练超参数。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "FLUX.2 base 从头预训练",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "FLUX.2 VAE / latent space 从头训练",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Guidance distillation",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Safety fine-tuning",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "主干采用 latent rectified flow / flow matching；[dev] 从 FLUX.2 base 派生并做 guidance distillation，不做 step distillation；发布前另做 safety fine-tuning。VAE 以新的 8x/32-channel latent representation 从头训练，但官方未公开重建、感知、对抗、KL 或语义正则等损失的确切组合与权重。优化器、学习率、scheduler、batch、CFG dropout、resolution curriculum、蒸馏 teacher/target 和全部后训练超参数均未知。",
+  "training_infra": "未知；未披露训练框架、数据并行/张量并行/流水线并行策略、通信互联、吞吐、checkpoint 频率、容错或数据管线。官方 Apache-2.0 仓库是最小推理实现，不能据此推断内部训练基础设施。",
+  "inference_hardware": "官方原始 BF16 方案需要 H100-equivalent 级显存；Hugging Face 在 H100 上启用 CPU offload 后约占 62 GB VRAM，DiT+Mistral 同驻而不 offload 会超过 80 GB。BFL 官方代码在 GB200、CUDA 12.9、Python 3.12 上测试。4-bit DiT+text encoder 可在约 20 GB 空闲 VRAM 运行；4-bit DiT+远程文本编码器约 18 GB；更激进 group offload 可降至 8 GB GPU VRAM，但需约 32 GB RAM（或用低内存选项换取更慢速度）。",
+  "inference_performance": "官方 [dev] 参考配置为 guidance 4.0、50 steps，Hugging Face 称 28 steps 是可接受的质量/速度折中；官方未给出固定硬件、固定分辨率下的端到端秒数。Artificial Analysis 的多提供商页面显示同一标准/修改部署的单次近期结果可从约 1.5 秒到数百秒，且其统计包含提供商返回 URL 后的下载时间，因此不能归结为模型内核延迟。原始模型不应继承 [klein] 的 sub-second 指标。",
+  "max_output_resolution": "BFL 对 FLUX.2 家族宣称最多 4 megapixels，并称图像编辑可在最高 4MP 保持细节；BFL API 会把超过 4MP 的图像缩放到 4MP。公开材料未给出 FLUX.2 [dev] 本地实现的唯一最大宽高组合或完整 aspect-ratio 边界，因此应记为“最多 4MP（家族/服务口径），精确 WxH 上限未知”，而不是固定 2048x2048。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1151,
+  "aa_elo_observed_at": "2026-07-19（Artificial Analysis Text to Image Open Weights Leaderboard 动态快照；Elo 会随新增盲评投票变化）",
+  "generation_time_seconds": null,
+  "generation_time_context": "未给单一 generation_time_seconds，因为 Artificial Analysis 将 FLUX.2 [dev] 分成 8 个标准/修改提供商部署，页面的 14 日中位数曲线未提供一个可代表模型本身的统一值；近期同 prompt 结果在 MachGen 约 1.5-2.5 秒、DeepInfra/fal.ai/Runware 常见约 6-9 秒，Replicate 个别请求可超过 300 秒。该口径包含下载提供商返回 URL 的图像、受队列与部署优化影响，且未披露服务端硬件，不能与官方本地 50-step BF16 推理直接比较。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Text to Image Leaderboard",
+      "variant": "FLUX.2 [dev] open weights",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1151,
+        "rank_global": 35,
+        "rank_open_weights": 7,
+        "rank_interval_95pct": "31-39",
+        "elo_ci_95pct": "-8/+8",
+        "samples": 7419
+      },
+      "scope": "第三方动态文本生图盲评；Elo、名次、样本数会继续变化，不能与编辑赛道 Elo 互换，也不是 BFL 官方自测。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Editing Leaderboard",
+      "variant": "FLUX.2 [dev] open weights",
+      "observed_at": "2026-07-19",
+      "metrics": {
+        "elo": 1141,
+        "rank_global": 39,
+        "rank_interval_95pct": "37-44",
+        "elo_ci_95pct": "-8/+8",
+        "samples": 8831
+      },
+      "scope": "第三方动态图像编辑盲评；这是与 T2I 分开的赛道，不能把 1141 与 T2I 的 1151 平均成一个总分。"
+    },
+    {
+      "benchmark": "FLUX.2 release safety evaluation",
+      "variant": "proposed FLUX.2 [dev] release checkpoint",
+      "observed_at": "2025-11-25 model card; 2026-02-24 family follow-up",
+      "metrics": {
+        "final_third_party_prompts": "approximately 2,800",
+        "family_targeted_post_training_reduction": "77%-98%"
+      },
+      "scope": "约 2,800 prompts 是模型卡披露的发布前最终第三方 T2I/I2I 合成 CSAM/NCII 评估规模；77%-98% 是后续 BFL 对 FLUX.2 五个开放权重 checkpoint 的家族级汇总，不能当作 [dev] 的单独绝对违规率或生成质量分数。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "用 24B Mistral-3 VLM 条件器把世界知识、结构化指令和多参考图理解接入单一 32B rectified-flow checkpoint，使同一模型无需针对角色、物体或风格另行微调即可完成 T2I、单图编辑和最多 10 张参考图组合。",
+      "scope_boundary": "统一生成/编辑和多参考能力不是行业首次；“最多 10 张”是 FLUX.2 产品/管线能力上限，不代表任意 10 图任务都无损保持身份。32B 只指 flow Transformer，24B conditioner 另计。Mistral 小版本在发布文案中不一致：BFL 只写 Mistral-3 24B，HF 发布博客写 3.1，当前官方代码用 3.2 model+3.1 processor。",
+      "evidence": "BFL 2025-11-25 发布博客 How It Works、官方 FLUX.2 [dev] 模型卡、官方 text_encoder.py 与 Hugging Face Diffusers 发布博客。",
+      "confidence": "高（能力与24B规模）；中高（发布日 conditioner 精确小版本）"
+    },
+    {
+      "claim": "在 MM-DiT 双流前段后采用占主导的 fully parallel 单流块：8 个双流块接 48 个单流块，单流块同时融合 attention QKV 与 FF input projections，并全局共享时间/引导 AdaLN-Zero 调制、移除 Transformer 线性层 bias。",
+      "scope_boundary": "这是官方开放源码可核查的架构差异，不应升级为 BFL 已证明的单因素性能因果结论。BFL 没有公开消融、训练算力节省或每项改动的独立质量增益；“无 bias”指 DiT Transformer 实现，不能外推到 VAE 的卷积层或 Mistral 条件器。",
+      "evidence": "BFL 官方 src/flux2/model.py 中 Flux2Params、顶层 modulation 和 SingleStreamBlock/DoubleStreamBlock；Hugging Face 2025-11-25 技术博客逐项解释 shared modulation、no bias、fully parallel block 与 8/48 比例。",
+      "confidence": "高"
+    },
+    {
+      "claim": "从头重训新的 FLUX.2 latent space，并以 8x 空间压缩、32 latent channels、2x2 packing 与 BatchNorm 构成 FLUX.2 VAE/DiT 接口，目标是在重建质量、压缩与下游可学习性之间取得更好的权衡。",
+      "scope_boundary": "“改善三难权衡”是 BFL 的设计目标与厂商主张；公开页面没有给出完整、可复现的训练配方或统一数值基准，不能声称其在所有数据集上绝对优于全部 VAE。8x/32-channel/packing/BN 是当前官方推理实现事实，训练损失和语义正则细节仍未知。",
+      "evidence": "BFL FLUX.2 发布博客及 Representation Comparison 页面；BFL 官方 src/flux2/autoencoder.py；官方 Hugging Face VAE 文件树。",
+      "confidence": "高（结构与从头重训）；中（无公开数值的综合优越性）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "端到端系统的官方总参数与 active-parameter 口径（32B 仅指 DiT，24B conditioner 另计）",
+    "训练硬件型号、数量、集群规模、累计 accelerator-hours、能耗与成本",
+    "训练数据总量、来源清单、许可结构、图文/编辑/多参考配比、语言与真实/合成数据比例、去重流程",
+    "FLUX.2 base 与 [dev] 的完整训练阶段顺序、优化步数、batch、分辨率课程、wall-clock 时间",
+    "优化器、学习率、scheduler、flow-matching 细节、guidance-distillation teacher/target 与全部超参数",
+    "VAE 训练损失组合、损失权重、数据规模、训练步数及公开可复现的完整重建/生成基准",
+    "内部训练框架、并行策略、互联、吞吐、容错与 checkpoint 频率",
+    "发布日 Mistral conditioner 的精确小版本冻结边界（BFL 泛称 Mistral-3 24B；HF 发布博客 3.1；当前代码 3.2 model+3.1 processor）",
+    "FLUX.2 [dev] 本地实现的严格最大宽高/aspect-ratio 边界；4MP 目前是家族/服务口径",
+    "固定硬件、固定分辨率、固定步数下的官方端到端延迟、吞吐与峰值显存",
+    "Artificial Analysis 所有 provider 的统一 14 日中位 generation time；页面没有提供单一模型值",
+    "BFL 发布时性能图的原始投票数、置信区间和可复现评测 prompt 集",
+    "共享调制、无 bias、fully parallel 单流块和新 VAE 各自独立贡献的消融结果"
+  ],
+  "sources": [
+    {
+      "title": "FLUX.2: Frontier Visual Intelligence",
+      "url": "https://bfl.ai/blog/flux-2",
+      "source_type": "official_release_blog"
+    },
+    {
+      "title": "black-forest-labs/flux2: Official inference repo for FLUX.2 models",
+      "url": "https://github.com/black-forest-labs/flux2",
+      "source_type": "official_github_repository"
+    },
+    {
+      "title": "FLUX.2 official model architecture implementation",
+      "url": "https://github.com/black-forest-labs/flux2/blob/main/src/flux2/model.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "FLUX.2 official text encoder implementation",
+      "url": "https://github.com/black-forest-labs/flux2/blob/main/src/flux2/text_encoder.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "FLUX.2 official autoencoder implementation",
+      "url": "https://github.com/black-forest-labs/flux2/blob/main/src/flux2/autoencoder.py",
+      "source_type": "official_source_code"
+    },
+    {
+      "title": "black-forest-labs/FLUX.2-dev model card",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-dev",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "black-forest-labs/FLUX.2-dev file tree",
+      "url": "https://huggingface.co/black-forest-labs/FLUX.2-dev/tree/main",
+      "source_type": "official_weight_repository"
+    },
+    {
+      "title": "Diffusers welcomes FLUX.2",
+      "url": "https://huggingface.co/blog/flux-2",
+      "source_type": "official_library_technical_blog"
+    },
+    {
+      "title": "FLUX.2: Analyzing and Enhancing the Latent Space of FLUX – Representation Comparison",
+      "url": "https://bfl.ai/research/representation-comparison",
+      "source_type": "official_vae_research_page"
+    },
+    {
+      "title": "FLUX.2 family overview",
+      "url": "https://docs.bfl.ai/flux_2/flux2_overview",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "FLUX.2 release notes",
+      "url": "https://docs.bfl.ai/release-notes",
+      "source_type": "official_release_history"
+    },
+    {
+      "title": "FLUX.2 [klein]: Towards Interactive Visual Intelligence",
+      "url": "https://bfl.ai/blog/flux2-klein-towards-interactive-visual-intelligence",
+      "source_type": "official_family_variant_release_blog"
+    },
+    {
+      "title": "Capable, Open, and Safe: Combating AI Misuse",
+      "url": "https://bfl.ai/blog/capable-open-and-safe-combating-ai-misuse",
+      "source_type": "official_safety_followup"
+    },
+    {
+      "title": "Artificial Analysis Text to Image Open Weights Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/text-to-image/open-weights",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "Artificial Analysis Image Editing Leaderboard",
+      "url": "https://artificialanalysis.ai/image/leaderboard/editing/",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "FLUX.2 [dev] API Provider Benchmarking and Analysis",
+      "url": "https://artificialanalysis.ai/image/providers/flux_flux-2--dev",
+      "source_type": "independent_provider_benchmark"
+    },
+    {
+      "title": "Idea2StableDiffusion",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "input_chronology_clue"
+    }
+  ],
+  "notes": "代表版本选择 FLUX.2 [dev]：它与 2025-11-25 首发时间直接对应，是首发家族中唯一公开 32B 完整主干权重、官方推理代码和第三方 T2I/编辑双赛道数据都可核验的版本，因此比闭源 API 的 [pro]/[flex] 更适合历史记录和可复核比较。首发家族同时包含托管 [pro]（生产质量/速度）与 [flex]（开放 steps、guidance 控制）；[klein] 在首发时仅预告，2026-01-15 正式推出 4B/9B、distilled/base 及后续 9B KV 路线，其中 4B 为 Apache-2.0，9B 为 FLUX NCL，且改用 Qwen3 4B/8B 条件器，不能把其 sub-second/4-step 指标回填给 [dev]。托管 [max] 于 2025-12-16 后续上线，加入最高质量与 grounding search。FLUX.2 VAE 是全家族共享组件而非独立生成端点。modality 记为 Omni，是因为同一 [dev] checkpoint 同时覆盖 T2I、单参考编辑和多参考编辑；横向比较时仍应分别使用 T2I Elo 1151 与编辑 Elo 1141。comparison_eligible=true 表示权重、代码、固定模型身份和动态第三方盲评足以做能力比较，不表示训练可复现；history_eligible=true 由官方首发日期和持续可访问权重支持。最重要的证据边界是：32B 不含 24B conditioner；Mistral 小版本文案有差异；共享调制/无 bias/fully parallel 的强证据来自当前官方源码与 HF 技术博客而非 BFL 论文消融；新 VAE 的结构可核查，但训练配方和完整数值基准未公开。"
+}

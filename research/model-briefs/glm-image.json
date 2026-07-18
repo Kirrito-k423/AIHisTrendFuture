@@ -1,0 +1,231 @@
+{
+  "slug": "glm-image",
+  "name": "GLM-Image",
+  "family": "GLM",
+  "entry_kind": "model",
+  "modality": "T2I",
+  "organization": "智谱 AI（Zhipu AI / Z.ai），与华为联合发布",
+  "release_date": "2026-01-14",
+  "release_date_basis": "智谱官方 GLM-Image 文章元数据的 createAt 为 2026-01-13T16:00:00.000Z，对应北京时间 2026-01-14 00:00；官方中文稿称“今天”联合华为开源。Hugging Face 仓库虽于 2026-01-08 建立，但公开发布口径采用官方公告日期。",
+  "access": "开放权重并提供商业 API。官方权重发布于 Hugging Face（zai-org/GLM-Image）和 ModelScope（ZhipuAI/GLM-Image），官方 GitHub 提供 Diffusers/Transformers 与 SGLang 使用示例；Z.ai API 也提供托管生成服务。",
+  "license": "模型整体权重为 MIT；其中沿用 X-Omni 的 VQ tokenizer 与 ViT 权重仍受 Apache-2.0 约束；官方 GitHub 代码仓库标注 Apache-2.0。",
+  "official_model_ids": [
+    "zai-org/GLM-Image",
+    "ZhipuAI/GLM-Image"
+  ],
+  "parameter_total": "官方核心生成架构合计约 16B（9B 自回归生成器 + 7B 扩散解码器）。该口径不含仓库中的轻量 Glyph-byT5、VAE、ViT/VQ tokenizer 等辅助组件，官方未公布含全部辅助组件的精确总参数量。",
+  "parameter_active": "未知；9B 自回归生成器与 7B 扩散解码器在同一生成流程中先后运行，并非官方给出的 MoE 式 active-parameter 口径。",
+  "weight_size": "官方 Hugging Face 仓库 safetensors 权重文件合计 35,765,307,854 bytes（35.765 GB / 33.309 GiB）；这是发布文件体积，不用于反推训练精度、训练设备数或精确参数总量。",
+  "precision": "官方 quick start 以 torch.bfloat16 加载，AR 配置也标注 bfloat16；这是公开推理/发布配置。训练精度未知，不能由权重文件体积或推理 dtype 反推。",
+  "architecture": "两阶段混合架构。第一阶段是从 GLM-4-9B-0414 初始化的 9B 离散自回归生成器，扩展视觉词表并生成 semantic-VQ 图像 token；第二阶段是沿用 CogView4 思路的 7B 单流 DiT 扩散解码器，以 flow matching 从语义 token 恢复 VAE latent 中的高频细节并输出图像。官方同时支持 T2I 与 I2I/编辑，但本条目按主要发布类别记为 T2I。",
+  "attention_or_sequence_design": "AR 部分以 MRoPE 处理 T2I/I2I 中交错的图文序列。初始低分辨率训练使用 raster-scan token 顺序；高分辨率阶段使用渐进式生成：先生成约 256 个与目标宽高比相同的低分辨率布局 token，再生成 1K–4K 个高分辨率 token，并提高前置 token 的训练权重。扩散解码器为单流 DiT；semantic-VQ 经投影后与 VAE latent 沿通道维拼接。I2I 时，参考图 semantic-VQ 与 VAE latent 均作为条件，并在参考图与生成图之间使用 block-causal attention，以便对参考 token 使用 KV cache。",
+  "vae_or_tokenizer": "主要离散 tokenizer 为 X-Omni 方案的 semantic-VQ，官方解释其目标是提高视觉 token 的语义相关性；16× 图像压缩对应 256、1024、1024–4096 token 三种训练区间，公开配置的 VQ codebook size 为 16,384。扩散阶段另用 16-channel AutoencoderKL latent，最终解码/放大因子为 32×。VQ tokenizer 与 ViT 权重源自 X-Omni，许可证为 Apache-2.0。",
+  "text_encoder_or_conditioner": "文本提示首先由 GLM-4-9B-0414 初始化的 AR 模块理解并转成 semantic-VQ token。扩散解码器不再直接使用完整 prompt 作为条件，也无需大型文本编码器；为复杂文字尤其中文笔画渲染，加入轻量 Glyph-byT5，按字符编码待渲染文本区域，并将 glyph embedding 与视觉 embedding 沿序列维拼接。",
+  "training_hardware": "官方确认使用华为昇腾 Atlas 800T A2 设备。中文官方稿称 GLM-Image 从数据到训练采用该硬件；更细的表述明确自回归结构基座从数据预处理到大规模预训练全流程在 Atlas 800T A2 上完成。",
+  "training_hardware_scale": "未知；官方未披露 Atlas 800T A2 服务器、节点或 NPU 数量，也未披露集群互联拓扑与累计加速器时。",
+  "training_data_scale": "未知；官方未披露图像数、图文对数、token 数、存储量或各阶段样本量。",
+  "training_data_composition": "AR 预训练联合进行 text-to-image 与 image-to-image 生成。官方未披露具体数据集名称、网页/合成/授权数据占比、语言构成、去重过滤方法或数据许可结构。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "AR 多分辨率预训练",
+      "description": "从 GLM-4-9B-0414 初始化；冻结文本 word embedding，训练其他部分，新增视觉 embedding 并以视觉 LM head 替换原 LM head。依次训练 256px、512px、512–1024px mixed-resolution，联合 T2I 与 I2I；高分辨率阶段采用先约 256 个布局 token、后 1K–4K token 的渐进式生成。"
+    },
+    {
+      "stage": 2,
+      "name": "扩散解码器训练",
+      "description": "7B 单流 DiT 以 semantic-VQ token 为条件、采用 flow matching，在 VAE latent 空间学习恢复 semantic-VQ 丢失的高频细节；完整 prompt 不直接进入解码器，文字区域另由 Glyph-byT5 编码。"
+    },
+    {
+      "stage": 3,
+      "name": "SFT",
+      "description": "官方国产训练栈说明其端到端训练套件覆盖 SFT，但未披露 SFT 的数据、步骤、目标函数、涉及模块或与前述预训练的确切衔接方式。"
+    },
+    {
+      "stage": 4,
+      "name": "解耦强化学习后训练",
+      "description": "分别优化 AR 与扩散解码器。AR 使用 GRPO 与低频反馈；扩散解码器使用适配扩散模型的 flow-GRPO 与高频反馈。两者不是一个共享奖励下的端到端联合 RL。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "AR 256px / 512px / mixed 512–1024px 预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "扩散解码器 flow-matching 训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "SFT",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "AR GRPO 与扩散解码器 flow-GRPO",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "AR 使用离散 semantic-VQ token 自回归建模、T2I/I2I 联合训练、MRoPE 与渐进式高分辨率生成；扩散解码器采用 flow matching。后训练采用解耦 RL：AR 模块用 GRPO，奖励含 HPSv3 美学、OCR 文字准确性和 VLM 全局语义正确性；扩散解码器用 flow-GRPO，奖励含 LPIPS 纹理/细节相似度、OCR 与专用手部评分模型。官方没有公开 GRPO/flow-GRPO 的组大小、采样数、KL 设置、奖励权重、训练步数或消融。",
+  "training_infra": "官方确认昇思 MindSpore AI 框架，并称基于 MindSpeed-LLM 自研视觉 AR 的预训练与后训练方案。训练套件覆盖数据预处理、预训练、SFT 和 RL，使用动态图多级流水下发、Ascend 高性能融合算子与多流并行，让通信与计算重叠；官方还点名 AdamW EMA、COC、RMS Norm 等昇腾亲和融合算子。具体数据并行/张量并行/流水并行度、通信库、容错与吞吐均未知。",
+  "inference_hardware": "官方性能表在单张 NVIDIA H100 上使用 Diffusers 测试。GitHub 同时提示当前架构优化有限，完整常规运行建议单卡显存大于 80GB或多卡；Hugging Face 模型卡称启用 CPU offload 可在约 23GB GPU 显存下运行，但更慢。",
+  "inference_performance": "官方单 H100、Diffusers、batch=1：512×512 T2I 27.30s，峰值显存 34.26GB；1024×1024 T2I 64.34s，峰值 37.82GB；2048×2048 T2I 252.59s，峰值 45.08GB。1024×1024、batch=4 为 108.22s、峰值 52.09GB。官方示例通常使用 50 inference steps、guidance_scale=1.5；这些本地 H100 数字与托管 API 延迟不可直接互换。",
+  "max_output_resolution": "2048×2048。官方 API 文档规定宽高各为 512–2048 且均为 32 的倍数；官方仓库亦给出 2048×2048 的 T2I/I2I 性能测试。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": 1043.93,
+  "aa_elo_observed_at": "2026-07-19",
+  "generation_time_seconds": 170.565333604813,
+  "generation_time_context": "Artificial Analysis 页面于 2026-07-19 观测到的 fal.ai 代表端点过去 14 天中位生成时间，单位为每张图秒数；其口径包含供应商返回 URL 时的图像下载时间。该值是动态托管 API 指标，不等同于官方单 H100 的本地 1024×1024 64.34s 测试。静态图像模型的 max_output_duration_seconds 与 native_fps 不适用，故为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "CVTG-2K",
+      "metrics": {
+        "word_accuracy_average": 0.9116,
+        "NED": 0.9557,
+        "CLIPScore": 0.7877,
+        "word_accuracy_2_regions": 0.9103,
+        "word_accuracy_3_regions": 0.9209,
+        "word_accuracy_4_regions": 0.9169,
+        "word_accuracy_5_regions": 0.8975
+      },
+      "source_scope": "智谱官方技术页的自报评测；Word Accuracy 与 NED 在所列开源模型中最高，但 CLIPScore 并非最高。"
+    },
+    {
+      "benchmark": "LongText-Bench",
+      "metrics": {
+        "english": 0.9524,
+        "chinese": 0.9788
+      },
+      "source_scope": "智谱官方技术页的自报评测；中文得分在所列开源模型中最高，英文低于所列闭源 Seedream 4.5 与 Nano Banana 2.0。"
+    },
+    {
+      "benchmark": "OneIG-Bench",
+      "metrics": {
+        "english_overall": 0.528,
+        "chinese_overall": 0.511
+      },
+      "source_scope": "智谱官方技术页的自报 T2I 综合评测。"
+    },
+    {
+      "benchmark": "TIIF-Bench",
+      "metrics": {
+        "short_overall": 81.01,
+        "long_overall": 81.02
+      },
+      "source_scope": "智谱官方技术页的自报 T2I 综合评测。"
+    },
+    {
+      "benchmark": "DPG-Bench",
+      "metrics": {
+        "overall": 84.78
+      },
+      "source_scope": "智谱官方技术页的自报 T2I 综合评测。"
+    },
+    {
+      "benchmark": "Artificial Analysis Image Arena",
+      "metrics": {
+        "quality_elo": 1043.93,
+        "quality_elo_ci95_lower": 1035.93,
+        "quality_elo_ci95_upper": 1051.93
+      },
+      "source_scope": "Artificial Analysis 动态页面，2026-07-19 访问；Elo 会随投票继续变化。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "以 9B 离散自回归生成器负责低频语义/全局布局，再以 7B flow-matching 单流 DiT 解码器恢复高频细节；semantic-VQ 作为两者之间的紧凑接口。",
+      "scope_boundary": "这是官方公开并可由模型配置与权重结构核验的混合两阶段设计，不应表述为单个 16B 端到端自回归模型。官方“首个开源、工业级离散自回归图像生成模型”属于厂商首创声明，未做全行业独立穷举验证；渐进式生成本身也引用了既有 CogView3 工作。",
+      "evidence": "智谱官方技术页明确给出 9B AR + 7B 单流 DiT、semantic-VQ、16× token 压缩、约 256 个布局 token 后再扩展至 1K–4K token，以及 flow matching 解码；Hugging Face 模型卡和公开 config 与该结构一致。",
+      "confidence": "高"
+    },
+    {
+      "claim": "扩散解码器移除完整 prompt 的直接条件，依赖 AR 生成的 semantic-VQ 传递语义，并用轻量 Glyph-byT5 专门补充待渲染文字的字符级字形信息。",
+      "scope_boundary": "“不使用 prompt”仅指 7B 扩散解码器的直接条件；用户 prompt 仍由上游 9B AR 模块处理。Glyph-byT5 针对文字区域，不是通用大文本编码器替代品。文字提升的因果贡献没有公开独立消融。",
+      "evidence": "官方 Decoder Formulation 明确描述 semantic-VQ 与 VAE latent 通道拼接、删除 decoder 的 prompt input，并将 Glyph-byT5 embedding 与视觉 embedding 沿序列维拼接；公开 model_index 同时列出 T5EncoderModel/ByT5Tokenizer。",
+      "confidence": "高"
+    },
+    {
+      "claim": "用解耦强化学习分别对齐 AR 的低频语义/美学目标与扩散解码器的高频细节目标：AR 使用 GRPO，扩散解码器明确使用 flow-GRPO。",
+      "scope_boundary": "官方证据支持“两个模块都接受 GRPO 类优化”，且仅扩散分支被明确命名为 flow-GRPO；不能把整个 GLM-Image 的 RL 都简称 flow-GRPO，也不能声称两个模块端到端联合优化。官方未披露训练规模、超参数、奖励权重或 RL 消融，故不能量化归因其带来的增益。",
+      "evidence": "智谱官方中英文技术页明确写明两模块分别优化、两者基于 GRPO，并明确扩散解码器采用为 diffusion 适配的 flow-GRPO；同时列出 AR 的 HPSv3/OCR/VLM 奖励与 decoder 的 LPIPS/OCR/手部评分奖励。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "含 Glyph-byT5、VAE、ViT/VQ tokenizer 等所有辅助模块在内的精确总参数量",
+    "parameter_active 的官方口径",
+    "训练精度；不得从 BF16 推理配置或公开权重文件体积反推",
+    "Atlas 800T A2 的服务器数、节点数、NPU 数、并行拓扑与累计加速器时",
+    "训练数据总量、具体来源、授权结构、语言/网页/合成数据占比、过滤与去重方法",
+    "各预训练分辨率阶段、扩散解码器、SFT、AR GRPO 与 flow-GRPO 的训练步数、batch size、wall-clock 时间、FLOPs 与能耗",
+    "SFT 的具体数据、目标函数、模块范围及其在整体训练顺序中的精确位置",
+    "GRPO/flow-GRPO 的 group size、采样数、KL 设置、奖励权重、学习率与模块级消融",
+    "训练基础设施的精确数据/张量/流水并行度、通信库、容错机制与训练吞吐",
+    "官方单 H100 性能表所用 H100 具体显存版本、软件提交版本与除已披露项外的完整推理参数",
+    "官方厂商基准的完整复现实验脚本、提示词集、随机种子与第三方独立复核结果"
+  ],
+  "sources": [
+    {
+      "title": "GLM-Image: Auto-regressive for Dense-knowledge and High-fidelity Image Generation",
+      "url": "https://www.zhipuai.cn/en/glmImage",
+      "source_type": "official_technical_blog"
+    },
+    {
+      "title": "智谱联合华为开源国产芯片训练的多模态 SOTA 模型",
+      "url": "https://www.zhipuai.cn/zh/glmImage",
+      "source_type": "official_technical_blog_and_training_infra_disclosure"
+    },
+    {
+      "title": "zai-org/GLM-Image",
+      "url": "https://github.com/zai-org/GLM-Image",
+      "source_type": "official_github"
+    },
+    {
+      "title": "zai-org/GLM-Image model card",
+      "url": "https://huggingface.co/zai-org/GLM-Image",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "zai-org/GLM-Image repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/zai-org/GLM-Image?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "GLM-Image official model index",
+      "url": "https://huggingface.co/zai-org/GLM-Image/blob/main/model_index.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "GLM-Image official autoregressive encoder config",
+      "url": "https://huggingface.co/zai-org/GLM-Image/blob/main/vision_language_encoder/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "GLM-Image official diffusion transformer config",
+      "url": "https://huggingface.co/zai-org/GLM-Image/blob/main/transformer/config.json",
+      "source_type": "official_model_config"
+    },
+    {
+      "title": "GLM-Image - Z.AI Developer Documentation",
+      "url": "https://docs.z.ai/guides/image/glm-image",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "GLM-Image Quality, Generation Time & Price Analysis",
+      "url": "https://artificialanalysis.ai/image/models/glm_glm-image",
+      "source_type": "independent_benchmark_leaderboard"
+    },
+    {
+      "title": "ZhipuAI/GLM-Image",
+      "url": "https://modelscope.cn/models/ZhipuAI/GLM-Image",
+      "source_type": "official_model_registry"
+    }
+  ],
+  "notes": "GLM-Image 是已发布、可下载、可运行且有官方与第三方动态指标的模型，因此 comparison_eligible 与 history_eligible 均为 true。模态按主要候选条目记为 T2I，但同一权重也支持 I2I、编辑、风格迁移、身份保持和多主体一致性。16B 是 9B AR 与 7B decoder 的官方核心口径，不是含所有组件的精确总参数。关于强化学习，最严格的官方边界是：AR=GRPO；decoder=flow-GRPO；二者用不同频率与目标的奖励分别训练。Artificial Analysis 数值是动态快照，后续使用时应连同观测日期一起展示。"
+}

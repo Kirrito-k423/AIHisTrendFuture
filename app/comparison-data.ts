@@ -1,5 +1,6 @@
 import { historyData } from "./data";
 import { representativeModelCatalog, type RawModelCatalogEntry } from "./model-catalog";
+import { generativeResearchHistoryIds } from "./generative-research";
 import {
   getParameterInferenceMethod,
   parameterEstimateByModelId,
@@ -17,6 +18,8 @@ export const metricKeys = [
   "trainingTokensT",
   "outputTokensPerSecond",
   "blendedPricePerMTok",
+  "aaGenerativeElo",
+  "generationSeconds",
 ] as const;
 
 export type MetricKey = (typeof metricKeys)[number];
@@ -45,6 +48,9 @@ export const structuredFieldDefinitions = [
   { label: "Artificial Analysis 指标", group: "外部测量" },
   { label: "榜单上下文 / 口径", group: "外部测量" },
   { label: "榜单中位速度", group: "外部测量" },
+  { label: "输出规格", group: "生成能力" },
+  { label: "生成速度", group: "生成能力" },
+  { label: "生成榜单 Elo", group: "生成能力" },
 ] as const;
 
 export type StructuredFieldLabel = (typeof structuredFieldDefinitions)[number]["label"];
@@ -177,6 +183,24 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     better: "lower",
     scale: "linear",
   },
+  aaGenerativeElo: {
+    key: "aaGenerativeElo",
+    title: "图像 / 视频生成 Elo",
+    shortTitle: "生成 Elo",
+    unit: "Elo",
+    description: "Artificial Analysis 等生成榜单的动态 Elo。T2I、图像编辑、T2V 与不同视频规格必须分开比较。",
+    better: "higher",
+    scale: "linear",
+  },
+  generationSeconds: {
+    key: "generationSeconds",
+    title: "单次生成时间",
+    shortTitle: "生成时间",
+    unit: "秒",
+    description: "来源披露的单次端到端生成时间；必须同时阅读硬件、分辨率、帧数、步数和服务商口径。",
+    better: "lower",
+    scale: "linear",
+  },
 };
 
 const architectureOverrides: Record<string, string> = {
@@ -260,10 +284,11 @@ const historyEventIdByCatalogId: Partial<Record<string, string>> = {
   "wan22-t2v-a14b": "wan2.2-t2v-a14b",
   "qwen-image-20b": "qwen-image-20b",
   "z-image-turbo": "z-image-turbo-2025-11",
+  ...generativeResearchHistoryIds,
 };
 
 const historyModelEvents = historyData.lanes
-  .filter((lane) => lane.id === "llm-training" || lane.id === "multimodal-training")
+  .filter((lane) => ["llm-training", "t2i-training", "t2v-training", "omni-training", "generation-methods"].includes(lane.id))
   .flatMap((lane) => lane.events);
 
 function rawSource(raw: RawModelCatalogEntry): ComparisonSource[] {
@@ -323,6 +348,12 @@ function fallbackStructuredFact(raw: RawModelCatalogEntry, label: StructuredFiel
   if (label === "榜单中位速度" && raw.outputTokensPerSecond !== null) {
     return disclosed(formatMetricValue("outputTokensPerSecond", raw.outputTokensPerSecond), aaSources(raw));
   }
+  if (label === "生成速度" && raw.generationSeconds != null) {
+    return disclosed(`${formatMetricValue("generationSeconds", raw.generationSeconds)}；${raw.generationContext ?? "具体生成口径见主来源"}`, aaSources(raw).length ? aaSources(raw) : rawSource(raw));
+  }
+  if (label === "生成榜单 Elo" && raw.aaGenerativeElo != null) {
+    return disclosed(formatMetricValue("aaGenerativeElo", raw.aaGenerativeElo), aaSources(raw).length ? aaSources(raw) : rawSource(raw));
+  }
   return unknownFact(raw);
 }
 
@@ -366,6 +397,7 @@ export const comparisonModels: ComparisonModel[] = representativeModelCatalog.ma
   license: raw.license ?? "未知（权重尚未发布）",
   modality: normalizeModality(raw.modality),
   architecture: architectureOverrides[raw.id]
+    ?? raw.architectureLabel
     ?? (raw.totalParamsB !== null && raw.activeParamsB !== null && raw.activeParamsB < raw.totalParamsB ? "Sparse MoE" : raw.totalParamsB !== null ? "Dense / 架构见主来源" : "未披露"),
   primarySourceUrl: raw.primarySourceUrl,
   parameterEstimate: parameterEstimateByModelId[raw.id],
@@ -380,6 +412,12 @@ export const comparisonModels: ComparisonModel[] = representativeModelCatalog.ma
     trainingTokensT: structuralMetric(raw.trainingTokensT, raw.primarySourceUrl),
     outputTokensPerSecond: dynamicMetric(raw.outputTokensPerSecond, raw.aaUrl, "AA 服务供应商速度快照；不是聚合吞吐"),
     blendedPricePerMTok: dynamicMetric(raw.blendedPricePerMTok, raw.aaUrl, "AA 7:2:1 cache/input/output 混合口径；无 cache 时按来源口径"),
+    aaGenerativeElo: dynamicMetric(raw.aaGenerativeElo ?? null, raw.aaUrl, "生成榜单动态快照；只在同任务、同规格口径内比较"),
+    generationSeconds: raw.generationSeconds == null ? undefined : {
+      value: raw.generationSeconds,
+      sourceUrl: raw.aaUrl ?? raw.primarySourceUrl,
+      note: raw.generationContext ?? "必须结合硬件、分辨率、帧数与采样步数阅读",
+    },
   },
 }));
 
@@ -390,5 +428,7 @@ export function formatMetricValue(key: MetricKey, value: number) {
   if (key === "trainingTokensT") return `${value}T`;
   if (key === "outputTokensPerSecond") return `${value} tok/s`;
   if (key === "blendedPricePerMTok") return `$${value}`;
+  if (key === "aaGenerativeElo") return `${value} Elo`;
+  if (key === "generationSeconds") return `${value} s`;
   return String(value);
 }

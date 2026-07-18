@@ -1,0 +1,199 @@
+{
+  "slug": "seedance-1",
+  "name": "Seedance 1.0 Pro",
+  "family": "Seedance 1.0",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "ByteDance Seed（字节跳动 Seed）",
+  "release_date": "2025-06-10",
+  "release_date_basis": "采用官方技术报告 arXiv v1 的首次公开日期 2025-06-10，且官方项目页的 Artificial Analysis 截止时间为 2025-06-09、报告称产品将在 2025 年 6 月接入豆包与即梦。Pro API 版本号 seedance-1-0-pro-250528/doubao-seedance-1-0-pro-250528 中的 250528 更像模型版本日期，不能单独证明 5 月 28 日已公开发布，因此不据此提前发布日期。",
+  "access": "闭源托管服务。官方报告给出的模型 ID 为 Doubao-Seedance-1.0-pro；中国区可经豆包、即梦和火山方舟调用，国际区可经 BytePlus ModelArk 调用。没有公开可下载的模型权重或本地推理代码。本文选择 Pro 作为条目代表，因为它是技术报告明确指向的质量/大参数版本，也是 2025-06 历史节点；Pro Fast 属同一 Seedance 1.0 家族的加速、降价服务变体，不另当作新一代基础模型。",
+  "license": "专有商业服务；未发布模型权重许可证。API 与产品输出受相应豆包、即梦、火山引擎或 BytePlus 服务条款约束，技术报告未给出可再分发/再训练许可。",
+  "official_model_ids": [
+    "Doubao-Seedance-1.0-pro",
+    "doubao-seedance-1-0-pro-250528",
+    "seedance-1-0-pro-250528",
+    "doubao-seedance-1-0-pro-fast-250610",
+    "seedance-1-0-pro-fast-251015"
+  ],
+  "parameter_total": "未知；官方只把 Pro 称为 Seedance 1.0 系列的“大参数版本”，没有披露 DiT、VAE、Refiner、文本编码器或端到端总参数量。",
+  "parameter_active": "未知；未披露稠密/MoE 路由口径或单次生成各阶段的 active parameters。",
+  "weight_size": "未知；闭源服务未发布权重文件或可核验的文件体积。",
+  "precision": "训练与发布权重精度未知。推理基础设施披露了针对 Attention/GEMM 的细粒度混合精度量化以及 FP8 通信，但没有给出各层位宽、量化格式、覆盖比例或质量校准阈值，不能据此推断原始权重精度。",
+  "architecture": "级联 latent video diffusion/flow-matching 系统。第一阶段以时序因果 VAE 把图像/视频压入连续 latent，并用基于 MMDiT 的 Diffusion Transformer 在 480p latent 上生成；DiT 将空间层与时间层解耦，空间层做视觉/文本多模态建模，时间层只处理视觉 token。第二阶段是从预训练 base model 初始化的条件 diffusion Refiner：先把 480p 低清视频上采样，将其与扩散噪声沿通道拼接，再细化到 720p 或 1080p。统一条件框架把干净/零填充帧与噪声沿通道拼接，并用二元掩码标记条件帧，从而以一个模型混合训练 T2I、T2V 和 I2V；本条按历史榜单主任务记为 T2V。",
+  "attention_or_sequence_design": "空间层在单帧内部聚合注意力，并采用 Stable Diffusion 3 风格 MMDiT：视觉与文本各自拥有 AdaLN、QKV 投影和 MLP 权重，Q/K 在注意力前归一化；文本 token 只在空间层参与跨模态交互。时间层只对视觉 token 做 self-attention，并在每帧内划分窗口，使计算受控而在时间轴上保持全局感受野。视觉 token 使用 3D RoPE；文本 token 增加额外 1D 位置编码，拼接序列使用 3D 多模态旋转位置编码 MM-RoPE。MM-RoPE 支持视觉/文本交错序列，也支持按动作时间顺序排列多镜头、每个镜头携带独立详细 caption 的训练。",
+  "vae_or_tokenizer": "时序因果卷积 VAE（encoder 与 decoder 均 causal），联合压缩图像和视频；时间/高度/宽度下采样率为 (4, 16, 16)，latent channels=48。因果设计允许同一 VAE 处理单帧图像；为适应高空间压缩，DiT 侧取消额外 patchification。VAE 使用 L1 重建、KL、LPIPS 感知和对抗损失，判别器为兼顾外观与运动的 PatchGAN 类混合结构。推理时还训练固定原 encoder、收窄像素侧通道的 thin VAE decoder，官方报告称其在端到端感知质量无损下使 VAE 解码提速 2 倍。",
+  "text_encoder_or_conditioner": "DiT 使用经过微调的 decoder-only LLM 作为文本编码器，具体基座、规模与上下文长度未披露。另有独立 Prompt Engineering 模型，以 Qwen2.5-14B 初始化：先对人工标注的用户提示词到 dense caption 对进行全参数 SFT，再以正确/错误改写对做 LoRA-DPO；T2V 与 I2V 分开构造改写数据。训练 caption 模型以 Tarsier2 为起点，冻结视觉编码器、全参数微调语言模型，并使用中英双语数据。",
+  "training_hardware": "GPU 集群；官方报告未披露训练 GPU 的厂商/具体型号。数据处理平台会按算子在 CPU/GPU/NPU 间异构调度。NVIDIA L20 只明确用于 41.4 秒推理测试，不能当作训练硬件。",
+  "training_hardware_scale": "官方称长序列视频大规模预训练基础设施面向并实际讨论“thousands of GPUs（数千 GPU）”扩展，并用 HSDP 缓解扩展到数千 GPU 时的效率下降；但未披露 Seedance 1.0 某次训练的精确 GPU 数、节点数、峰值规模、GPU-hours、FLOPs、能耗或成本。CT/SFT 仅定性说明比预训练使用更少/有限数量 GPU。",
+  "training_data_scale": "未知；官方只称大规模、多来源图像与视频语料，没有披露原始视频小时数、最终 clip 数、图像数、token 数或各训练阶段样本量。SFT 数据按数百个风格、运动等类别定向收集，但未披露数量。",
+  "training_data_composition": "视频来自多样公共与获许可资源，覆盖时长、分辨率、人/动物/物体、自然/城市场景、动作、纪录片/动画等类型、艺术风格、镜头运动与电影技法。流程含合规预筛、镜头边界检测与最多若干秒的片段化（精确上限在公开 HTML 数学转换中缺失）、logo/水印/字幕/图形检测与自适应裁剪、清晰度/抖动/美学/构图/静态程度过滤、色情/暴力/儿童剥削/裸露安全过滤、内部视频表征聚类语义去重以及长尾重平衡。dense caption 融合动态动作/运镜与静态主体/场景/风格信息；多镜头样本按动作时序排列并逐镜头配 caption。图像数据沿用 Seedream 类方法，具体组成未披露。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "时序因果 VAE 训练",
+      "description": "以 L1、KL、LPIPS 与 PatchGAN 类对抗目标训练 4×16×16 时空下采样、48 通道的连续视频/图像 VAE。"
+    },
+    {
+      "stage": 2,
+      "name": "低分辨率 T2I 初始化",
+      "description": "先进行充分的低分辨率文生图训练，建立语义与空间生成能力并提高随后视频预训练吞吐。公开 HTML 未保留该阶段的精确分辨率数值。"
+    },
+    {
+      "stage": 3,
+      "name": "渐进式图像-视频联合预训练",
+      "description": "逐步引入 3–12 秒视频，再提升分辨率与帧率；保留少量 T2I 维持语义对齐，并把 I2V 占比设为 20%。以 MM-RoPE、多镜头逐镜头 caption 和统一条件掩码共同训练 T2I/T2V/I2V。"
+    },
+    {
+      "stage": 4,
+      "name": "Continue Training（CT）",
+      "description": "针对预训练中占比较低的 I2V 增加其比例，筛选更高美学、更丰富光流运动的数据；同时混合完整动静态长 caption 与去除首帧静态描述的运动短 caption。使用略少于预训练的 GPU 和退火学习率。精确占比变化值未在公开 HTML 中保留。"
+    },
+    {
+      "stage": 5,
+      "name": "监督微调与模型融合",
+      "description": "在数百种风格、运动等类别均衡的人工核验高质量视频-文本对上，以较小学习率、较少 GPU 和 early stopping 分别训练多个子集模型，随后合并模型以整合风格、运动和场景优势。"
+    },
+    {
+      "stage": 6,
+      "name": "视频 RLHF",
+      "description": "用基础 VLM 奖励、运动奖励与关键帧美学奖励组成复合奖励，直接最大化多奖励线性组合；扩散模型与奖励模型做多轮迭代学习。作者报告该策略相较 DPO/PPO/GRPO 更有效，但未公开完整目标公式和超参数。"
+    },
+    {
+      "stage": 7,
+      "name": "480p→720p/1080p Diffusion Refiner",
+      "description": "从 base model 初始化 Refiner，以预上采样的低清视频作为通道条件训练；Refiner 同样经历预训练、SFT 和 RLHF，并在加速后的低 NFE Refiner 上直接做多奖励 RLHF。"
+    },
+    {
+      "stage": 8,
+      "name": "多阶段蒸馏与推理专用 VAE",
+      "description": "依次结合 TSCD 分段轨迹一致性蒸馏、RayFlow 风格 score distillation，以及以人类偏好监督的多步对抗蒸馏；另固定 VAE encoder 重训薄 decoder。最终蒸馏版本构成 Pro/Fast 服务加速能力的技术基础，但官方没有披露 Pro 与 Pro Fast 的逐 checkpoint 映射。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "全部 VAE、预训练、CT、SFT、RLHF、Refiner 与蒸馏阶段",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "主干采用 flow matching 与 velocity prediction；训练 timestep 从 logit-normal 分布采样，并按分辨率与时长做 shift，使更高分辨率/更长视频获得更强噪声扰动。课程从低分辨率 T2I 到图像-视频联合、更高分辨率和更高 fps。后训练包含高质量 SFT、子模型 merging、直接最大化基础/运动/美学复合奖励的视频 RLHF，以及 Refiner RLHF。加速训练结合 TSCD、score distillation 与人类偏好引导的多步对抗蒸馏；Prompt Engineering 单独使用全参数 SFT 和 LoRA-DPO。",
+  "training_infra": "预训练采用 PyTorch 体系，torch.compile 加手写 CUDA kernel fusion；RoPE/Norm 等融合将全局显存访存降低超过 90%。并行结合 HSDP 数据并行与 Ulysses sequence parallel；MLAC 多级 activation checkpointing 异步缓存/预取高重算成本算子输出并可把 checkpoint 模块输入卸载到 CPU；对不同时长/分辨率样本做 runtime-aware all-to-all 负载均衡。容错包括模型、优化器、dataloader 状态的周期分片 checkpoint、机器健康检查、meta tensor 快速初始化与 bitwise-exact 恢复。后训练使用动态 CPU offload、重算、局部静态显存规划、FSDP 与按模型配置的 sequence parallel。数据管线由统一人机平台、定制 BMF/Ray 异构计算层、ByteCloud/火山引擎资源层组成，支持自动扩缩和抢占重试。",
+  "inference_hardware": "官方技术报告性能测试使用 NVIDIA L20；未明确披露卡数、显存占用或主机配置。线上由火山方舟/BytePlus 托管。系统还支持自适应混合并行、异步卸载和 VAE 时空混合并行，以适配长序列及显存受限设备。",
+  "inference_performance": "官方报告：生成 5 秒 1080p 视频耗时 41.4 秒（NVIDIA L20），端到端多阶段蒸馏与系统优化相对原管线达到约/超过 10× 加速；thin VAE decoder 单独约 2×，kernel fusion 累计提高推理吞吐约 15%，异步卸载性能损失小于 2%。BytePlus 对同家族 Pro Fast 的产品口径是相对 Pro 最多 3× 更快、价格低 72%；这是服务变体相对值，不是同一硬件、同一提示词的公开完整 benchmark。",
+  "max_output_resolution": "1080p；官方 API 同时支持 480p、720p、1080p。实际像素尺寸随比例而异，例如 BytePlus 计费表中 16:9 的 1080p 为 1920×1088。",
+  "max_output_duration_seconds": 12,
+  "native_fps": 24,
+  "aa_elo": 1137.48,
+  "aa_elo_observed_at": "2026-07-19",
+  "generation_time_seconds": 41.4,
+  "generation_time_context": "ByteDance 官方技术报告的 Seedance 1.0 Pro 口径：NVIDIA L20 上生成 5 秒、1080p 视频，未披露卡数、采样 NFE、队列/下载时间或其他主机配置。不是 Artificial Analysis 当前标准化 720p/5s API 端到端中位数，因此不可与 AA generation-time 图直接混用。",
+  "benchmark_scores": [
+    {
+      "benchmark": "Artificial Analysis Video Arena（发布时）",
+      "metrics": {
+        "t2v_rank": 1,
+        "i2v_rank": 1,
+        "observed_at": "2025-06-09 11:00 GMT+8"
+      },
+      "source_scope": "ByteDance 官方项目页对第三方榜单的时间截面；技术报告称 2025-06-10 时两条赛道均第一，且 I2V 领先 Veo 3 与 Kling 2.0 超过 100 Elo。图中精确历史 Elo 未以可检索文本公开，因此不转录猜测值。"
+    },
+    {
+      "benchmark": "Artificial Analysis Video Arena（当前模型页）",
+      "metrics": {
+        "elo": 1137.48
+      },
+      "source_scope": "Artificial Analysis 的 Seedance 1.0 模型页在 2026-07-19 抓取到的动态 Elo；榜单会随投票池与模型集合变化，不能回填为 2025-06 发布 Elo。"
+    },
+    {
+      "benchmark": "SeedVideoBench-1.0",
+      "metrics": {
+        "t2v_prompts": 300,
+        "i2v_prompts": 300,
+        "evaluation": "专家五分绝对评分与 Good-Same-Bad 成对比较"
+      },
+      "source_scope": "ByteDance 自建并由影视导演参与制定指标/人工评测；覆盖 motion quality、prompt following、aesthetic quality，I2V 另评 preservation。图表数值未在公开 HTML 中机器可读，且属于厂商自报。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "解耦空间/时间层的 MMDiT 与多镜头 MM-RoPE，把高效视频注意力、视觉文本交错位置编码和原生多镜头训练结合在一个统一 T2I/T2V/I2V 模型中。",
+      "scope_boundary": "空间/时间因子化、窗口注意力、MMDiT 与 RoPE 各自并非首次出现；可归因的创新是 Seedance 1.0 对这些组件的具体组合：时间层按帧内窗口划分且跨时间保持全局感受野，文本只参加空间跨模态层，MM-RoPE 支持按时间排列且逐镜头配 caption 的交错多镜头序列。官方没有提供独立消融数值来量化每个组件贡献。",
+      "evidence": "技术报告 §2.2 与官方中文技术博客明确描述 decoupled spatial/temporal layers、window partition、MMDiT 双模态权重、3D MM-RoPE、交错视觉/文本 token 和逐镜头 caption 训练；项目页展示原生多镜头能力。",
+      "confidence": "高（结构存在）；中（首创性和单组件效果）"
+    },
+    {
+      "claim": "以 480p base + 720p/1080p diffusion Refiner 的级联系统配合多阶段低 NFE 蒸馏、Refiner RLHF 与 thin causal-VAE decoder，在高分辨率视频质量和约 10× 端到端加速之间取得平衡。",
+      "scope_boundary": "级联超分、蒸馏、对抗训练和薄解码器均有前作；新意主要是完整视频产品流水线中的联合工程与把多奖励 RLHF 直接扩展到加速后的 Refiner。41.4 秒只对应官方 L20、5 秒 1080p 口径，未公开同硬件 teacher 基线或可复现代码，不能独立验证“基本无损/10×”。",
+      "evidence": "技术报告 §2.3、§4.4.4、§5.1–5.2 和官方博客披露 480p→720p/1080p Refiner、TSCD/score/adversarial distillation、Refiner 多奖励 RLHF、thin decoder 2× 与 L20 41.4 秒。",
+      "confidence": "高（设计与厂商测试口径）；中（相对加速和无损结论的独立可复现性）"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "DiT、VAE、Refiner、文本编码器及端到端总参数量、active parameters 和权重文件大小",
+    "训练 GPU 厂商/型号、精确 GPU/节点数、互联拓扑、GPU-hours、训练 FLOPs、能耗与成本",
+    "原始与最终训练数据的图像数、视频 clip 数/小时数、来源清单与各来源/许可/语言/地域占比",
+    "各预训练分辨率与 fps 阶段在公开 HTML 数学转换中缺失的精确数值，以及 CT 的 I2V 比例终值",
+    "VAE、预训练、CT、SFT、RLHF、Refiner、蒸馏各阶段 wall-clock、steps、batch、学习率与优化器超参数",
+    "原始训练/发布权重精度，以及推理量化逐层位宽、稀疏率、NFE 和完整显存占用",
+    "41.4 秒 L20 测试的卡数、主机配置、采样步数、冷启动/队列/编码是否计入",
+    "2025-06 发布截面的精确 Artificial Analysis T2V/I2V Elo 数值及当前 AA 页面对应 Pro 还是特定供应商封装的完整映射",
+    "Pro 与 Pro Fast 各蒸馏 checkpoint 的架构/参数差异；官方只确认 Fast 继承 Pro 核心能力并给出相对速度/价格",
+    "服务输出训练数据保留政策与可再训练、再分发权利的统一模型许可证"
+  ],
+  "sources": [
+    {
+      "title": "Seedance 1.0: Exploring the Boundaries of Video Generation Models (arXiv:2506.09113)",
+      "url": "https://arxiv.org/abs/2506.09113",
+      "source_type": "official_technical_report"
+    },
+    {
+      "title": "Seedance 1.0 official project page",
+      "url": "https://seed.bytedance.com/en/seedance",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "Seedance 1.0 technical report publication page — ByteDance Seed",
+      "url": "https://seed.bytedance.com/en/public_papers/seedance-1-0-exploring-the-boundaries-of-video-generation-models",
+      "source_type": "official_publication_page"
+    },
+    {
+      "title": "Seedance 1.0 技术报告公开 — 字节跳动 Seed",
+      "url": "https://seed.bytedance.com/zh/blog/tech-report-of-seedance-1-0-is-now-publicly-available",
+      "source_type": "official_technical_blog"
+    },
+    {
+      "title": "seedance-1.0-pro — BytePlus ModelArk",
+      "url": "https://docs.byteplus.com/en/docs/modelark/1587798",
+      "source_type": "official_api_model_page"
+    },
+    {
+      "title": "seedance-1.0-pro-fast — BytePlus ModelArk",
+      "url": "https://docs.byteplus.com/en/docs/ModelArk/1901652",
+      "source_type": "official_api_model_page"
+    },
+    {
+      "title": "Seedance video generation model capabilities and parameters — BytePlus ModelArk",
+      "url": "https://docs.byteplus.com/api/docs/ModelArk/2298881",
+      "source_type": "official_api_documentation"
+    },
+    {
+      "title": "CreateContentsGenerationsTasks — 火山方舟 API",
+      "url": "https://api.volcengine.com/api-docs/view?action=CreateContentsGenerationsTasks&serviceCode=ark&version=2024-01-01",
+      "source_type": "official_api_reference"
+    },
+    {
+      "title": "Seedance 1.0 — Artificial Analysis model page",
+      "url": "https://artificialanalysis.ai/video/models/seedance-10",
+      "source_type": "independent_benchmark"
+    },
+    {
+      "title": "Ideas around T2I2V models — Seedance 1.0 index clue",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "代表选择：本条用 Seedance 1.0 Pro，而不是 Pro Fast。理由是 2025-06-10 技术报告直接标注 Model ID=Doubao-Seedance-1.0-pro，BytePlus 也把 Pro 定义为系列的大参数/质量版本，最适合做历史能力与同代质量比较。Pro Fast 是同一 Seedance 1.0 family 的全规模加速降价变体：官方称继承 Pro 核心优势、最高 3× 更快、价格低 72%；中国区可见 250610 版本名，国际 BytePlus 明确页面版本为 251015，且没有单独技术报告证明它是新基础架构，因此只在 family/ID/性能说明中保留，不把其速度冒充 Pro 发布时性能。Seedance 1.0 本身统一支持 T2V 与 I2V，本数据库按候选文章主标签记为 T2V。可比较性为 true：有明确托管模型 ID、统一的 24 fps/2–12 秒/最高 1080p 规格、发布时及当前第三方 Arena 记录和官方 41.4 秒测试；比较时必须锁定 Pro、任务、分辨率、时长和观察日期。历史资格为 true：它在 2025-06 把时序因果高压缩 VAE、解耦时空 MMDiT、MM-RoPE 原生多镜头训练、统一 T2V/I2V、视频 RLHF 与级联 Refiner/蒸馏组合成一个商业化节点。"
+}

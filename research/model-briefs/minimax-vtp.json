@@ -1,0 +1,228 @@
+{
+  "slug": "minimax-vtp",
+  "name": "MiniMax VTP (Visual Tokenizer Pre-training)",
+  "family": "VTP",
+  "entry_kind": "method",
+  "modality": "T2I",
+  "organization": "MiniMax 与华中科技大学（HUST）",
+  "release_date": "2025-12-16",
+  "release_date_basis": "官方 GitHub News 将技术报告与预训练权重的公开日期记为 2025-12-16；三个 Hugging Face 仓库也均创建于 2025-12-16。arXiv v1 的提交时间为 2025-12-15 18:59:54 UTC（北京时间已是 2025-12-16）。2026-03-06/09 发布的 v2 与更新公告补充了实验结果，不改变本条目的首次公开日期。",
+  "access": "开放代码与视觉 tokenizer 权重。官方发布了 MiniMaxAI/VTP-Small-f16d64、VTP-Base-f16d64、VTP-Large-f16d64，可在本地用于图像重建、图像/文本特征提取，并可作为另行训练的 LightningDiT 的 latent tokenizer。官方没有发布一个可直接输入文本提示词生成图像的完整 VTP T2I checkpoint；ImageNet 生成需先按仓库脚本训练下游 LightningDiT，LAION T2I 仅作为论文实验报告。Hugging Face 页面将这些权重标为 image-feature-extraction，且 Large 页面显示没有托管推理提供商。",
+  "license": "代码与模型卡采用 modified MIT：基本为 MIT，但若软件或其衍生作品用于月活超过 1 亿或年经常性收入超过 3000 万美元的商业产品/服务，用户界面须显著展示“MiniMax VTP”。论文 HTML 另标 CC BY-NC-SA 4.0；不能把论文许可与代码/权重许可混为一谈。",
+  "official_model_ids": [
+    "MiniMaxAI/VTP-Small-f16d64",
+    "MiniMaxAI/VTP-Base-f16d64",
+    "MiniMaxAI/VTP-Large-f16d64"
+  ],
+  "parameter_total": "Hugging Face 官方仓库元数据给出的完整 checkpoint 参数量分别为：Small 167,177,888；Base 295,639,328；Large 731,570,720。这里包含公开 checkpoint 内的视觉编码器、像素解码器、文本编码器等组件；VTP 是方法与多尺寸模型族，不存在单一统一的参数量。",
+  "parameter_active": "不适用/未给出。公开变体是稠密 ViT 组件而非 MoE，官方没有 active-parameter 口径；重建、CLIP 特征与 SSL 特征三种使用路径调用的组件也不同，不能用总参数量代替某一路径的活跃参数量。",
+  "weight_size": "官方 Hugging Face 仓库的 model.safetensors 文件体积：Small 668,762,180 bytes；Base 1,182,608,420 bytes；Large 2,926,368,188 bytes。这些是发布文件体积，不用于反推训练精度、训练机器数或训练算力。",
+  "precision": "公开 config 将 Base 的 torch_dtype 及 Large 的 dtype 标为 float32；Hugging Face Large 页面同时列出 F32 与 BF16 tensor types，官方 quick start 使用 torch.autocast(\"cuda\")。训练精度、混合精度策略及 loss scaling 未披露，不能从 safetensors 体积或推理 autocast 反推。",
+  "architecture": "VTP 是基于全 Vision Transformer 的连续视觉 tokenizer/自编码器预训练框架，而不是完整的 T2I 生成器。图像经 16×16 patch 化进入 ViT 编码器，再通过 64 维瓶颈得到 f16d64 latent；像素解码器先把 latent 提升回特征空间，经 ViT blocks 精炼，再用 pixel-shuffle 重建像素。公开 Small/Base/Large checkpoint 分别使用 12 层、384/768 隐藏维的 Small/Base 对称编码器-解码器，以及 24 层、1024 隐藏维的 Large 对称编码器-解码器；三者另带 12 层、768 维 CLIP 风格文本 Transformer。论文的快速缩放实验曾使用 ViT-L 编码器加 4 层轻量解码器，最终公开 Large config 则是 24 层解码器，二者不应混淆。下游生成评估另接 LightningDiT-B/XL，LightningDiT 不属于 VTP 权重。",
+  "attention_or_sequence_design": "256×256 输入在 patch size 16 下形成 16×16=256 个图像 patch token，并带 CLS 表征用于对比/分类路径。公开 config 使用标准多头 ViT：Small/Base/Large 分别为 6/12/16 heads，SwiGLU FFN；视觉编码器标为 RMSNorm，像素解码器标为 LayerNorm。论文称为训练稳定性加入 QKNorm，但公开三个 config 的 vision_use_qk_norm/decoder_use_qk_norm 均为 false，具体最终 checkpoint 是否通过其他实现路径使用等效归一化未有清晰说明。VTP 不提出 T2I 去噪器的跨模态注意力结构；公开的下游 LightningDiT 配方是单独的生成评估系统。",
+  "vae_or_tokenizer": "VTP 本身就是 f16d64 视觉 tokenizer：空间下采样/patch ratio 为 16，连续瓶颈维度为 64，公开 checkpoint 的 image_size 为 256。它不是离散 codebook tokenizer，也没有官方披露 VAE 式 KL 参数化。预训练阶段持续使用像素重建与感知损失保持细节；随后冻结视觉 tokenizer，仅用 GAN objective 微调像素解码器以提升重建保真度。",
+  "text_encoder_or_conditioner": "VTP 内含 12 层、hidden size 768、12 heads、context length 77、vocab size 49,408 的 CLIP 风格文本 Transformer，用于图文对比预训练和零样本图像分类。它不是论文下游 DiT-XL T2I 实验的已完整披露/发布文本条件器；公开 checkpoint 也没有打包可直接文本生图的 DiT。因此不能把该文本编码器的存在解释为 VTP checkpoint 本身可直接 T2I。",
+  "training_hardware": "未知；论文、官方 GitHub、模型卡未披露加速器厂商或型号。",
+  "training_hardware_scale": "未知；未披露 GPU/加速器数量、节点数、互联拓扑、累计 accelerator-hours 或峰值集群规模。",
+  "training_data_scale": "视觉 tokenizer 预训练使用内部过滤的 DataComp-1B，共 277M 图文样本。数据缩放消融从 DataComp-1B 随机采样 100K、1M、10M、100M 四个子集，每个子集训练到累计看到 1.1B 样本。下游 class-conditional LightningDiT 使用 ImageNet；T2I 泛化实验使用 LAION，但论文未给出该 T2I 训练集的精确样本数。",
+  "training_data_composition": "VTP 主预训练数据来自内部过滤版 DataComp-1B 图文对，用于 CLIP 图文对比，同时对抽样图像执行 DINO 风格自监督与像素重建。官方未公开内部过滤规则、各来源占比、授权结构、语言分布、去重/安全过滤细节。ImageNet 仅用于下游 DiT 生成评估以及 tokenizer 的重建/理解评估；LAION 用于论文 T2I 泛化实验。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "统一视觉 tokenizer 预训练",
+      "description": "从头联合优化 ViT 编码器、像素解码器与相应表示学习分支；总目标由像素重建/感知损失、自监督损失（DINOv2 风格自蒸馏与 masked image modeling）和 CLIP 图文对比损失加权组成。CLIP 使用完整大批次图文对，SSL 与重建从中随机抽取较小子批次。"
+    },
+    {
+      "stage": 2,
+      "name": "GAN 像素解码器微调",
+      "description": "冻结视觉 tokenizer/编码器，仅以 GAN objective 微调 pixel decoder，提高重建保真度并避免在全模型联合阶段直接使用 GAN 时的 ViT 训练不稳定。"
+    },
+    {
+      "stage": 3,
+      "name": "下游生成评估（独立于 VTP 权重）",
+      "description": "冻结 VTP 并提取 latent，另行训练 LightningDiT-B/XL。ImageNet 评估保持 DiT 配置/FLOPs 一致以隔离 tokenizer 预训练的影响；LAION T2I 实验另训 DiT-XL。此阶段证明方法价值，但不构成已发布的端到端 VTP T2I 模型。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "统一视觉 tokenizer 预训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知；仅数据缩放消融披露每个子集累计处理 1.1B 样本"
+    },
+    {
+      "stage": "GAN 像素解码器微调",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    },
+    {
+      "stage": "下游 LightningDiT 评估",
+      "wall_clock_time": "未知",
+      "optimization_steps": "论文以 80/600 epochs 报告 ImageNet 结果；公开示例 YAML 另设 max_steps=100,000，不能无条件视为所有论文结果的统一训练时长"
+    }
+  ],
+  "training_algorithms": "核心算法是多目标联合预训练：L_total = λ_rec L_rec + λ_ssl L_ssl + λ_clip L_clip。重建路径结合像素级重建与 LPIPS 感知损失；SSL 路径依照 DINOv2，组合 EMA teacher 自蒸馏、多视图与 iBOT/MAE 类 masked image modeling；跨模态路径依照 CLIP 做图文对比学习。论文指出 CLIP 常需 16K/32K batch，而 SSL/重建约 4K，因此先取得大批图文对，再为后两类目标抽取子批次。第二阶段冻结 tokenizer、用 GAN 微调 decoder。下游公开 LightningDiT 配方使用 velocity prediction、linear transport path、cosine loss、log-normal time sampling；这些属于生成评估配方，不是 VTP tokenizer 的预训练算法。tokenizer 的优化器、学习率日程与完整 loss 权重没有可靠公开值。",
+  "training_infra": "官方代码为 PyTorch 生态，requirements 包含 torch/torchvision/timm/transformers/omegaconf；预训练实现建立在 OpenCLIP 与 DINOv2 代码上，最终模型变体采用 DINOv3 架构；下游生成评估使用 LightningDiT。依赖版本未锁定，且没有披露分布式并行策略、通信库、checkpoint 容错、吞吐或存储流水线。",
+  "inference_hardware": "官方 quick start 以 CUDA 与 torch.autocast 演示图像重建/特征提取，但没有指定 GPU 型号、显存下限或推荐卡数。端到端 T2I 生成器未作为 VTP checkpoint 发布。",
+  "inference_performance": "官方未报告 VTP tokenizer 在指定硬件上的编码/解码延迟、吞吐或峰值显存。公开 LightningDiT 采样 YAML 使用 Euler ODE、250 sampling steps、per-process batch size 4，但未给出耗时；该设置也不能代表一个公开端到端 T2I 服务的性能。",
+  "max_output_resolution": "不适用（VTP 不是完整生成模型）。公开 tokenizer config 与重建评估为 256×256；论文 LAION T2I 训练将图像短边随机缩放到 256–512，但没有给出可部署生成器的最大输出分辨率。",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "不适用/未知：VTP 没有公开可直接提示词出图的端到端 checkpoint，也没有 Artificial Analysis Image Arena 条目或官方指定硬件上的生成耗时。静态图像条目的 max_output_duration_seconds 与 native_fps 不适用，故为 null。",
+  "benchmark_scores": [
+    {
+      "benchmark": "ImageNet 256×256 tokenizer reconstruction and representation",
+      "metrics": {
+        "rFID_lower_is_better": 0.36,
+        "zero_shot_top1_percent": 78.2,
+        "linear_probe_top1_percent": 85.7
+      },
+      "source_scope": "论文 v2 与官方 README 的 VTP-L/最终 tokenizer 自报结果；同时评估重建与理解，不是文本生图质量榜单。"
+    },
+    {
+      "benchmark": "ImageNet 256×256 class-conditional generation, 80 epochs",
+      "metrics": {
+        "LightningDiT_675M_gFID_unguided_lower_is_better": 2.62,
+        "LightningDiT_675M_gFID_guided_lower_is_better": 1.44,
+        "LightningDiT_1B_gFID_unguided_lower_is_better": 2.03
+      },
+      "source_scope": "论文 Table 2；VTP tokenizer 加另行训练的 LightningDiT，分别为 675M/1.0B 生成模型。表中 2.62 与正文/图注的 2.60/2.61 存在四舍五入或版本差异，本字段按表格记录。不是公开 VTP 权重本身的推理成绩。"
+    },
+    {
+      "benchmark": "ImageNet 256×256 class-conditional generation, long training",
+      "metrics": {
+        "LightningDiT_675M_epochs": 600,
+        "gFID_unguided_lower_is_better": 1.85,
+        "gFID_guided_lower_is_better": 1.11,
+        "guided_inception_score_higher_is_better": 279.5,
+        "guided_precision_higher_is_better": 0.79,
+        "guided_recall_higher_is_better": 0.67
+      },
+      "source_scope": "论文 Table 2 的厂商/作者自报结果；生成模型仍是单独训练的 675M LightningDiT，不是 VTP tokenizer 参数量或一个发布的 T2I checkpoint。"
+    },
+    {
+      "benchmark": "Tokenizer data-scaling ablation with fixed downstream DiT compute",
+      "metrics": {
+        "dataset_subset_sizes": [
+          100000,
+          1000000,
+          10000000,
+          100000000
+        ],
+        "VTP_gFID_at_100K": 47.59,
+        "VTP_gFID_at_100M": 27.45,
+        "reconstruction_only_AE_gFID_at_100K": 58.37,
+        "reconstruction_only_AE_gFID_at_100M": 56.71
+      },
+      "source_scope": "论文 Sec. 4.5；每个子集均累计训练 1.1B samples，且下游 DiT FLOPs 保持一致，用于隔离 tokenizer 数据规模效应。"
+    },
+    {
+      "benchmark": "Tokenizer parameter-scaling ablation with fixed downstream DiT setup",
+      "metrics": {
+        "VTP_encoder_scale_gFID_from": 31.28,
+        "VTP_encoder_scale_gFID_to": 26.12,
+        "encoder_parameter_range": "约 20M 至 300M",
+        "expanded_pixel_decoder_gFID": 24.08,
+        "VTP_S_B_L_gFID_at_80_epochs": [
+          5.46,
+          3.88,
+          2.81
+        ]
+      },
+      "source_scope": "论文 Sec. 4.4 与 Table 3；S/B/L 数字是在相同 LightningDiT 训练下比较 tokenizer 尺寸，不能当作通用 T2I Elo。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "在同一个 ViT 视觉 tokenizer 预训练框架内联合优化 CLIP 图文对比、DINO 风格自监督（自蒸馏+掩码建模）和像素重建，使同一 latent 同时承载全局语义、局部空间感知与细节重建信息。",
+      "scope_boundary": "创新边界是视觉 tokenizer 的预训练目标与 latent 表征，不是新的 T2I 去噪器、文本编码器或完整生成模型。作者称其为据其所知首次把 CLIP+SSL+AE 三类目标用于视觉 tokenizer 预训练；这是论文的有限范围首创声明，未做全行业独立穷举验证。CLIP、DINO/iBOT、LPIPS、ViT 和 GAN 均为已有技术，首创性不应扩张为这些组件本身。",
+      "evidence": "论文 Sec. 3 明确给出三项加权总损失、EMA teacher 自蒸馏/MIM、图文对比与两阶段重建训练；Sec. 4.3 报告 CLIP+SSL+AE 在固定预算下达到 gFID 27.8、linear probing 74.9%，优于单一/双目标消融。",
+      "confidence": "高"
+    },
+    {
+      "claim": "把视觉 tokenizer 预训练本身作为可扩展投入维度，并在保持下游 DiT 配置/训练 FLOPs 不变时展示 generation quality 随 tokenizer 的预训练算力、模型参数和数据规模持续改善。",
+      "scope_boundary": "“首个展示视觉 tokenizer generation scaling”的表述是作者的限定声明，证据来自其 ImageNet/LAION、ViT 与 LightningDiT 实验范围，不等于已经证明跨所有生成架构、分辨率和数据域的普适 scaling law。LAION T2I 的 v2 只给出曲线与定性结论，尚缺完整数值表和复现实验细节；不能把 class-conditional ImageNet 的 1.11 gFID 说成通用文本生图成绩。",
+      "evidence": "论文报告：重建-only AE 很早饱和，而 VTP 在约 10× tokenizer 预训练算力下带来 65.8% FID 改善；数据从 100K 扩到 100M 时 VTP gFID 从 47.59 降至 27.45，AE 仅从 58.37 降至 56.71；编码器约 20M 扩到 300M 时 VTP gFID 从 31.28 降至 26.12。",
+      "confidence": "中高（实验内高，跨域普适性尚未独立验证）"
+    }
+  ],
+  "comparison_eligible": false,
+  "history_eligible": true,
+  "unknown_fields": [
+    "视觉 tokenizer 预训练使用的加速器型号、GPU/节点数量、互联与累计 accelerator-hours",
+    "训练精度、混合精度策略与 loss scaling；不得由 FP32/BF16 发布张量或文件体积反推",
+    "277M 内部过滤 DataComp-1B 的过滤规则、来源/授权比例、语言构成、去重和安全治理细节",
+    "最终 Small/Base/Large 各自的优化步数、全局 batch、wall-clock 时间、FLOPs、能耗及完整优化器/学习率日程",
+    "三项总损失在最终模型中的完整数值权重、GAN 微调时长与 GAN 超参数",
+    "论文 LAION T2I 实验的精确数据量、文本条件器、完整训练配方、数值 benchmark 表与 checkpoint",
+    "公开 tokenizer 在指定 GPU 上的编码/解码延迟、吞吐、显存与端到端生成耗时",
+    "论文称使用 QKNorm 与公开 checkpoint config 中 qk_norm=false 之间的最终实现对应关系",
+    "公开 Large 权重中 F32/BF16 张量的逐组件分布以及官方推荐推理 dtype",
+    "是否会发布论文中完整的预训练脚本、最终端到端 T2I 权重或托管推理服务"
+  ],
+  "sources": [
+    {
+      "title": "Towards Scalable Pre-training of Visual Tokenizers for Generation (arXiv:2512.13687 v2)",
+      "url": "https://arxiv.org/html/2512.13687v2",
+      "source_type": "official_paper"
+    },
+    {
+      "title": "arXiv submission record for 2512.13687",
+      "url": "https://arxiv.org/abs/2512.13687",
+      "source_type": "official_preprint_metadata"
+    },
+    {
+      "title": "MiniMax-AI/VTP",
+      "url": "https://github.com/MiniMax-AI/VTP",
+      "source_type": "official_github"
+    },
+    {
+      "title": "MiniMax VTP modified MIT license",
+      "url": "https://github.com/MiniMax-AI/VTP/blob/main/LICENSE",
+      "source_type": "official_license"
+    },
+    {
+      "title": "MiniMaxAI/VTP-Small-f16d64",
+      "url": "https://huggingface.co/MiniMaxAI/VTP-Small-f16d64",
+      "source_type": "official_model_card"
+    },
+    {
+      "title": "MiniMaxAI/VTP-Base-f16d64",
+      "url": "https://huggingface.co/MiniMaxAI/VTP-Base-f16d64",
+      "source_type": "official_model_card_and_config"
+    },
+    {
+      "title": "MiniMaxAI/VTP-Large-f16d64",
+      "url": "https://huggingface.co/MiniMaxAI/VTP-Large-f16d64",
+      "source_type": "official_model_card_and_config"
+    },
+    {
+      "title": "VTP-Small-f16d64 repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/MiniMaxAI/VTP-Small-f16d64?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "VTP-Base-f16d64 repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/MiniMaxAI/VTP-Base-f16d64?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "VTP-Large-f16d64 repository metadata with blobs",
+      "url": "https://huggingface.co/api/models/MiniMaxAI/VTP-Large-f16d64?blobs=true",
+      "source_type": "official_model_repository_api"
+    },
+    {
+      "title": "Official LightningDiT evaluation config for VTP-L",
+      "url": "https://github.com/MiniMax-AI/VTP/blob/main/generation/configs/train_vtp_l_dit_xl.yaml",
+      "source_type": "official_evaluation_config"
+    },
+    {
+      "title": "Ideas around T2I2V models — MiniMax VTP index entry",
+      "url": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/#2512-minimax-vtp",
+      "source_type": "secondary_index_clue_only"
+    }
+  ],
+  "notes": "分类判断：VTP 的核心是视觉 tokenizer 预训练框架/方法，因此 entry_kind=method。它虽然发布了可部署的 tokenizer checkpoints，但没有发布完整可提示词生图的 VTP 生成器；故在 T2I 模型横向榜单中 comparison_eligible=false。history_eligible=true，因为其多目标 tokenizer 预训练与 tokenizer scaling 结论可作为 T2I 技术演进节点。公开权重可独立用于重建和视觉/图文特征提取，也可作为新生成模型的第一阶段 tokenizer；这不等于端到端 T2I 部署。论文当前 v2 在 2026-03 更新并由官方仓库标为 ECCV 2026，但首次公开日期仍采用 2025-12-16。"
+}
