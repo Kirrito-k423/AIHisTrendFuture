@@ -302,7 +302,7 @@ export function TimelineExplorer({ data }: { data: TimelinePageData }) {
   const visibleEvents = visibleLanes.flatMap((lane) => lane.events);
   const sourceCount = visibleEvents.reduce((sum, event) => sum + event.sources.length, 0);
   const newestEvent = [...visibleEvents].sort((a, b) => b.date.localeCompare(a.date))[0];
-  const laneLevels = (lane: TimelineLane) => data.page === "history" && lane.id === "llm-training" ? 4 : 2;
+  const laneLevels = (lane: TimelineLane) => data.page === "history" && (lane.id === "llm-training" || lane.id === "multimodal-training") ? 4 : 2;
 
   return (
     <main className={`atlas page-${data.page}`}>

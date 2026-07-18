@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 21);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 24);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -69,6 +69,12 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Muon Split/);
   assert.match(source, /Prefix Tree Merging/);
   assert.match(source, /Gated DeltaNet/);
+  assert.match(source, /const wan22 = modelEvent/);
+  assert.match(source, /const qwenImage = modelEvent/);
+  assert.match(source, /const zImageTurbo = modelEvent/);
+  assert.match(source, /Decoupled-DMD/);
+  assert.match(source, /MSRoPE/);
+  assert.match(source, /Denoising-stage MoE/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
   assert.match(source, /注意力创新/);
@@ -89,6 +95,11 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /2022-11-30/);
   assert.match(source, /Qwen3\.7/);
   assert.match(source, /MiniMax‑M3/);
+  assert.match(source, /Wan2\.2‑T2V‑A14B/);
+  assert.match(source, /Qwen-Image/);
+  assert.match(source, /Z-Image-Turbo/);
+  assert.match(source, /modality: "text→image"/);
+  assert.match(source, /modality: "text→video"/);
   assert.match(source, /aaIntelligence/);
   assert.match(source, /primarySourceUrl/);
 });
@@ -132,12 +143,19 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(comparisonSource, /draggable/);
   assert.match(comparisonSource, /onDrop/);
   assert.match(comparisonSource, /按厂商筛选可加入模型/);
+  assert.match(comparisonSource, /按模型任务类型筛选可加入模型/);
   assert.match(comparisonSource, /<optgroup/);
 
   const response = await render("/compare");
   const html = await response.text();
   assert.match(html, /注意力创新/);
   assert.match(html, /全部厂商/);
+  assert.match(html, /全部类型/);
+  assert.match(html, /T2I/);
+  assert.match(html, /T2V/);
+  assert.match(html, /Wan2\.2‑T2V‑A14B/);
+  assert.match(html, /Qwen-Image/);
+  assert.match(html, /Z-Image-Turbo/);
   assert.match(html, /拖动排序/);
   assert.match(html, /开创 \/ 关键方案/);
   assert.match(html, /训练算法 \/ 机制/);

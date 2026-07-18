@@ -212,18 +212,23 @@ function StructuredComparison({
   onClear: () => void;
   onReorder: (sourceId: string, targetId: string) => void;
 }) {
+  const [pickerModality, setPickerModality] = useState("");
   const [vendor, setVendor] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const vendors = useMemo(() => Array.from(new Set(availableModels.map((model) => model.organization)))
-    .sort((a, b) => a.localeCompare(b, "zh-CN")), [availableModels]);
+  const pickerModalities = useMemo(() => Array.from(new Set(availableModels.map((model) => model.modality))).sort(), [availableModels]);
+  const vendors = useMemo(() => Array.from(new Set(availableModels
+    .filter((model) => !pickerModality || model.modality === pickerModality)
+    .map((model) => model.organization)))
+    .sort((a, b) => a.localeCompare(b, "zh-CN")), [availableModels, pickerModality]);
   const groupedAvailableModels = useMemo(() => {
     const groups = new Map<string, ComparisonModel[]>();
     availableModels
+      .filter((model) => !pickerModality || model.modality === pickerModality)
       .filter((model) => !vendor || model.organization === vendor)
       .forEach((model) => groups.set(model.organization, [...(groups.get(model.organization) ?? []), model]));
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b, "zh-CN"));
-  }, [availableModels, vendor]);
+  }, [availableModels, pickerModality, vendor]);
   const filteredModelCount = groupedAvailableModels.reduce((count, [, items]) => count + items.length, 0);
 
   function startColumnDrag(event: DragEvent<HTMLButtonElement>, modelId: string) {
@@ -260,6 +265,17 @@ function StructuredComparison({
           <p>每列一个模型，每行一个固定字段；未知不会被隐藏，状态、来源与推导口径保留在单元格内。</p>
         </div>
         <div className="structured-picker">
+          <label className="structured-type-picker">
+            <span>类型</span>
+            <select
+              value={pickerModality}
+              onChange={(event) => { setPickerModality(event.target.value); setVendor(""); }}
+              aria-label="按模型任务类型筛选可加入模型"
+            >
+              <option value="">全部类型</option>
+              {pickerModalities.map((item) => <option value={item} key={item}>{item}</option>)}
+            </select>
+          </label>
           <label className="structured-vendor-picker">
             <span>厂商</span>
             <select value={vendor} onChange={(event) => setVendor(event.target.value)} aria-label="按厂商筛选可加入模型">
@@ -313,7 +329,7 @@ function StructuredComparison({
                       </button>
                       <strong>{model.name}</strong>
                       <span>{model.organization}</span>
-                      <small>{model.releaseDate} · {accessLabel(model.access)}</small>
+                      <small>{model.modality} · {model.releaseDate} · {accessLabel(model.access)}</small>
                       <div className="structured-model-actions">
                         <em>已核验 {disclosedCount}/{structuredFieldDefinitions.length}</em>
                         <a href={model.primarySourceUrl} target="_blank" rel="noreferrer">主来源 ↗</a>

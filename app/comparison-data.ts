@@ -76,7 +76,7 @@ export interface ComparisonModel {
   releaseDate: string;
   access: "open" | "api" | "pending";
   license: string;
-  modality: "LLM" | "VLM" | "Image" | "Video" | "Omni";
+  modality: "LLM" | "VLM" | "T2I" | "T2V" | "Omni";
   architecture: string;
   primarySourceUrl: string;
   parameterEstimate?: ParameterEstimate;
@@ -202,11 +202,24 @@ const architectureOverrides: Record<string, string> = {
   "minimax-m21": "Sparse MoE",
   "minimax-m25": "Full Attention + Sparse MoE + 3×MTP · Forge",
   "minimax-m3": "MoE + MiniMax Sparse Attention",
+  "flux-1-dev": "Rectified Flow · Hybrid multimodal / single-stream DiT",
+  "hunyuanvideo": "Video DiT + causal 3D VAE · Full spatiotemporal attention",
+  "wan21-t2v-14b": "Flow Matching Video DiT + Wan-VAE",
+  "qwen25-omni-7b": "Thinker-Talker + streaming Token2Wav",
+  "bagel-7b-mot": "Mixture-of-Transformer-Experts + Rectified Flow",
+  "ltx-23": "Joint audio-video DiT · Distilled serving variants",
+  "cosmos3-super": "AR Reasoner + Rectified-Flow Generator · Mixture of Transformers",
+  "wan22-t2v-a14b": "Denoising-Stage MoE · 2×14B Video DiT Experts",
+  "qwen-image-20b": "20B Double-Stream MMDiT + MSRoPE",
+  "z-image-turbo": "6.15B Single-Stream S3-DiT · 8-NFE Decoupled-DMD",
 };
 
 function normalizeModality(modality: string): ComparisonModel["modality"] {
-  if (modality.includes("audio") || modality.includes("video")) return "Omni";
-  if (modality.includes("image")) return "VLM";
+  const [input = "", output = ""] = modality.split("→");
+  if (output === "image") return "T2I";
+  if (output === "video") return "T2V";
+  if (output.includes("+") || output.includes("audio")) return "Omni";
+  if (input.includes("image") || input.includes("video")) return "VLM";
   return "LLM";
 }
 
@@ -237,6 +250,16 @@ const historyEventIdByCatalogId: Partial<Record<string, string>> = {
   "minimax-m3": "minimax-m3",
   "glm-52-max": "glm-5-2",
   "kimi-k3": "kimi-k3",
+  "flux-1-dev": "flux-1-dev",
+  "hunyuanvideo": "hunyuanvideo-2024-12",
+  "wan21-t2v-14b": "wan2.1-t2v-14b",
+  "qwen25-omni-7b": "qwen2.5-omni-7b",
+  "bagel-7b-mot": "bagel-7b-mot",
+  "ltx-23": "ltx-2-3",
+  "cosmos3-super": "cosmos3-super-family",
+  "wan22-t2v-a14b": "wan2.2-t2v-a14b",
+  "qwen-image-20b": "qwen-image-20b",
+  "z-image-turbo": "z-image-turbo-2025-11",
 };
 
 const historyModelEvents = historyData.lanes

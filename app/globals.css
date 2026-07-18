@@ -2159,7 +2159,7 @@ body {
   display: grid;
   flex: 0 0 auto;
   gap: 7px;
-  grid-template-columns: 210px minmax(320px, 430px) auto;
+  grid-template-columns: 130px 200px minmax(300px, 420px) auto;
 }
 
 .structured-picker label {
@@ -2947,7 +2947,7 @@ body {
   }
 
   .structured-picker {
-    grid-template-columns: minmax(150px, .7fr) minmax(220px, 1.3fr) auto;
+    grid-template-columns: 130px minmax(150px, .7fr) minmax(220px, 1.3fr) auto;
     width: 100%;
   }
 
