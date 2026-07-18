@@ -2095,3 +2095,64 @@ body {
     padding-right: 8px;
   }
 }
+
+/* Narrow timeline cards: favor readable wrapping over horizontal footprint. */
+.lane-label,
+.timeline-lane {
+  height: 190px;
+}
+
+.lane-baseline {
+  top: 95px;
+}
+
+.event-marker {
+  align-content: start;
+  grid-template-columns: minmax(0, 1fr);
+  height: auto;
+  min-height: 66px;
+  min-width: 0;
+  padding: 7px 8px 7px 11px;
+  width: 124px;
+}
+
+.event-date {
+  grid-column: 1;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.event-marker strong {
+  display: block;
+  grid-column: 1;
+  line-height: 1.25;
+  max-width: none;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: normal;
+}
+
+.event-marker em {
+  align-self: start;
+  grid-column: 1;
+  grid-row: auto;
+  line-height: 1.25;
+  margin-top: 3px;
+  max-width: 102px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.event-marker > small {
+  grid-column: 1;
+  line-height: 1.2;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@media (max-width: 760px) {
+  .event-marker {
+    width: 116px;
+  }
+}

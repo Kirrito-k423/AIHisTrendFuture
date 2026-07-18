@@ -379,7 +379,7 @@ export function TimelineExplorer({ data }: { data: TimelinePageData }) {
                       type="button"
                       className={`event-marker tier-${event.tier ?? "baseline"} ${selected?.id === event.id ? "selected" : ""}`}
                       key={event.id}
-                      style={{ left: `${toPercent(event.date, activeStart, activeEnd)}%`, top: `${15 + (eventIndex % 2) * 45}px` }}
+                      style={{ left: `${toPercent(event.date, activeStart, activeEnd)}%`, top: `${12 + (eventIndex % 2) * 88}px` }}
                       onClick={() => setSelected(event)}
                       aria-label={`查看 ${event.title} 的详细证据`}
                     >
