@@ -78,3 +78,27 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /aaIntelligence/);
   assert.match(source, /primarySourceUrl/);
 });
+
+test("metric charts use interactive ECharts with linear axes and sortable tables", async () => {
+  const metricSource = await readFile(new URL("../app/components/MetricExplorer.tsx", import.meta.url), "utf8");
+  const comparisonSource = await readFile(new URL("../app/components/ComparisonExplorer.tsx", import.meta.url), "utf8");
+  const dataSource = await readFile(new URL("../app/comparison-data.ts", import.meta.url), "utf8");
+
+  assert.match(metricSource, /import\("echarts"\)/);
+  assert.match(metricSource, /tooltip:/);
+  assert.match(metricSource, /legend:/);
+  assert.match(metricSource, /dataZoom:/);
+  assert.match(metricSource, /type: "value"/);
+  assert.match(metricSource, /ChartTypeButtons/);
+  assert.match(metricSource, /SortableEvidenceHeader/);
+  assert.match(comparisonSource, /compareModels/);
+  assert.match(comparisonSource, /SortableHeader/);
+  assert.doesNotMatch(metricSource, /Math\.log|type:\s*["']log/);
+  assert.doesNotMatch(dataSource, /scale:\s*["']log/);
+
+  const response = await render("/metrics/totalParamsB");
+  const html = await response.text();
+  assert.match(html, /ECharts 交互/);
+  assert.match(html, /阶梯线/);
+  assert.match(html, /按列排序/);
+});

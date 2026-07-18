@@ -1771,6 +1771,18 @@ body {
   cursor: not-allowed;
 }
 
+.sort-summary {
+  align-items: center;
+  border-left: 1px solid var(--line);
+  color: var(--cyan);
+  display: flex;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  margin-left: auto;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
 .model-matrix-wrap {
   background: #fff;
   min-height: 520px;
@@ -1804,6 +1816,42 @@ body {
   display: block;
   font-weight: 400;
   margin-top: 4px;
+}
+
+.table-sort-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  gap: 5px;
+  letter-spacing: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.table-sort-button span {
+  color: #8b969b;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.table-sort-button:hover,
+.table-sort-button.active,
+.table-sort-button.active span {
+  color: var(--cyan);
+}
+
+.header-chart-link {
+  color: var(--cyan);
+  display: block;
+  font-size: 8px;
+  font-weight: 400;
+  margin-top: 5px;
+  width: fit-content;
 }
 
 .model-matrix td {
@@ -1961,34 +2009,104 @@ body {
   font-size: 9px;
 }
 
-.canvas-wrap {
-  overflow-x: auto;
+.chart-interaction-note {
+  align-items: center;
+  background: #eaf4f5;
+  border-bottom: 1px solid #cfe1e3;
+  border-top: 1px solid #cfe1e3;
+  color: #526068;
+  display: flex;
+  font-size: 9px;
+  gap: 12px;
+  min-height: 34px;
+  padding: 5px 20px;
+}
+
+.chart-interaction-note strong {
+  color: var(--cyan);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  letter-spacing: .06em;
+}
+
+.chart-type-buttons {
+  border: 1px solid #cbd1d3;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.chart-type-buttons button {
+  background: #fff;
+  border: 0;
+  border-right: 1px solid #cbd1d3;
+  color: #526068;
+  cursor: pointer;
+  font-size: 9px;
+  min-height: 28px;
+  padding: 0 9px;
+}
+
+.chart-type-buttons button:last-child {
+  border-right: 0;
+}
+
+.chart-type-buttons button:hover,
+.chart-type-buttons button.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.chart-axis-note {
+  color: var(--muted);
+  font-size: 9px;
+  margin: -4px 0 0;
+}
+
+.echarts-wrap {
+  height: 460px;
+  min-width: 0;
   width: 100%;
 }
 
-.canvas-wrap canvas {
-  display: block;
+.echarts-wrap-ranking {
+  height: 430px;
 }
 
-.chart-legend {
+.echarts-tooltip-title {
+  border-bottom: 1px solid #d9dfe1;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  padding-bottom: 5px;
+}
+
+.echarts-tooltip-title ~ div {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  min-height: 22px;
-  padding: 7px 20px 0 74px;
+  gap: 14px;
+  justify-content: space-between;
+  line-height: 1.75;
 }
 
-.chart-legend span {
-  align-items: center;
-  display: inline-flex;
-  font-size: 8px;
-  gap: 5px;
+.echarts-tooltip-title ~ div span {
+  color: #68737a;
 }
 
-.chart-legend i {
-  border-radius: 50%;
-  height: 7px;
-  width: 7px;
+.echarts-tooltip-title ~ div strong {
+  color: #111c24;
+  text-align: right;
+}
+
+.echarts-tooltip-title ~ p {
+  border-top: 1px solid #e4e8e9;
+  color: #526068;
+  line-height: 1.45;
+  margin: 5px 0;
+  padding-top: 5px;
+}
+
+.echarts-tooltip-title ~ small {
+  color: var(--cyan);
+  display: block;
+  margin-top: 6px;
 }
 
 .metric-evidence-table {
@@ -2021,6 +2139,10 @@ body {
   letter-spacing: .07em;
   padding: 8px 10px;
   text-align: left;
+}
+
+.metric-evidence-table th .table-sort-button {
+  white-space: nowrap;
 }
 
 .metric-evidence-table td {

@@ -43,7 +43,7 @@ export interface MetricDefinition {
   unit: string;
   description: string;
   better: "higher" | "lower" | "context";
-  scale: "linear" | "log";
+  scale: "linear";
 }
 
 export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
@@ -72,7 +72,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "B",
     description: "模型全部参数，统一换算为十亿参数。闭源模型未披露时保持未知。",
     better: "context",
-    scale: "log",
+    scale: "linear",
   },
   activeParamsB: {
     key: "activeParamsB",
@@ -81,7 +81,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "B / token",
     description: "稀疏模型每个 token 实际经过的参数规模；不能用专家数量简单反推。",
     better: "context",
-    scale: "log",
+    scale: "linear",
   },
   contextK: {
     key: "contextK",
@@ -90,7 +90,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "K tokens",
     description: "官方支持的最大上下文，统一换算为千 token；API 与本地部署可能不同。",
     better: "higher",
-    scale: "log",
+    scale: "linear",
   },
   weightSizeGB: {
     key: "weightSizeGB",
@@ -99,7 +99,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "GB",
     description: "官方仓库核心权重文件大小。闭源模型及尚未发布权重的模型保持未知。",
     better: "context",
-    scale: "log",
+    scale: "linear",
   },
   trainingTokensT: {
     key: "trainingTokensT",
@@ -108,7 +108,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "T tokens",
     description: "官方披露的预训练 token 数，统一换算为万亿 token；数据构成另见证据档案。",
     better: "context",
-    scale: "log",
+    scale: "linear",
   },
   outputTokensPerSecond: {
     key: "outputTokensPerSecond",
@@ -117,7 +117,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "tokens/s",
     description: "服务端点的输出速度。供应商、输入长度、并发与统计口径不同，不能直接等同于系统吞吐。",
     better: "higher",
-    scale: "log",
+    scale: "linear",
   },
   blendedPricePerMTok: {
     key: "blendedPricePerMTok",
@@ -126,7 +126,7 @@ export const metricDefinitions: Record<MetricKey, MetricDefinition> = {
     unit: "USD / MTok",
     description: "按来源披露的输入/输出/cache 混合假设折算；仅比较同一成本口径。",
     better: "lower",
-    scale: "log",
+    scale: "linear",
   },
 };
 

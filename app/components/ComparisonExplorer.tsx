@@ -13,6 +13,32 @@ import {
 
 const SNAPSHOT_DATE = "2026-07-18";
 
+type SortKey = "name" | "releaseDate" | MetricKey;
+type SortDirection = "asc" | "desc";
+
+function isMetricKey(key: SortKey): key is MetricKey {
+  return metricKeys.includes(key as MetricKey);
+}
+
+function compareModels(a: ComparisonModel, b: ComparisonModel, key: SortKey, direction: SortDirection) {
+  if (isMetricKey(key)) {
+    const aValue = a.metrics[key]?.value;
+    const bValue = b.metrics[key]?.value;
+    if (aValue === undefined && bValue === undefined) return b.releaseDate.localeCompare(a.releaseDate);
+    if (aValue === undefined) return 1;
+    if (bValue === undefined) return -1;
+    const numericDifference = aValue - bValue;
+    return (direction === "asc" ? numericDifference : -numericDifference)
+      || b.releaseDate.localeCompare(a.releaseDate);
+  }
+
+  const comparison = key === "name"
+    ? a.name.localeCompare(b.name, "zh-CN")
+    : a.releaseDate.localeCompare(b.releaseDate);
+  return (direction === "asc" ? comparison : -comparison)
+    || a.name.localeCompare(b.name, "zh-CN");
+}
+
 function accessLabel(access: ComparisonModel["access"]) {
   if (access === "open") return "开放权重";
   if (access === "pending") return "权重待发布";
@@ -58,6 +84,35 @@ function MetricCell({ model, metric }: { model: ComparisonModel; metric: MetricK
   );
 }
 
+function SortableHeader({
+  label,
+  sortKey,
+  currentKey,
+  direction,
+  onSort,
+  className,
+  metric,
+}: {
+  label: string;
+  sortKey: SortKey;
+  currentKey: SortKey;
+  direction: SortDirection;
+  onSort: (key: SortKey) => void;
+  className?: string;
+  metric?: MetricKey;
+}) {
+  const active = currentKey === sortKey;
+  return (
+    <th className={className} aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}>
+      <button type="button" className={`table-sort-button ${active ? "active" : ""}`} onClick={() => onSort(sortKey)}>
+        {label}<span aria-hidden="true">{active ? (direction === "asc" ? "↑" : "↓") : "↕"}</span>
+      </button>
+      {metric ? <Link className="header-chart-link" href={`/metrics/${metric}`}>图表 ↗</Link> : null}
+      {metric ? <small>{metricDefinitions[metric].unit}</small> : null}
+    </th>
+  );
+}
+
 export function ComparisonExplorer() {
   const [query, setQuery] = useState("");
   const [organization, setOrganization] = useState("全部机构");
@@ -65,6 +120,7 @@ export function ComparisonExplorer() {
   const [modality, setModality] = useState("全部模态");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [onlySelected, setOnlySelected] = useState(false);
+  const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({ key: "releaseDate", direction: "desc" });
 
   const organizations = useMemo(
     () => ["全部机构", ...Array.from(new Set(comparisonModels.map((model) => model.organization))).sort()],
@@ -87,8 +143,8 @@ export function ComparisonExplorer() {
         const matchesSelected = !onlySelected || selected.has(model.id);
         return matchesQuery && matchesOrg && matchesAccess && matchesModality && matchesSelected;
       })
-      .sort((a, b) => b.releaseDate.localeCompare(a.releaseDate));
-  }, [access, modality, onlySelected, organization, query, selected]);
+      .sort((a, b) => compareModels(a, b, sort.key, sort.direction));
+  }, [access, modality, onlySelected, organization, query, selected, sort]);
 
   function toggleModel(id: string) {
     setSelected((current) => {
@@ -97,6 +153,12 @@ export function ComparisonExplorer() {
       else next.add(id);
       return next;
     });
+  }
+
+  function toggleSort(key: SortKey) {
+    setSort((current) => current.key === key
+      ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+      : { key, direction: key === "name" ? "asc" : "desc" });
   }
 
   return (
@@ -135,6 +197,7 @@ export function ComparisonExplorer() {
         <label><span>模态</span><select value={modality} onChange={(event) => setModality(event.target.value)}>{modalities.map((item) => <option key={item}>{item}</option>)}</select></label>
         <button type="button" className={onlySelected ? "active" : ""} disabled={!selected.size} onClick={() => setOnlySelected((value) => !value)}>仅看已选 {selected.size || ""}</button>
         <button type="button" onClick={() => { setSelected(new Set()); setOnlySelected(false); }}>清空</button>
+        <span className="sort-summary">排序：{sort.key === "name" ? "模型" : sort.key === "releaseDate" ? "发布日期" : metricDefinitions[sort.key].shortTitle} {sort.direction === "asc" ? "↑" : "↓"}</span>
       </section>
 
       <section className="model-matrix-wrap" aria-label="模型横向比较矩阵">
@@ -142,11 +205,11 @@ export function ComparisonExplorer() {
           <thead>
             <tr>
               <th className="select-col">选择</th>
-              <th className="model-col">模型</th>
-              <th>发布日期</th>
+              <SortableHeader label="模型" sortKey="name" currentKey={sort.key} direction={sort.direction} onSort={toggleSort} className="model-col" />
+              <SortableHeader label="发布日期" sortKey="releaseDate" currentKey={sort.key} direction={sort.direction} onSort={toggleSort} />
               <th>权限 / 许可</th>
               <th>模态 / 架构</th>
-              {metricKeys.map((key) => <th key={key}><Link href={`/metrics/${key}`}>{metricDefinitions[key].shortTitle} ↗</Link><small>{metricDefinitions[key].unit}</small></th>)}
+              {metricKeys.map((key) => <SortableHeader key={key} label={metricDefinitions[key].shortTitle} sortKey={key} currentKey={sort.key} direction={sort.direction} onSort={toggleSort} metric={key} />)}
               <th>主来源</th>
             </tr>
           </thead>
