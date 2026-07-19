@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ComparisonExplorer } from "../components/ComparisonExplorer";
+import { ComparisonHub } from "../components/ComparisonHub";
 
 export const metadata: Metadata = {
   title: "模型横向比较",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ComparePage() {
-  return <ComparisonExplorer />;
+  return <ComparisonHub initialView="model" />;
 }

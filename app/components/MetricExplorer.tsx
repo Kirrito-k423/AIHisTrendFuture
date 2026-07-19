@@ -13,6 +13,7 @@ import {
   type MetricKey,
   type MetricValue,
 } from "../comparison-data";
+import { SiteHeader } from "./SiteHeader";
 
 interface ChartPoint {
   model: ComparisonModel;
@@ -360,14 +361,7 @@ function EChartsPanel({
 }
 
 function MetricHeader() {
-  const tabs = [["历史", "/history", "01"], ["趋势", "/trends", "02"], ["未来", "/future", "03"], ["模型对比", "/compare", "04"]] as const;
-  return (
-    <header className="site-header comparison-header">
-      <div className="page-switch page-switch-left"><Link href="/compare">← 模型对比</Link></div>
-      <nav aria-label="主页面">{tabs.map(([label, href, index]) => <Link key={href} href={href} className={href === "/compare" ? "active" : ""}><small>{index}</small>{label}</Link>)}</nav>
-      <div className="page-switch page-switch-right"><span className="switch-edge">指标证据页</span></div>
-    </header>
-  );
+  return <SiteHeader activePage="history" comparisonActive left={{ href: "/history/compare", label: "← 技术 / 模型比较" }} right={{ label: "指标证据页" }} />;
 }
 
 function ChartTypeButtons<T extends string>({ value, options, onChange }: {
@@ -493,7 +487,7 @@ export function MetricExplorer({ initialMetric, initialFocus }: { initialMetric:
       </section>
 
       <section className="metric-evidence-table">
-        <header><div><span>03 / 数据与来源</span><h2>每个点都能回到证据，也能按列排序</h2></div><Link href="/compare">返回横向比较 →</Link></header>
+        <header><div><span>03 / 数据与来源</span><h2>每个点都能回到证据，也能按列排序</h2></div><Link href="/history/compare">返回横向比较 →</Link></header>
         <div className="metric-table-scroll"><table><thead><tr>
           <SortableEvidenceHeader label="发布日期" sortKey="releaseDate" currentKey={evidenceSort.key} direction={evidenceSort.direction} onSort={toggleEvidenceSort} />
           <SortableEvidenceHeader label="模型" sortKey="name" currentKey={evidenceSort.key} direction={evidenceSort.direction} onSort={toggleEvidenceSort} />

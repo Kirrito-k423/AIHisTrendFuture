@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState, type DragEvent, type KeyboardEvent } from "react";
+import { Fragment, useMemo, useState, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import {
   comparisonModels,
   formatMetricValue,
@@ -12,14 +12,16 @@ import {
   type MetricKey,
 } from "../comparison-data";
 import { parameterInferenceMethods } from "../parameter-inference";
+import { SiteHeader } from "./SiteHeader";
 
-const SNAPSHOT_DATE = "2026-07-18";
+const SNAPSHOT_DATE = "2026-07-19";
 
 type SortKey = "name" | "releaseDate" | MetricKey;
 type SortDirection = "asc" | "desc";
 type ComparisonView = "numeric" | "structured";
 
 const DEFAULT_STRUCTURED_MODELS = ["kimi-k25", "glm-5", "minimax-m25", "qwen35-397b-a17b"];
+const AA_TEXT_ONLY_METRICS: MetricKey[] = ["aaIntelligence", "aaAgentic"];
 
 function isMetricKey(key: SortKey): key is MetricKey {
   return metricKeys.includes(key as MetricKey);
@@ -48,29 +50,6 @@ function accessLabel(access: ComparisonModel["access"]) {
   if (access === "open") return "开放权重";
   if (access === "pending") return "权重待发布";
   return "API / 闭源";
-}
-
-function ComparisonHeader() {
-  const tabs = [
-    ["历史", "/history", "01"],
-    ["趋势", "/trends", "02"],
-    ["未来", "/future", "03"],
-    ["模型对比", "/compare", "04"],
-  ] as const;
-
-  return (
-    <header className="site-header comparison-header">
-      <div className="page-switch page-switch-left"><Link href="/future">← 未来</Link></div>
-      <nav aria-label="主页面">
-        {tabs.map(([label, href, index]) => (
-          <Link key={href} href={href} className={href === "/compare" ? "active" : ""}>
-            <small>{index}</small>{label}
-          </Link>
-        ))}
-      </nav>
-      <div className="page-switch page-switch-right"><span className="switch-edge">快照 {SNAPSHOT_DATE}</span></div>
-    </header>
-  );
 }
 
 function MetricCell({ model, metric }: { model: ComparisonModel; metric: MetricKey }) {
@@ -216,6 +195,9 @@ function StructuredComparison({
   const [vendor, setVendor] = useState("");
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const visibleStructuredFields = useMemo(() => models.some((model) => model.modality !== "LLM")
+    ? structuredFieldDefinitions.filter((field) => field.label !== "Artificial Analysis 指标")
+    : [...structuredFieldDefinitions], [models]);
   const pickerModalities = useMemo(() => Array.from(new Set(availableModels.map((model) => model.modality))).sort(), [availableModels]);
   const vendors = useMemo(() => Array.from(new Set(availableModels
     .filter((model) => !pickerModality || model.modality === pickerModality)
@@ -305,7 +287,7 @@ function StructuredComparison({
               <tr>
                 <th className="structured-field-col">结构化字段</th>
                 {models.map((model) => {
-                  const disclosedCount = structuredFieldDefinitions.filter(({ label }) => model.structuredFacts[label].status !== "未知").length;
+                  const disclosedCount = visibleStructuredFields.filter(({ label }) => model.structuredFacts[label].status !== "未知").length;
                   return (
                     <th
                       key={model.id}
@@ -331,7 +313,7 @@ function StructuredComparison({
                       <span>{model.organization}</span>
                       <small>{model.modality} · {model.releaseDate} · {accessLabel(model.access)}</small>
                       <div className="structured-model-actions">
-                        <em>已核验 {disclosedCount}/{structuredFieldDefinitions.length}</em>
+                        <em>已核验 {disclosedCount}/{visibleStructuredFields.length}</em>
                         <a href={model.primarySourceUrl} target="_blank" rel="noreferrer">主来源 ↗</a>
                         <button type="button" onClick={() => onRemove(model.id)}>移除</button>
                       </div>
@@ -341,14 +323,14 @@ function StructuredComparison({
               </tr>
             </thead>
             <tbody>
-              {structuredFieldDefinitions.map((field, index) => {
-                const beginsGroup = index === 0 || structuredFieldDefinitions[index - 1].group !== field.group;
+              {visibleStructuredFields.map((field, index) => {
+                const beginsGroup = index === 0 || visibleStructuredFields[index - 1].group !== field.group;
                 return (
                   <Fragment key={field.label}>
                     {beginsGroup ? (
                       <tr className="structured-group-row">
                         <th>{field.group}</th>
-                        <td colSpan={models.length}>{structuredFieldDefinitions.filter((item) => item.group === field.group).length} 项统一字段</td>
+                        <td colSpan={models.length}>{visibleStructuredFields.filter((item) => item.group === field.group).length} 项统一字段</td>
                       </tr>
                     ) : null}
                     <tr>
@@ -386,7 +368,7 @@ function StructuredComparison({
   );
 }
 
-export function ComparisonExplorer() {
+export function ComparisonExplorer({ hubNavigation }: { hubNavigation?: ReactNode } = {}) {
   const [query, setQuery] = useState("");
   const [organization, setOrganization] = useState("全部机构");
   const [access, setAccess] = useState("全部权限");
@@ -425,6 +407,9 @@ export function ComparisonExplorer() {
   const selectedModels = useMemo(() => selectedIds
     .map((id) => comparisonModels.find((model) => model.id === id))
     .filter((model): model is ComparisonModel => Boolean(model)), [selectedIds]);
+  const displayedMetricKeys = useMemo(() => modality === "LLM"
+    ? [...metricKeys]
+    : metricKeys.filter((key) => !AA_TEXT_ONLY_METRICS.includes(key)), [modality]);
 
   const availableStructuredModels = useMemo(() => comparisonModels
     .filter((model) => !selected.has(model.id))
@@ -455,31 +440,39 @@ export function ComparisonExplorer() {
 
   return (
     <main className="atlas comparison-page">
-      <ComparisonHeader />
+      <SiteHeader
+        activePage="history"
+        comparisonActive
+        left={{ href: "/history", label: "← 历史图谱" }}
+        right={{ label: `快照 ${SNAPSHOT_DATE}` }}
+      />
+
+      {hubNavigation}
 
       <section className="comparison-summary">
         <div>
-          <p className="kicker"><span>MODEL DATABASE</span>2022—2026 / SOURCE BACKED</p>
+          <p className="kicker"><span>HISTORY / MODEL DATABASE</span>2022—2026 / SOURCE BACKED</p>
           <h1>模型横向比较</h1>
           <p>数值指标可以排序和进入时间图；模型类型、注意力、MoE、训练数据、阶段、低精度与 Infra 等文字字段，也能按同一结构并排比较。未披露字段保持“未知”。</p>
         </div>
         <dl>
           <div><dt>模型</dt><dd>{comparisonModels.length}</dd></div>
           <div><dt>机构</dt><dd>{organizations.length - 1}</dd></div>
-          <div><dt>字段</dt><dd>{metricKeys.length} + {structuredFieldDefinitions.length}</dd></div>
+          <div><dt>字段</dt><dd>{displayedMetricKeys.length} + {structuredFieldDefinitions.length}</dd></div>
         </dl>
       </section>
 
       <ParameterInferenceGuide />
 
       <section className="metric-shortcuts" aria-label="指标分析入口">
-        {metricKeys.map((key) => (
+        {displayedMetricKeys.map((key) => (
           <Link href={`/metrics/${key}`} key={key}>
             <span>{metricDefinitions[key].shortTitle}</span>
             <small>{metricDefinitions[key].unit} · 时间趋势 + 绝对值</small>
           </Link>
         ))}
       </section>
+      {modality !== "LLM" ? <p className="multimodal-aa-note">AA 智能指数与 AA Agent 指数仅在“LLM”模态筛选下显示；多模态模型比较已移除这两项。</p> : null}
 
       <section className="comparison-controls" aria-label="模型筛选">
         <label className="matrix-search">
@@ -498,7 +491,7 @@ export function ComparisonExplorer() {
 
       <section className="comparison-view-switch" aria-label="比较内容类型">
         <button type="button" className={view === "numeric" ? "active" : ""} onClick={() => setView("numeric")}>
-          <span>数值矩阵</span><small>{metricKeys.length} 项 · 可排序 / 可视化</small>
+          <span>数值矩阵</span><small>{displayedMetricKeys.length} 项 · 可排序 / 可视化</small>
         </button>
         <button type="button" className={view === "structured" ? "active" : ""} onClick={() => setView("structured")}>
           <span>结构化文字字段</span><small>{structuredFieldDefinitions.length} 项 · 架构 / 训练 / Infra</small>
@@ -516,7 +509,7 @@ export function ComparisonExplorer() {
               <SortableHeader label="发布日期" sortKey="releaseDate" currentKey={sort.key} direction={sort.direction} onSort={toggleSort} />
               <th>权限 / 许可</th>
               <th>模态 / 架构</th>
-              {metricKeys.map((key) => <SortableHeader key={key} label={metricDefinitions[key].shortTitle} sortKey={key} currentKey={sort.key} direction={sort.direction} onSort={toggleSort} metric={key} />)}
+              {displayedMetricKeys.map((key) => <SortableHeader key={key} label={metricDefinitions[key].shortTitle} sortKey={key} currentKey={sort.key} direction={sort.direction} onSort={toggleSort} metric={key} />)}
               <th>主来源</th>
             </tr>
           </thead>
@@ -528,7 +521,7 @@ export function ComparisonExplorer() {
                 <td className="mono">{model.releaseDate}</td>
                 <td><strong>{accessLabel(model.access)}</strong><small>{model.license}</small></td>
                 <td><strong>{model.modality}</strong><small>{model.architecture}</small></td>
-                {metricKeys.map((key) => <td key={key}><MetricCell model={model} metric={key} /></td>)}
+                {displayedMetricKeys.map((key) => <td key={key}><MetricCell model={model} metric={key} /></td>)}
                 <td><a className="source-button" href={model.primarySourceUrl} target="_blank" rel="noreferrer">官方来源 ↗</a></td>
               </tr>
             ))}
