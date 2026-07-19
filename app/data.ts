@@ -1,4 +1,6 @@
 import type { Fact, Source, TimelineEvent, TimelinePageData } from "./types";
+import { trainingTechnologyLanes } from "./training-tech-data";
+import { hardwareLanes } from "./hardware-data";
 import { generativeResearchEvents } from "./generative-research";
 
 const ACCESSED = "2026-07-18";
@@ -1592,12 +1594,14 @@ export const historyData: TimelinePageData = {
   page: "history",
   kicker: "Observed / Verified",
   title: "AI 技术历史图谱",
-  intro: "默认显示 2026 当前前沿；横向按真实发布日期，纵向比较训练与推理。点开节点看完整字段与来源，或切到对比表；旧模型保留在“完整历史”作为架构基线。",
-  windowLabel: "2023—2026 / EVIDENCE SNAPSHOT",
-  startDate: "2023-01-01",
+  intro: "默认进入训练技术图谱；横向按论文或开源发布日，纵向比较结构、算法、算子与并行，也可切换 NVIDIA、Huawei Ascend 与其他厂商硬件。每个节点按 STAR 展示动机、目标、实验流程和结果，并回链论文、官方博客、规格页或代码仓。",
+  windowLabel: "2017—2026 / EVIDENCE SNAPSHOT",
+  startDate: "2017-01-01",
   endDate: "2026-12-31",
-  tickDates: ["2023-01-01", "2024-01-01", "2025-01-01", "2026-01-01", "2026-12-01"],
+  tickDates: ["2017-01-01", "2019-01-01", "2021-01-01", "2023-01-01", "2025-01-01", "2026-12-01"],
   lanes: [
+    ...trainingTechnologyLanes,
+    ...hardwareLanes,
     {
       id: "llm-training",
       group: "模型训练 / 01",

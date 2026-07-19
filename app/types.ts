@@ -18,6 +18,43 @@ export interface Fact {
   method?: string;
 }
 
+export interface StarNarrative {
+  situation: string;
+  target: string;
+  action: string;
+  result: string;
+}
+
+export interface PrimaryContributor {
+  name: string;
+  role: "first-author" | "project-team";
+  organization: string;
+  profileUrl?: string;
+  profileLabel?: "个人主页" | "GitHub" | "论文作者页" | "官方项目";
+  sourceUrl: string;
+  note?: string;
+}
+
+export interface ModelTechnologyLink {
+  modelId: string;
+  relation: "采用" | "技术谱系" | "基础模型" | "实验验证" | "训练 / 推理支撑";
+  note?: string;
+}
+
+export type TechnologyCategory = "模型结构" | "算法流程" | "高效算子" | "并行方案";
+
+export interface TechnologyComparison {
+  category: TechnologyCategory;
+  mechanism: string;
+  bestFor: string;
+  experiment: string;
+  result: string;
+  computeMemory: string;
+  parallelism: string;
+  limitations: string;
+  availability: string;
+}
+
 export interface TimelineEvent {
   id: string;
   date: string;
@@ -34,6 +71,11 @@ export interface TimelineEvent {
   breakthroughs?: string[];
   revisionNotes?: string[];
   tier?: "frontier" | "watch" | "baseline";
+  star?: StarNarrative;
+  comparison?: TechnologyComparison;
+  eventKind?: "technology" | "model" | "hardware" | "research";
+  primaryContributor?: PrimaryContributor;
+  modelLinks?: ModelTechnologyLink[];
 }
 
 export interface TimelineLane {
