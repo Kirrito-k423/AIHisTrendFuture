@@ -220,11 +220,22 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 22);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 33);
   for (const expected of [
     "Full Attention",
+    "Multi-Query Attention",
+    "Grouped-Query Attention",
+    "Multi-Head Latent Attention",
     "PagedAttention",
     "Gated DeltaNet",
+    "DeepSeek Sparse Attention",
+    "Kimi Delta Attention",
+    "LatentMoE",
+    "Stable LatentMoE",
+    "Attention Residuals",
+    "DeepSeek-V4 CSA/HCA",
+    "Sigmoid Tanh Unit",
+    "Quantization-Aware Training",
     "Auxiliary-Loss-Free",
     "Muon Optimizer",
     "DanceGRPO",
@@ -240,6 +251,12 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "DeepEP",
     "veScale-FSDP",
   ]) assert.match(dataSource, new RegExp(expected));
+  assert.match(dataSource, /tokenMixing/);
+  assert.match(dataSource, /kvLayout/);
+  assert.match(dataSource, /selectorCompressor/);
+  assert.match(dataSource, /Indexer with kpool：[\s\S]*?无官方一手依据/);
+  assert.match(dataSource, /β=4\.0、linear_β=25\.0/);
+  assert.match(dataSource, /待 2026-07-27 权重或技术报告交叉核验/);
   assert.match(dataSource, /5–66% 吞吐/);
   assert.match(dataSource, /尚不能视为已公开可用/);
   assert.match(timelineSource, /STAR 技术档案/);
@@ -251,6 +268,10 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.equal(response.status, 200);
   assert.match(html, /训练技术 \/ 01/);
   assert.match(html, /Full Attention \/ Transformer/);
+  assert.match(html, /Multi-Head Latent Attention/);
+  assert.match(html, /Stable LatentMoE/);
+  assert.match(html, /Sigmoid Tanh Unit/);
+  assert.match(html, /Quantization-Aware Training/);
   assert.match(html, /veScale-FSDP/);
 });
 
@@ -284,8 +305,8 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 22);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 22);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 33);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 33);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);

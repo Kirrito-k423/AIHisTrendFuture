@@ -42,9 +42,14 @@ export interface ModelTechnologyLink {
 }
 
 export type TechnologyCategory = "模型结构" | "算法流程" | "高效算子" | "并行方案";
+export type TechnologyFamily = "Attention" | "MoE" | "残差连接" | "激活函数" | "优化器" | "量化训练" | "训练算法" | "高效算子" | "并行系统";
 
 export interface TechnologyComparison {
   category: TechnologyCategory;
+  family: TechnologyFamily;
+  tokenMixing?: string;
+  kvLayout?: string;
+  selectorCompressor?: string;
   mechanism: string;
   bestFor: string;
   experiment: string;

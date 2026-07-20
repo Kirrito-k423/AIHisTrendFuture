@@ -3323,8 +3323,27 @@ body {
   width: 100%;
 }
 
-.technology-category-filter {
+.technology-category-filter,
+.technology-family-filter {
   display: flex;
+}
+
+.technology-family-filter {
+  border-left: 1px solid var(--line);
+  flex: 1 1 100%;
+  min-height: 38px;
+  overflow-x: auto;
+}
+
+.technology-family-filter::before {
+  align-items: center;
+  color: var(--muted);
+  content: "子分类";
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  padding: 0 12px;
 }
 
 .technology-controls button {
@@ -3622,8 +3641,10 @@ body {
   .technology-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
   .technology-controls { padding: 0 12px; }
   .technology-controls > label { min-width: 100%; border-bottom: 1px solid var(--line); }
-  .technology-category-filter { flex: 1 1 100%; overflow-x: auto; }
-  .technology-category-filter button { min-height: 40px; white-space: nowrap; }
+  .technology-category-filter,
+  .technology-family-filter { flex: 1 1 100%; overflow-x: auto; }
+  .technology-category-filter button,
+  .technology-family-filter button { min-height: 40px; white-space: nowrap; }
   .comparison-hub-switch { grid-template-columns: repeat(2, 1fr); padding: 0; }
   .comparison-hub-switch > div { display: none; }
   .comparison-hub-switch button { min-height: 62px; }
