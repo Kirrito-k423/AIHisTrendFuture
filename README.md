@@ -43,6 +43,12 @@ npm test
 npm run research:bundle
 ```
 
+## 每日 AI 前沿深研
+
+仓库内置 [`ai-trend-daily-research`](./skills/ai-trend-daily-research/SKILL.md) skill：从 AI HOT 公共只读接口发现 SOTA 模型、训练 / 推理技术和硬件突破候选，回到一手来源核验后，再按本仓库的固定字段与证据状态更新内容。没有达到证据门槛的日期不会创建空更新或重新发布站点。
+
+该 skill 的 canonical 源保留在本仓库；本机 Codex 通过 `~/.codex/skills/ai-trend-daily-research` 的符号链接发现它。首次安装后通常需要新开任务或重载应用。
+
 ## 项目结构
 
 ```text
@@ -60,6 +66,7 @@ app/
 public/og.png                      # 社交分享图
 research/model-briefs/             # 每个模型/方法一份独立调研记录
 scripts/generate-generative-research.mjs # 调研数据打包脚本
+skills/ai-trend-daily-research/          # AI HOT 每日前沿发现、核验与发布闭环
 tests/rendered-html.test.mjs       # 路由与字段完整性测试
 ```
 

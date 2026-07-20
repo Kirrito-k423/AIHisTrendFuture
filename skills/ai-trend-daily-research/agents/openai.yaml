@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI 趋势每日深研"
+  short_description: "从 AI HOT 发现并核验 AI 前沿事件，更新技术时空图谱"
+  default_prompt: "Use $ai-trend-daily-research to run today’s evidence-backed AI frontier update."
