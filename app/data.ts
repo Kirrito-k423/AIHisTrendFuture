@@ -4,6 +4,7 @@ import { hardwareLanes } from "./hardware-data";
 import { generativeResearchEvents } from "./generative-research";
 
 const ACCESSED = "2026-07-18";
+const DAILY_ACCESSED = "2026-07-21";
 
 function source(
   id: string,
@@ -13,6 +14,16 @@ function source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: ACCESSED };
+}
+
+function dailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: DAILY_ACCESSED };
 }
 
 function fact(
@@ -1312,6 +1323,61 @@ const cosmos3Super = modelEvent({
   ],
 });
 
+const cosmos3Edge = modelEvent({
+  id: "cosmos3-edge",
+  date: "2026-07-20",
+  tier: "frontier",
+  title: "Cosmos3‑Edge",
+  organization: "NVIDIA",
+  eyebrow: "当前前沿 / Edge World Model / 开放权重",
+  summary:
+    "4B 参数的开放世界模型，把场景理解、未来预测、视觉生成与动作生成放到边缘设备可部署的尺度；NVIDIA 将其作为机器人、智能空间和视觉 AI Agent 的单 GPU / Jetson 起点。",
+  confidence: "高",
+  tags: ["World Model", "VLM", "Action", "I2V", "Edge", "Jetson", "Open Weights", "4B"],
+  officialSourceIds: ["cosmos3-edge-card", "cosmos3-edge-blog", "cosmos3-edge-config", "cosmos3-edge-api"],
+  sources: [
+    dailySource("cosmos3-edge-card", "nvidia/Cosmos3-Edge Model Card", "NVIDIA", "https://huggingface.co/nvidia/Cosmos3-Edge", "模型卡"),
+    dailySource("cosmos3-edge-blog", "Introducing Cosmos 3 Edge", "NVIDIA / Hugging Face", "https://huggingface.co/blog/nvidia/cosmos3edge", "官方博客"),
+    dailySource("cosmos3-edge-config", "Cosmos3-Edge config.json", "NVIDIA", "https://huggingface.co/nvidia/Cosmos3-Edge/blob/main/config.json", "模型卡"),
+    dailySource("cosmos3-edge-api", "Cosmos3-Edge model repository metadata", "Hugging Face", "https://huggingface.co/api/models/nvidia/Cosmos3-Edge", "模型卡"),
+    dailySource("cosmos3-framework", "NVIDIA Cosmos Framework", "NVIDIA", "https://github.com/NVIDIA/cosmos-framework", "代码仓"),
+  ],
+  totalParameters: "4B trainable parameters",
+  activeParameters: "约 4B；Edge 模型不是稀疏专家 MoE，不能用 top-k active experts 表达",
+  activeDerived: true,
+  weightSize: "完整仓库权重体积未知；主模型 index metadata 显示约 4.871 GB，另含 transformer、VAE 与 vision encoder safetensors",
+  precision: "模型卡称仅 BF16 precision 已测试；FP4、FP8、FP16 等未被官方支持",
+  architecture: "Cosmos3 Mixture-of-Transformers 平台的 Edge 变体；config 暴露 Cosmos3EdgeForConditionalGeneration，文本塔 28 层 hidden 2048，视觉编码器 27 层 hidden 1152",
+  attention: "Reasoner 文本塔 16 Q heads / 8 KV heads，head_dim 128，MRoPE section 24/20/20；Reasoner 输入支持到 256K tokens",
+  moe: "不是稀疏 FFN MoE；Cosmos3 平台为 AR tower + diffusion tower 的 Mixture-of-Transformers",
+  otherArchitecture: "Generator 支持文本、图像和 action trajectory 输入，输出图像、视频、action 或文本；action 表示覆盖 camera、AV、Franka、Agibot、UR、Google robot、WidowX、UMI 等 embodiment",
+  hardware: "官方 PBR 覆盖单 B200/H100/H20/RTX PRO/DGX/Jetson 平台；训练硬件未披露",
+  hardwareCount: "推理基准均为 batch size 1 的单 GPU 或单集成平台；基础训练规模未知",
+  dataScale: "模型卡总口径 1.3B data points；表格披露 text 22M、image 19M reasoning / 767M generation、video 1M reasoning / 348M generation、action 7M",
+  dataDetails: "包含 OpenImage、Coyo700M、YouTube Video、UMI，以及私有 Egocentric、Nexar、AgiBot、HOI；另有 HiDream/Qwen-Image 合成图像与 Qwen3-VL 合成 captions",
+  stages: "Cosmos3-Nano/Super 于 2026-05-31 发布；Edge、Edge-Policy-DROID 与 Super 4-Step 蒸馏 checkpoints 于 2026-07-20 发布；Edge 的完整后训练阶段与时长未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "统一世界建模、action-conditioned generation、forward/inverse dynamics、DROID policy post-training；Super 4-Step 使用 DMD2 蒸馏，不能倒填为 Edge 训练算法",
+  lowPrecision: "公开与测试口径为 BF16；量化或低精度训练未知",
+  infra: "Cosmos Framework；vLLM-Omni 与 PyTorch PBR；单 GPU/Jetson 运行，支持 prompt upsampling 与离线 batch inference",
+  aaIndex: "非 Artificial Analysis：官方称 4B 同规模模型中 VANTAGE-Bench #1，并在机器人 policy learning 上达到 SOTA",
+  aaContext: "模型卡基准；I2V 480p、24 fps、189 frames，batch size 1；动态/机器人指标需按各表口径单独比较",
+  aaSpeed: "PyTorch H100 I2V 23.92s、vLLM-Omni H100 I2V 27.64s；Jetson T3000 text decode 29.7 tok/s（eager Transformers）",
+  score: "4B · VANTAGE #1 · H100 I2V 23.92s",
+  breakthroughs: [
+    "把 Cosmos3 的世界模型能力压缩到 4B 级开放 checkpoint，并面向单 GPU 与 Jetson 边缘平台给出 PBR。",
+    "同一 Edge 模型覆盖理解、image-to-video、forward/inverse dynamics 与 action generation，action 轨迹以 embodiment-specific JSON 表示。",
+    "官方给出 Jetson Thor / Orin 的 reasoner 与 generator 延迟口径，便于把边缘部署从营销声明约束到可复核表格。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmrtgmuyf3366bitl3gnpc8eo；attribution canonical 同 URL；发现日期 2026-07-21。",
+    "Cosmos3-Edge 与 2026-05-31 的 Cosmos3-Super Family 不合并：Edge 是 4B 边缘模型，Super 是 64B 生成前沿模型。",
+    "VANTAGE/RoboLab 是官方模型卡与博客口径；未发现 Artificial Analysis 对 Cosmos3-Edge 的独立 Elo 或 Intelligence Index。",
+    "Jetson T2000 的 I2V 使用 448×256 分辨率，不能和 480p datacenter I2V 延迟直接横比。",
+  ],
+});
+
 const cerebras405Sources = [
   source("c405-blog", "Llama 3.1 405B now runs at 969 tokens/s", "Cerebras", "https://www.cerebras.ai/blog/llama-405b-inference", "官方博客"),
 ];
@@ -1645,7 +1711,7 @@ export const historyData: TimelinePageData = {
       title: "Omni 理解 / 生成",
       description: "跨文本、图像、视频与音频的统一模型",
       color: "violet",
-      events: [qwenOmni, bagel, cosmos3Super],
+      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge],
     },
     {
       id: "generation-methods",

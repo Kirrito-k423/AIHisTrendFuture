@@ -12,6 +12,7 @@ import type {
 
 const ACCESSED_AT = "2026-07-19";
 const CURRENT_ACCESSED_AT = "2026-07-20";
+const DAILY_ACCESSED_AT = "2026-07-21";
 
 function source(
   id: string,
@@ -31,6 +32,16 @@ function currentSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: CURRENT_ACCESSED_AT };
+}
+
+function dailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: DAILY_ACCESSED_AT };
 }
 
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
@@ -104,6 +115,7 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-fsdp1": { name: "Yanli Zhao", role: "first-author", organization: "Meta AI", sourceUrl: "https://arxiv.org/abs/2304.11277", profileLabel: "GitHub", profileUrl: "https://github.com/zhaojuanmao" },
   "tech-fsdp2": { name: "PyTorch Distributed 团队", role: "project-team", organization: "Meta / PyTorch", sourceUrl: "https://pytorch.org/blog/introducing-pytorch-fully-sharded-data-parallel-api/", profileLabel: "官方项目", profileUrl: "https://github.com/pytorch/pytorch", note: "FSDP2 是 API / 实现迭代，官方发布未声明独立论文一作。" },
   "tech-deepep": { name: "DeepSeek-AI 开源基础设施团队", role: "project-team", organization: "DeepSeek-AI", sourceUrl: "https://github.com/deepseek-ai/DeepEP", profileLabel: "官方项目", profileUrl: "https://github.com/deepseek-ai/DeepEP", note: "仓库未声明论文式个人一作。" },
+  "tech-ultraep": { name: "Dots-Infra / 小红书技术 / 北京大学团队", role: "project-team", organization: "Dots-Infra / Xiaohongshu / Peking University", sourceUrl: "https://github.com/Dots-Infra/UltraEP", profileLabel: "官方项目", profileUrl: "https://github.com/Dots-Infra/UltraEP", note: "论文列出个人作者；工程发布与生产部署按项目团队归属。" },
   "tech-vescale-fsdp": { name: "Zezhou Wang", role: "first-author", organization: "ByteDance Seed", sourceUrl: "https://arxiv.org/abs/2602.22437", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2602.22437" },
 };
 
@@ -145,6 +157,7 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
   "tech-fsdp1": [{ modelId: "flux-1-dev", relation: "训练 / 推理支撑" }],
   "tech-fsdp2": [{ modelId: "qwen-image-20b", relation: "训练 / 推理支撑" }],
   "tech-deepep": [{ modelId: "deepseek-v3-2024-12", relation: "采用" }, { modelId: "deepseek-v4-pro", relation: "技术谱系" }],
+  "tech-ultraep": [{ modelId: "qwen3-235b-a22b", relation: "实验验证" }, { modelId: "deepseek-v3-2024-12", relation: "实验验证" }],
   "tech-vescale-fsdp": [{ modelId: "qwen3-5-397b-a17b", relation: "实验验证" }],
 };
 
@@ -1148,6 +1161,42 @@ const deepEp = technology({
   sources: [source("deepep-repo", "DeepEP", "DeepSeek-AI", "https://github.com/deepseek-ai/DeepEP", "代码仓")],
 });
 
+const ultraEp = technology({
+  id: "tech-ultraep",
+  date: "2026-07-15",
+  title: "UltraEP",
+  organization: "Dots-Infra / Xiaohongshu / Peking University",
+  category: "并行方案",
+  eyebrow: "论文 + 代码仓 / Real-time EP Balancing",
+  summary: "在 MoE 每层、每个 microbatch 的 post-gating 精确负载上实时复制热点专家并重路由 token，把大 EP 训练与 serving prefill 的 rank-level imbalance 压到接近 force-balanced ceiling。",
+  score: "94.3% ideal / 1.49×",
+  tags: ["UltraEP", "MoE", "Expert Parallel", "Load Balancing", "NVLink", "NVSHMEM", "Qwen3-235B"],
+  situation: "大规模 expert parallelism 会把设备级专家负载偏斜放大成 compute stragglers、token all-to-all 瓶颈和 activation-memory 峰值；历史负载预测在生产非平稳流量下容易失准。",
+  target: "在 rack-scale nodes 的 scale-up fabric 内，用实时精确负载把 MoE 端到端吞吐推近理想均衡，同时保持训练数学等价和低关键路径开销。",
+  action: "每层每个 microbatch 后读取 gating 负载，通过 quota-driven planner 决定热点专家 replica 与 token reroute；使用 GPU-native plan solving、RSN persistent tile streaming、relay fan-out 与异步 replica gradient reduction。",
+  result: "arXiv v3 报告最高 256 GPUs、多 RSN、106B–671B MoE 中，训练+serving 平均达到 force-balanced ideal throughput 的 94.3%，较 no-balancing 1.49×，inter-rank imbalance 从 1.30–4.01 降到 1.01–1.04；技术博客另报训练平均 94.6% ideal、较 Megatron-LM +42%，serving prefill 较 SGLang 1.56×。",
+  mechanism: "系统侧 exact-load real-time expert replication：预留 redundant expert slots，跨层复用 replica weight/grad buffers，按 quota 解耦专家实例最终负载，并在 NVLink domain 内分发权重、重路由 token、回收梯度。",
+  bestFor: "EP64/EP40 这类 rank 持有专家较少、负载偏斜明显的超大 MoE 训练和 prefill；尤其是 Qwen3-235B、DeepSeek-V3 等稀疏模型级别的 rack-scale 部署。",
+  experiment: "论文使用 GLM4.5-106B、Qwen3-235B、DeepSeek-V3 等 106B–671B 模型，训练基于 Megatron-LM、serving prefill 基于 SGLang，规模最高 256 GPUs；开源 examples 提供 8×Hopper demo 与 Qwen3-235B recipe。",
+  computeMemory: "关键路径开销通常小于 300 µs、约 1%–2% end-to-end step time；Qwen3-235B 单个 redundant slot 额外内存从朴素 9.9 GB 降到 108 MB；仍需预留 replica buffer 与 NVSHMEM。",
+  parallelism: "Expert Parallel 的系统负载均衡层，可与 DP/PP/VPP、activation checkpointing、低精度和 CUDA graph 组合；专家复制限制在 scale-up NVLink fabric 内。",
+  limitations: "收益依赖大 EP、非均匀负载与 NVLink/RSN 条件；不替代 router 辅助损失或专家专化训练目标。8×Hopper demo 只是缩放复现，生产收益需 Qwen3-235B 级别大集群验证。",
+  availability: "MIT 开源；UltraEP v1.0.0 于 2026-07-15 发布，Megatron-LM reference integration 公开，SGLang inference integration 仍标为 experimental / 待生产就绪。",
+  breakthroughs: ["post-gating exact-load balancing", "per-layer per-microbatch hot expert replication", "GPU-native quota solver", "cross-layer replica buffer reuse", "runtime load profiler"],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmrsy2z9e03wpbitlqgh25fol；attribution canonical 同 URL；发现日期 2026-07-21。",
+    "94.6% ideal / +42% 与 1.56× 是技术博客按训练和 serving prefill 分场景给出的结果；论文摘要总口径为 94.3% ideal、1.49× over no-balancing。",
+    "SGLang 集成截至本轮仍不是生产 ready；不要把训练侧开源可用性等同推理侧完整可用。",
+  ],
+  sources: [
+    dailySource("ultraep-paper", "UltraEP: Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing", "Dots-Infra / Peking University", "https://arxiv.org/abs/2606.04101", "论文"),
+    dailySource("ultraep-repo", "Dots-Infra/UltraEP", "Dots-Infra", "https://github.com/Dots-Infra/UltraEP", "代码仓"),
+    dailySource("ultraep-blog", "UltraEP: Near-Optimal Load Balancing for Large-Scale MoE Training and Inference", "Dots-Infra", "https://dots-infra.github.io/UltraEP", "官方博客"),
+    dailySource("ultraep-megatron", "Megatron-LM Training with UltraEP", "Dots-Infra", "https://github.com/Dots-Infra/UltraEP/blob/main/examples/README.md", "代码仓"),
+  ],
+});
+
 const veScaleFsdp = technology({
   id: "tech-vescale-fsdp",
   date: "2026-02-25",
@@ -1203,9 +1252,9 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-parallel",
     group: "训练技术 / 04",
     title: "高效并行 / 通信",
-    description: "Megatron、DeepSpeed、FSDP1/2、DeepEP 与 veScale-FSDP",
+    description: "Megatron、DeepSpeed、FSDP1/2、DeepEP、UltraEP 与 veScale-FSDP",
     color: "amber",
-    events: [megatron, zeroDeepSpeed, fsdp1, fsdp2, deepEp, veScaleFsdp],
+    events: [megatron, zeroDeepSpeed, fsdp1, fsdp2, deepEp, ultraEp, veScaleFsdp],
   },
 ];
 

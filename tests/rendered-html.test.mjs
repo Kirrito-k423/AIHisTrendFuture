@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 24);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 25);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -72,6 +72,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const wan22 = modelEvent/);
   assert.match(source, /const qwenImage = modelEvent/);
   assert.match(source, /const zImageTurbo = modelEvent/);
+  assert.match(source, /const cosmos3Edge = modelEvent/);
   assert.match(source, /Decoupled-DMD/);
   assert.match(source, /MSRoPE/);
   assert.match(source, /Denoising-stage MoE/);
@@ -220,7 +221,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 33);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 34);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -249,6 +250,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "PyTorch FSDP1",
     "PyTorch FSDP2",
     "DeepEP",
+    "UltraEP",
     "veScale-FSDP",
   ]) assert.match(dataSource, new RegExp(expected));
   assert.match(dataSource, /tokenMixing/);
@@ -272,6 +274,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(html, /Stable LatentMoE/);
   assert.match(html, /Sigmoid Tanh Unit/);
   assert.match(html, /Quantization-Aware Training/);
+  assert.match(html, /UltraEP/);
   assert.match(html, /veScale-FSDP/);
 });
 
@@ -305,8 +308,8 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 33);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 33);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 34);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 34);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
