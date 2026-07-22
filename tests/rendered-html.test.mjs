@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 25);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 26);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -105,6 +105,7 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.ok((source.match(/id: /g) ?? []).length >= 50);
   assert.match(source, /2022-11-30/);
   assert.match(source, /Qwen3\.7/);
+  assert.match(source, /Gemini 3\.6 Flash/);
   assert.match(source, /MiniMax‑M3/);
   assert.match(source, /Wan2\.2‑T2V‑A14B/);
   assert.match(source, /Qwen-Image/);

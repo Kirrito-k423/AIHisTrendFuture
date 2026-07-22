@@ -215,6 +215,7 @@ const architectureOverrides: Record<string, string> = {
   "glm-45": "Sparse MoE",
   "glm-5": "MoE + MLA / DSA + Shared MTP · Asynchronous Agent RL",
   "glm-52-max": "MoE + DSA + IndexShare",
+  "gemini-36-flash": "Gemini multimodal API · 1M context",
   "llama-4-maverick": "Multimodal MoE",
   "mixtral-8x7b-instruct": "Sparse MoE",
   "qwen3-235b-a22b": "MoE + GQA",
@@ -252,11 +253,11 @@ function structuralMetric(value: number | null, sourceUrl: string, note?: string
   return value === null ? undefined : { value, sourceUrl, note };
 }
 
-function dynamicMetric(value: number | null, sourceUrl: string | null, note: string): MetricValue | undefined {
+function dynamicMetric(value: number | null, sourceUrl: string | null, note: string, observedAt = "2026-07-18"): MetricValue | undefined {
   return value === null || !sourceUrl ? undefined : {
     value,
     sourceUrl,
-    observedAt: "2026-07-18",
+    observedAt,
     note,
   };
 }
@@ -275,6 +276,7 @@ const historyEventIdByCatalogId: Partial<Record<string, string>> = {
   "minimax-m3": "minimax-m3",
   "glm-52-max": "glm-5-2",
   "kimi-k3": "kimi-k3",
+  "gemini-36-flash": "gemini-3-6-flash",
   "flux-1-dev": "flux-1-dev",
   "hunyuanvideo": "hunyuanvideo-2024-12",
   "wan21-t2v-14b": "wan2.1-t2v-14b",
@@ -345,7 +347,7 @@ function fallbackStructuredFact(raw: RawModelCatalogEntry, label: StructuredFiel
     return disclosed(values.join("；"), aaSources(raw));
   }
   if (label === "榜单上下文 / 口径" && raw.aaUrl) {
-    return disclosed("Artificial Analysis 2026-07-18 动态快照；历史模型可能为 estimated", aaSources(raw));
+    return disclosed(`Artificial Analysis ${raw.aaObservedAt ?? "2026-07-18"} 动态快照；历史模型可能为 estimated`, aaSources(raw));
   }
   if (label === "榜单中位速度" && raw.outputTokensPerSecond !== null) {
     return disclosed(formatMetricValue("outputTokensPerSecond", raw.outputTokensPerSecond), aaSources(raw));
@@ -405,16 +407,16 @@ export const comparisonModels: ComparisonModel[] = representativeModelCatalog.ma
   parameterEstimate: parameterEstimateByModelId[raw.id],
   structuredFacts: structuredFactsFor(raw),
   metrics: {
-    aaIntelligence: dynamicMetric(raw.aaIntelligence, raw.aaUrl, "Artificial Analysis v4.1 动态快照；历史模型可能为 estimated"),
-    aaAgentic: dynamicMetric(raw.aaAgentic, raw.aaUrl, "Artificial Analysis Agentic Index 动态快照"),
+    aaIntelligence: dynamicMetric(raw.aaIntelligence, raw.aaUrl, "Artificial Analysis v4.1 动态快照；历史模型可能为 estimated", raw.aaObservedAt),
+    aaAgentic: dynamicMetric(raw.aaAgentic, raw.aaUrl, "Artificial Analysis Agentic Index 动态快照", raw.aaObservedAt),
     totalParamsB: structuralMetric(raw.totalParamsB, raw.primarySourceUrl),
     activeParamsB: structuralMetric(raw.activeParamsB, raw.primarySourceUrl, raw.activeParamsB === raw.totalParamsB ? "Dense 模型按总参数作为每 token 激活参数" : undefined),
     contextK: structuralMetric(raw.contextK, raw.primarySourceUrl),
     weightSizeGB: structuralMetric(raw.weightSizeGB, raw.primarySourceUrl, "官方仓库权重文件口径；不同精度不可混用"),
     trainingTokensT: structuralMetric(raw.trainingTokensT, raw.primarySourceUrl),
-    outputTokensPerSecond: dynamicMetric(raw.outputTokensPerSecond, raw.aaUrl, "AA 服务供应商速度快照；不是聚合吞吐"),
-    blendedPricePerMTok: dynamicMetric(raw.blendedPricePerMTok, raw.aaUrl, "AA 7:2:1 cache/input/output 混合口径；无 cache 时按来源口径"),
-    aaGenerativeElo: dynamicMetric(raw.aaGenerativeElo ?? null, raw.aaUrl, "生成榜单动态快照；只在同任务、同规格口径内比较"),
+    outputTokensPerSecond: dynamicMetric(raw.outputTokensPerSecond, raw.aaUrl, "AA 服务供应商速度快照；不是聚合吞吐", raw.aaObservedAt),
+    blendedPricePerMTok: dynamicMetric(raw.blendedPricePerMTok, raw.aaUrl, "AA 7:2:1 cache/input/output 混合口径；无 cache 时按来源口径", raw.aaObservedAt),
+    aaGenerativeElo: dynamicMetric(raw.aaGenerativeElo ?? null, raw.aaUrl, "生成榜单动态快照；只在同任务、同规格口径内比较", raw.aaObservedAt),
     generationSeconds: raw.generationSeconds == null ? undefined : {
       value: raw.generationSeconds,
       sourceUrl: raw.aaUrl ?? raw.primarySourceUrl,

@@ -5,6 +5,7 @@ import { generativeResearchEvents } from "./generative-research";
 
 const ACCESSED = "2026-07-18";
 const DAILY_ACCESSED = "2026-07-21";
+const TODAY_ACCESSED = "2026-07-22";
 
 function source(
   id: string,
@@ -24,6 +25,16 @@ function dailySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: DAILY_ACCESSED };
+}
+
+function todaySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: TODAY_ACCESSED };
 }
 
 function fact(
@@ -834,6 +845,59 @@ const kimiK3 = modelEvent({
     "SiTU 的名称与 K3 采用已由官方确认；β=4.0、linear_β=25.0、SituAndMul/ACT2FN 注入来自用户提供的实现线索，截至 2026-07-20 尚无公开官方代码可交叉核验。",
     "Stable LatentMoE 暂按 NVIDIA LatentMoE 的待确认变体关联，不在 K3 技术报告公开前宣称两者实现完全相同。",
     "Artificial Analysis 的排名、价格和速度是动态测量，本页固定为 2026-07-18 快照。",
+  ],
+});
+
+const gemini36Flash = modelEvent({
+  id: "gemini-3-6-flash",
+  date: "2026-07-21",
+  tier: "frontier",
+  title: "Gemini 3.6 Flash",
+  organization: "Google DeepMind",
+  eyebrow: "当前前沿 / Workhorse / 1M Context",
+  summary:
+    "Google 同日发布 Gemini 3.6 Flash、3.5 Flash-Lite 与 3.5 Flash Cyber；3.6 Flash 是新的通用 workhorse，重点提升编码、知识工作、多模态任务和 token efficiency，并在 AA 动态测量中达到约 50.1 Intelligence、303.6 tok/s。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Gemini", "1M", "Coding", "Agentic", "API"],
+  officialSourceIds: ["gemini36-blog", "gemini36-api-docs"],
+  aaSourceId: "gemini36-aa",
+  sources: [
+    todaySource("gemini36-blog", "Introducing Gemini 3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber", "Google", "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/", "官方博客"),
+    todaySource("gemini36-api-docs", "Gemini API model documentation", "Google AI for Developers", "https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash", "官方博客"),
+    todaySource("gemini36-aa", "Gemini 3.6 Flash (high)", "Artificial Analysis", "https://artificialanalysis.ai/models/gemini-3-6-flash", "第三方测量"),
+  ],
+  totalParameters: "未知",
+  activeParameters: "未知",
+  weightSize: "未知；闭源 API 模型未发布权重",
+  precision: "未知；Google 未披露训练或服务端推理精度",
+  architecture: "闭源 Gemini 多模态 Transformer 系列；官方未披露层数、hidden size、参数量或专家结构",
+  attention: "未知；官方只披露 1M token 上下文与原生工具使用能力，未公开 attention/KV cache 结构",
+  moe: "未知",
+  otherArchitecture: "文本、图像、音频、视频输入到文本输出；官方称 3.6 Flash 相比 3.5 Flash 减少推理步骤和工具调用，并改进编码、知识工作与多模态性能",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知",
+  stages: "未知；官方仅说明 3.6 Flash 直接基于 3.5 Flash 的开发者和客户反馈迭代",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方披露的是产品级 token efficiency、coding、knowledge work 与 safety safeguards，不披露训练算法细节",
+  lowPrecision: "未知",
+  infra: "通过 Gemini API、AI Studio、Vertex AI、Gemini Enterprise、Gemini app、Android Studio 与 Google Antigravity 提供；底层 serving 集群未知",
+  aaIndex: "Intelligence Index v4.1：50.07；AA 页面显示为 Gemini 3.6 Flash (high)，观察日期 2026-07-22",
+  aaContext: "1M tokens；官方 API 文档和 AA 页面均按 1M token context 口径",
+  aaSpeed: "AA 中位输出速度 303.61 output tok/s；Google 官方称 3.6 Flash 相比 3.5 Flash 在 AA Index 上输出 token 用量少 17%",
+  score: "AA 50.1 · 303.6 tok/s",
+  breakthroughs: [
+    "在同一 Flash 产品线中把 frontier-adjacent Intelligence 与高输出速度结合：AA 观测约 50.1 Intelligence、303.6 tok/s，并保留 1M 上下文。",
+    "官方披露 3.6 Flash 相比 3.5 Flash 减少 17% 输出 token，并在 DeepSWE、GDPval-AA v2 等任务上提升；这是效率/质量更新，不写成绝对 SOTA。",
+    "3.5 Flash-Lite 同日作为高吞吐配套型号发布，AA 观测约 489.9 tok/s；本节点只记录 3.6 Flash 主模型，不把 Lite 或 Cyber 的专门能力混入主字段。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmrusyoaf0bfgbi9ttofctwvj；attribution canonical 同 URL；发现日期 2026-07-22。",
+    "Google 博客还发布 3.5 Flash-Lite 与 3.5 Flash Cyber；3.5 Flash Cyber 仅面向政府和可信伙伴通过 CodeMender 提供，未并入本模型节点。",
+    "AA 50.07 略低于同页 3.5 Flash 的 50.20；3.6 Flash 的入库理由是同厂迭代后的 token efficiency、coding/knowledge 指标和可用性，而不是总榜第一。",
+    "参数、训练数据、硬件、精度与底层架构均未公开，保持未知。",
   ],
 });
 
@@ -1676,7 +1740,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash],
     },
     {
       id: "t2i-training",
