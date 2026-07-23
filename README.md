@@ -9,7 +9,7 @@
 - **历史**：LLM/VLM、T2I/图像编辑、T2V/视频编辑、Omni、生成训练方法、极致推理性能与推理技术论文。
 - **趋势（1–2 年）**：稀疏化、训练规模与数据质量、低精度训练、内存层级、电力约束、单位智能成本。
 - **未来（5–10 年）**：芯片与机架、异构推理、能源园区、长时程 Agent、人类平均智能、AI 科学家与治理外壳。
-- **81 个时间节点**，其中包含 35 个可横向比较的训练技术节点；从 T2I/T2V 综述逐条核验了 28 个候选条目（25 个模型、3 个方法），任何未查到的项目都显式保留为“未知”。
+- **102 个时间节点**，其中包含 56 个可横向比较的训练技术节点；新增 5 条 DeepSpeed 专栏泳道，按官方教程 Git 首次提交时间纳入 21 个方法。从 T2I/T2V 综述逐条核验的 28 个候选条目（25 个模型、3 个方法）仍保留原证据状态，任何未查到的项目都显式标为“未知”。
 - **当前快照**：Kimi K3（API 已上线、权重待发布）、Gemini 3.6 Flash、GLM‑5.2、MiniMax‑M3、DeepSeek‑V4‑Pro、Kimi K2.6、Qwen3.6、Cosmos3‑Super、Cosmos3‑Edge、ABot‑World‑0 与 LTX‑2.3；旧模型作为架构和性能基线。
 - **模型对比**：覆盖从 2022‑11 ChatGPT 到 2026‑07 的 89 个代表模型，并可按 T2I/T2V 筛选。除 LLM 指标外，还提供生成 Elo、单次生成时间、输出规格及逐项来源。
 
@@ -46,7 +46,7 @@ npm run research:bundle
 
 ## 每日 AI 前沿深研
 
-仓库内置 [`ai-trend-daily-research`](./skills/ai-trend-daily-research/SKILL.md) skill：从 AI HOT 公共只读接口发现 SOTA 模型、训练 / 推理技术和硬件突破候选，回到一手来源核验后，再按本仓库的固定字段与证据状态更新内容。没有达到证据门槛的日期不会创建空更新或重新发布站点。
+仓库内置 [`ai-trend-daily-research`](./skills/ai-trend-daily-research/SKILL.md) skill：从 AI HOT 公共只读接口发现 SOTA 模型、训练 / 推理技术和硬件突破候选，同时监控 DeepSpeed 官方教程、Release、Latest News 与重点示例变更；回到一手来源核验后，再按本仓库的固定字段与证据状态更新内容。没有达到证据门槛的日期不会创建空更新或重新发布站点。
 
 该 skill 的 canonical 源保留在本仓库；本机 Codex 通过 `~/.codex/skills/ai-trend-daily-research` 的符号链接发现它。首次安装后通常需要新开任务或重载应用。
 

@@ -330,6 +330,34 @@ test("every training technology has attributable ownership and model relations",
   assert.match(timelineSource, /关联模型/);
 });
 
+test("history includes five source-backed DeepSpeed columns and all 21 requested methods", async () => {
+  const dataSource = await readFile(new URL("../app/deepspeed-tech-data.ts", import.meta.url), "utf8");
+  const historySource = await readFile(new URL("../app/data.ts", import.meta.url), "utf8");
+
+  assert.equal((dataSource.match(/= deepSpeedEvent\(\{/g) ?? []).length, 21);
+  assert.equal((dataSource.match(/group: "DeepSpeed 专栏 \/ 0[1-5]"/g) ?? []).length, 5);
+  assert.match(dataSource, /网页底部 Updated 是站点构建时间，不作为发布日期/);
+  for (const expected of [
+    "ZeRO-Offload", "ZeRO++", "Mixed Precision ZeRO++", "Automatic Tensor Parallelism",
+    "1-bit Adam", "1-bit LAMB", "0/1 Adam", "Domino",
+    "DeepNVMe", "Ulysses-Offload", "ZenFlow", "DataStates-LLM Async Checkpoint",
+    "DeepSpeed-MoE", "DeepSpeed-MoE Inference", "DeepSpeed Model Compression", "Mixture-of-Quantization",
+    "DeepSpeed FLOPs Profiler", "PyTorch Profiler with DeepSpeed", "Communication Logging",
+    "DeepSpeed Autotuning", "DeepSpeed Monitor",
+  ]) assert.match(dataSource, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(historySource, /import \{ deepSpeedTechnologyLanes \}/);
+  assert.match(historySource, /\.\.\.deepSpeedTechnologyLanes/);
+
+  const response = await render("/history");
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(html, /DeepSpeed 专栏 \/ 01/);
+  assert.match(html, /DeepSpeed 专栏 \/ 05/);
+  assert.match(html, /ZeRO-Offload/);
+  assert.match(html, /DataStates-LLM Async Checkpoint/);
+  assert.match(html, /DeepSpeed Monitor/);
+});
+
 test("history adds verified hardware lanes and comparable spec fields", async () => {
   const hardwareSource = await readFile(new URL("../app/hardware-data.ts", import.meta.url), "utf8");
   const comparisonSource = await readFile(new URL("../app/components/HardwareComparison.tsx", import.meta.url), "utf8");
