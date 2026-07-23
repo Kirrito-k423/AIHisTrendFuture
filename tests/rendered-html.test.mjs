@@ -90,12 +90,13 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /https:\/\//);
 
   const research = JSON.parse(await readFile(new URL("../app/generative-research.json", import.meta.url), "utf8"));
-  assert.equal(research.length, 27);
-  assert.equal(research.filter((item) => item.entry_kind === "model").length, 24);
+  assert.equal(research.length, 28);
+  assert.equal(research.filter((item) => item.entry_kind === "model").length, 25);
   assert.equal(research.filter((item) => item.entry_kind === "method").length, 3);
   assert.ok(research.every((item) => item.unknown_fields && item.sources?.length && item.novelty_claims?.length));
   assert.ok(research.every((item) => item.source_article === "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"));
   assert.ok(research.some((item) => item.slug === "nextstep-1-1" && item.modality === "T2I"));
+  assert.ok(research.some((item) => item.slug === "abot-world-0" && item.modality === "T2V"));
   assert.ok(research.some((item) => item.slug === "self-forcing" && item.entry_kind === "method"));
 });
 
@@ -119,6 +120,7 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(research, /GLM-Image/);
   assert.match(research, /Step-Video-T2V 30B/);
   assert.match(research, /Seedance 2\.0/);
+  assert.match(research, /ABot-World-0/);
 });
 
 test("metric charts use interactive ECharts with linear axes and sortable tables", async () => {
@@ -183,6 +185,7 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /GLM-Image/);
   assert.match(html, /Seedance 2\.0/);
   assert.match(html, /Step-Video-T2V 30B/);
+  assert.match(html, /ABot-World-0/);
   assert.match(html, /Agent Swarm/);
   assert.match(html, /Muon Split/);
   assert.match(html, /Prefix Tree Merging/);
@@ -222,7 +225,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 34);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 35);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -243,6 +246,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "DanceGRPO",
     "DiffusionNFT",
     "On-Policy Distillation",
+    "Tunix Agentic RL",
     "Triton-Ascend",
     "Ascend C",
     "Liger Kernel",
@@ -309,11 +313,12 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 34);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 34);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 35);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 35);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
+  assert.match(dataSource, /Google Tunix 团队/);
   assert.match(dataSource, /Huawei Ascend C 团队/);
   assert.match(dataSource, /PyTorch Distributed 团队/);
   assert.match(dataSource, /DeepSeek-AI 开源基础设施团队/);

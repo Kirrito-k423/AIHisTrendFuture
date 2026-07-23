@@ -13,6 +13,7 @@ import type {
 const ACCESSED_AT = "2026-07-19";
 const CURRENT_ACCESSED_AT = "2026-07-20";
 const DAILY_ACCESSED_AT = "2026-07-21";
+const LATEST_ACCESSED_AT = "2026-07-23";
 
 function source(
   id: string,
@@ -42,6 +43,16 @@ function dailySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: DAILY_ACCESSED_AT };
+}
+
+function latestSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: LATEST_ACCESSED_AT };
 }
 
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
@@ -102,6 +113,7 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-qat": { name: "Benoit Jacob", role: "first-author", organization: "Google", sourceUrl: "https://arxiv.org/abs/1712.05877", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/1712.05877", note: "以现代 fake-quant 训练图的规范化里程碑标注，不主张其首创所有 QAT 思想。" },
   "tech-muon": { name: "Jingyuan Liu", role: "first-author", organization: "Moonshot AI", sourceUrl: "https://arxiv.org/abs/2502.16982", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2502.16982", note: "此处一作对应 Muon 可扩展训练论文；Muon 原始实现由 Keller Jordan 发布。" },
   "tech-grpo": { name: "Zhihong Shao", role: "first-author", organization: "DeepSeek-AI", sourceUrl: "https://arxiv.org/abs/2402.03300", profileLabel: "个人主页", profileUrl: "https://zhihongshao.github.io/" },
+  "tech-tunix-agentic-rl": { name: "Google Tunix 团队", role: "project-team", organization: "Google", sourceUrl: "https://github.com/google/tunix", profileLabel: "官方项目", profileUrl: "https://github.com/google/tunix", note: "Tunix 是持续维护的开源库与工程发布，官方材料未声明单一论文一作。" },
   "tech-dancegrpo": { name: "Zeyue Xue", role: "first-author", organization: "ByteDance Seed / The University of Hong Kong", sourceUrl: "https://arxiv.org/abs/2505.07818", profileLabel: "GitHub", profileUrl: "https://github.com/XueZeyue" },
   "tech-diffusionnft": { name: "Kaiwen Zheng", role: "first-author", organization: "Tsinghua University / NVIDIA", sourceUrl: "https://arxiv.org/abs/2506.01347", profileLabel: "个人主页", profileUrl: "https://zhengkw18.github.io/" },
   "tech-opd": { name: "Kevin Lu", role: "first-author", organization: "Thinking Machines Lab", sourceUrl: "https://thinkingmachines.ai/blog/on-policy-distillation/", profileLabel: "个人主页", profileUrl: "https://kevinlu.ai/" },
@@ -770,6 +782,44 @@ const grpo = technology({
   sources: [source("grpo-paper", "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models", "DeepSeek-AI", "https://arxiv.org/abs/2402.03300", "论文")],
 });
 
+const tunixAgenticRl = technology({
+  id: "tech-tunix-agentic-rl",
+  date: "2026-07-21",
+  title: "Tunix Agentic RL",
+  organization: "Google",
+  category: "算法流程",
+  family: "训练算法",
+  eyebrow: "官方博客 + 代码仓 / Agentic RL",
+  summary: "把多轮工具调用 Agent 后训练从同步 rollout 改成高并发异步采样与生产者-消费者流水，降低 TPU 因环境 I/O、工具执行和长尾 trajectory 等待造成的空转。",
+  score: "async rollout / TPU throughput",
+  tags: ["Tunix", "Agentic RL", "JAX", "TPU", "Async Rollout", "GRPO"],
+  situation: "Agentic RL 从单轮答案优化转向多轮环境交互和工具调用；代码执行、数据库查询、Web 搜索或环境 step 会让昂贵 TPU 等待 host-side I/O，传统同步 rollout 还会受最慢 trajectory 拖累。",
+  target: "在 JAX/TPU 后训练栈中，把 rollout、环境交互、分组和训练解耦，让 trainer 持续获得可训练 trajectory，同时保留自定义 agent/env 接口。",
+  action: "Tunix 使用 Python asyncio 的 RolloutOrchestrator 管理大并发 agent-environment episodes，用 GroupQueueManager 按 group_size 形成 ready groups，并把完成的 trajectory 流式交给 AgenticRLLearner；同时集成 vLLM-TPU、SGLang-JAX、Pathways 多机训练和轻量级 RL 指标剖析。",
+  result: "官方博客主张该架构能重叠模型推理、工具执行和 reward computation，避免 trainer 等待完整 batch；代码与文档可核验异步 rollout、trajectory grouping、multi-turn tool use 和 agent/env 抽象，但没有公开统一的端到端吞吐倍数表。",
+  mechanism: "high-concurrency asynchronous rollout + decoupled producer-consumer trajectory queue + dynamic grouping for GRPO-style group advantages。",
+  bestFor: "使用可验证或环境反馈奖励训练多轮工具 Agent，且基础训练/推理栈偏 JAX、TPU、MaxText、vLLM-TPU 或 SGLang-JAX 的团队。",
+  experiment: "官方博客给出 SWE coding agent、math、gaming agent 等 recipes 方向，并以 Perfetto / XProf 视角说明多轮 agentic training 的宏观瓶颈定位；未披露固定模型、TPU 数、任务和 baseline 下的统一量化 benchmark。",
+  computeMemory: "主要节省的是 accelerator idle time 和 pipeline stalls，不是单步显存；max_concurrency、group_size、max_open_buckets 与权重同步锁共同约束吞吐、内存和 rollout stale risk。",
+  parallelism: "rollout producers、环境执行、inference serving 和 trainer 分离；JAX/Pathways 可扩展到多 host，GroupQueueManager 支持异步 trajectory 分组。",
+  limitations: "缺少公开同口径吞吐倍数；当前优势集中在 JAX/TPU 生态，PyTorch/Ray/veRL/OpenRLHF 用户不能直接外推。异步 rollout 还需处理权重同步、stale samples、reward hacking 和长尾环境失败。",
+  availability: "Apache-2.0 开源。google/tunix 仓库、ReadTheDocs 文档和 agentic RL 代码可匿名访问；官方 README 标记 V2 release，Agentic RL Training 在 2025/12 已释放，本轮 2026-07-21 官方博客做系统性发布说明。",
+  breakthroughs: ["asynchronous trajectory collector", "producer-consumer rollout/training pipeline", "agent/env/tool 解耦抽象", "轻量级 RL stage profiling"],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmruuc0d80006bii0tzwael16；attribution canonical 同 URL；发现日期 2026-07-23。",
+    "官方材料没有给出可复核统一吞吐倍数，本条不记录 x 倍加速，只记录架构机制与可核验代码路径。",
+    "Tunix 不是新 SOTA 基座模型；按训练 / 推理技术门类入库。"
+  ],
+  sources: [
+    latestSource("tunix-blog", "Scaling Agentic RL: High-Throughput Agentic Training with Tunix", "Google Developers Blog", "https://developers.googleblog.com/scaling-agentic-rl-high-throughput-agentic-training-with-tunix/", "官方博客"),
+    latestSource("tunix-repo", "google/tunix", "Google", "https://github.com/google/tunix", "代码仓"),
+    latestSource("tunix-agentic-docs", "Tunix Agentic RL documentation", "Google / ReadTheDocs", "https://tunix.readthedocs.io/en/latest/agentic_rl.html", "代码仓"),
+    latestSource("tunix-rollout-orchestrator", "RolloutOrchestrator source", "Google", "https://github.com/google/tunix/blob/main/tunix/rl/agentic/pipeline/rollout_orchestrator.py", "代码仓"),
+    latestSource("tunix-group-queue", "GroupQueueManager source", "Google", "https://github.com/google/tunix/blob/main/tunix/rl/agentic/queue_manager/group_queue_manager.py", "代码仓"),
+  ],
+});
+
 const danceGrpo = technology({
   id: "tech-dancegrpo",
   date: "2025-05-12",
@@ -1236,9 +1286,9 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-algorithm",
     group: "训练技术 / 02",
     title: "算法流程 / Post-training",
-    description: "QAT、GRPO、视觉生成 RL、DiffusionNFT 与 On-Policy Distillation",
+    description: "QAT、GRPO、Agentic RL、视觉生成 RL、DiffusionNFT 与 On-Policy Distillation",
     color: "violet",
-    events: [quantizationAwareTraining, grpo, danceGrpo, diffusionNft, opd],
+    events: [quantizationAwareTraining, grpo, tunixAgenticRl, danceGrpo, diffusionNft, opd],
   },
   {
     id: "training-tech-kernel",

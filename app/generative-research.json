@@ -6124,5 +6124,182 @@
     "notes": "Seedance 2.0 是真实已发布的闭源模型，故 entry_kind=model，而不是 rumor；仅其参数/具体架构传闻需要降级。关于“200B MoE”的结论必须拆成两部分：至少 200B、200B–300B 与 100B 方案争论来自 36Kr 对匿名内部人士的二手采访，官方未确认最终参数；官方只确认“稀疏架构”，没有使用 MoE 一词或披露激活参数。因此本条目不写 200B 为已知参数，也不写 MoE 为确定架构。规格方面，官方技术报告给出原生 480p/720p、4–15 秒、最多 9 图+3 视频+3 音频；当前火山引擎商业页增加 1080p 输出档位，但未说明是否原生。官方工程案例明确 8K/50FPS 是把 720p/24FPS AIGC 素材经过超分与插帧得到，不能把 8K/50FPS 归给模型。尽管权重、训练细节和纯模型速度未知，该模型有官方托管 API、明确任务边界、官方/独立评测和当前 AA Elo，故 comparison_eligible=true、history_eligible=true。",
     "research_file": "research/model-briefs/seedance-2.json",
     "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
+  },
+  {
+    "slug": "abot-world-0",
+    "name": "ABot-World-0",
+    "family": "ABot-World",
+    "entry_kind": "model",
+    "modality": "T2V",
+    "organization": "AMAP CVLab / Alibaba",
+    "release_date": "2026-07-09",
+    "release_date_basis": "官方 GitHub README 的 News 记载 2026-07-09 发布 causal student model ABot-World-0-5B-LF、推理代码、本地 Gradio demo 与在线 playground；arXiv 技术报告 2607.19191 于 2026-07-21 公开，本轮 AI HOT 候选来自该论文热度。因此模型可用日期与论文日期分开记录，本条采用权重/代码首次公开日。",
+    "access": "开放权重与推理代码。官方 GitHub 提供 Apache-2.0 代码、本地 Gradio demo 与下载说明；ModelScope API 可匿名核验 amap_cvlab/ABot-World-0-5B-LF 已发布、可访问、模型类型 ti2v，核心 diffusion_pytorch_model.safetensors 为 BF16。Hugging Face 链接由官方 README 给出，但本轮匿名 API 访问返回 401，故不把 Hugging Face 元数据作为事实来源。",
+    "license": "Apache License 2.0（官方 GitHub LICENSE 与 ModelScope License 均标注）。项目另含 NOTICE 与 THIRD_PARTY_NOTICES，部署前仍需复核 Wan2.2、LightX2V、taehv、Helios 等依赖许可。",
+    "official_model_ids": [
+      "acvlab/ABot-World-0-5B-LF",
+      "amap_cvlab/ABot-World-0-5B-LF"
+    ],
+    "parameter_total": "5B。论文 WorldRoamBench 表把 ABot-World-0 的 Parameters 标为 5B；ModelScope safetensor 元数据给出 diffusion_pytorch_model.safetensors 的 model_size 为 5,270,329,536。该数值对应蒸馏后的核心生成器，不包含 Wan2.2 VAE、T5/UMT5 编码器及其他辅助权重。",
+    "parameter_active": "约 5B（公开材料没有披露 MoE 或稀疏激活结构；按当前公开核心 DiT/生成器口径视作每步激活核心模型，但不能据此推断完整流水线参数）。",
+    "weight_size": "核心 distilled generator 文件 diffusion_pytorch_model.safetensors 为 10,540,744,232 bytes（10.541 GB / 约 9.816 GiB），来自 ModelScope API。官方 README 的 checkpoint 结构还包含 Wan2.2_VAE.pth、taew2_2.pth、models_t5_umt5-xxl-enc-bf16.pth 和 google/umt5-xxl；这些辅助文件的完整下载体积未在 README 中给出。",
+    "precision": "核心 safetensors 在 ModelScope API 中标为 BF16；论文同时报告 FP8 为默认 quality-oriented operating point，并评估更激进低比特配置。训练精度、教师模型精度和量化校准细节未完整披露。",
+    "architecture": "动作条件视频世界模型。ABot-World-0 在预训练视频 DiT 基础上加入 raw keyboard action conditioning 与 reference-character memory，先训练可访问完整时间上下文的 bidirectional teacher，再通过 teacher forcing、causal ODE distillation 与 LongForcing 蒸馏为 causal few-step student，用于连续交互式世界 rollout。",
+    "attention_or_sequence_design": "核心是 bidirectional-to-causal 的时序约束转换：教师可联合去噪整段视频，学生在 causal visual conditioning 下只使用历史上下文生成未来 chunk。部署侧采用 bounded local-context KV cache 与 rolling eviction，使 KV cache footprint 不随总 rollout 时长无界增长；论文还使用 efficient low-precision attention、SageAttention2 与优化 RoPE。",
+    "vae_or_tokenizer": "流式部署栈包含 lightweight VAE decoder / LightVAE，用以降低 first-frame latency 与峰值显存；README checkpoint 结构列出 Wan2.2_VAE.pth 与 taew2_2.pth。VAE 的精确参数量、训练语料与重建指标未在公开材料中逐项披露。",
+    "text_encoder_or_conditioner": "README checkpoint 结构包含 models_t5_umt5-xxl-enc-bf16.pth 与 google/umt5-xxl。论文重点是动作条件与视频世界 rollout，未披露所有文本/动作编码器的精确参数拆分、tokenizer 版本或训练精度。",
+    "training_hardware": "未知",
+    "training_hardware_scale": "未知",
+    "training_data_scale": "官方宣布将开源 500-hour video training dataset with accurate action annotations，但截至本轮核验仍标记为 planned / stay tuned。论文称使用 AAA games、simulation engines 与 internet videos 的多源数据基础设施；总小时数、采样频率、过滤后样本量与许可细节未完整披露。",
+    "training_data_composition": "多源 video-action 数据，包含 AAA 游戏、仿真引擎与互联网视频。WorldExplorer 负责 agent-driven collection、同步采集视频帧、相机参数、控制输入、环境状态与元数据，并通过 14 个确定性质量检查、VLM 评估、动作与文本标注形成闭环。官方仅预告 500 小时带精确动作标注数据集，未披露完整发布日期、下载地址或许可。",
+    "training_stages": [
+      {
+        "stage": 1,
+        "name": "Bidirectional teacher training",
+        "description": "在大规模多源 video-action 数据上全参数微调，使教师模型学习动作与视觉动态对应关系。"
+      },
+      {
+        "stage": 2,
+        "name": "Teacher forcing",
+        "description": "把 bidirectional teacher 迁移到 causal autoregressive student，在 causal visual conditioning 下训练未来 chunk 生成。"
+      },
+      {
+        "stage": 3,
+        "name": "Causal ODE distillation",
+        "description": "以冻结的 Stage 1 causal diffusion model 的 probability-flow ODE 为目标，把多步自回归去噪压缩到 few-step prediction。"
+      },
+      {
+        "stage": 4,
+        "name": "LongForcing",
+        "description": "让学生在 long self-rollouts 上接受 extended-horizon teacher 的 distribution-level corrective supervision，以减轻长程自回归漂移。"
+      }
+    ],
+    "training_stage_times": [
+      {
+        "stage": "Bidirectional teacher training",
+        "optimization_steps": "未知",
+        "wall_clock_time": "未知"
+      },
+      {
+        "stage": "Teacher forcing",
+        "optimization_steps": "未知",
+        "wall_clock_time": "未知"
+      },
+      {
+        "stage": "Causal ODE distillation",
+        "optimization_steps": "未知",
+        "wall_clock_time": "未知"
+      },
+      {
+        "stage": "LongForcing",
+        "optimization_steps": "未知",
+        "wall_clock_time": "未知"
+      }
+    ],
+    "training_algorithms": "全参数动作条件视频模型微调；teacher forcing；causal ODE distillation；LongForcing / extended-horizon distribution matching；部署侧结合低比特 DiT 推理、bounded local-context KV cache、memory-aware scheduling、SageAttention2、LightVAE 与 Fast-RoPE。优化器、batch size、学习率、训练步数、teacher/student 噪声日程和 DMD 细节未完整披露。",
+    "training_infra": "WorldExplorer 数据闭环与部署栈是主要 infra 创新。数据侧使用 agent-driven collection、source-specific adapters、训练反馈驱动的采集重分配、质量检查与统一动作/文本标注；推理侧面向单张 RTX 5090 做 VAE 解码、低比特 DiT、注意力、RoPE、KV cache 和模块调度联合优化。训练集群、分布式并行、容错、checkpoint 频率未知。",
+    "inference_hardware": "官方测试口径为 1x NVIDIA RTX 5090 desktop GPU，Ubuntu 22.04、CUDA 13.3；README 安装说明也以 RTX 5090 为测试环境。",
+    "inference_performance": "论文与 README 共同披露：720P / 1280x704、batch size 1，在单张 RTX 5090 上最高 16 FPS，action-to-first-frame latency 1.2 s，峰值 VRAM 约 19 GiB / 不超过 19.3 GiB。论文说明该 latency 覆盖从用户 keypress 到对应 inference chunk 解码出首个响应帧，不是孤立 sampling speed。",
+    "max_output_resolution": "720P / 1280x704",
+    "max_output_duration_seconds": null,
+    "native_fps": 16,
+    "aa_elo": null,
+    "aa_elo_observed_at": null,
+    "generation_time_seconds": 1.2,
+    "generation_time_context": "action-to-first-frame latency；单张 NVIDIA RTX 5090，720P / 1280x704，batch size 1，包含生成与解码路径到首个响应帧可用。持续吞吐最高 16 FPS，峰值 VRAM 约 19 GiB。",
+    "benchmark_scores": [
+      {
+        "benchmark": "WorldRoamBench",
+        "variant": "ABot-World-0",
+        "observed_at": "2026-07-21 technical report",
+        "metrics": {
+          "parameters": "5B",
+          "action_fidelity": 0.5266,
+          "trajectory_following": 0.729,
+          "aesthetic": 0.6752,
+          "imaging": 0.5039,
+          "physical_mechanics": 0.4651,
+          "environment_memory": 0.5223,
+          "object_memory": 0.5041
+        },
+        "scope": "论文 Table 3 的 selected sub-dimensions；该表对比 Genie 3、HappyOyster、LingBot-World 与 HY-World 1.5，但只覆盖若干维度，不是通用 T2V 质量榜单。"
+      },
+      {
+        "benchmark": "Deployment envelope",
+        "variant": "optimized low-bit configurations",
+        "observed_at": "2026-07-21 technical report",
+        "metrics": {
+          "resolution": "1280x704",
+          "gpu": "1x NVIDIA RTX 5090",
+          "max_fps": 16,
+          "action_to_first_frame_latency_seconds": 1.2,
+          "peak_vram_gib": "<=19.3"
+        },
+        "scope": "系统级部署口径；低比特 operating envelope 与质量权衡需结合论文 Table 2，不可直接外推到其他 GPU、分辨率或未量化配置。"
+      }
+    ],
+    "novelty_claims": [
+      {
+        "claim": "在单张桌面级 RTX 5090 上实现 720P、最高 16 FPS、1.2 秒 action-to-first-frame 的连续动作条件世界 rollout。",
+        "scope_boundary": "这是论文和 README 的官方系统口径；依赖优化低比特配置和专门部署栈，不等同于未优化 BF16 纯模型速度，也不证明任意场景都可 16 FPS。",
+        "evidence": "arXiv:2607.19191 摘要、Table 1/2 与官方 GitHub README 均给出同一硬件、分辨率、FPS、延迟和显存范围。",
+        "confidence": "高"
+      },
+      {
+        "claim": "LongForcing 用 extended-horizon teacher 对学生 long self-rollouts 做分布级校正，以缓解长程自回归漂移。",
+        "scope_boundary": "论文给出 60 秒 ablation 和定性长程 rollout，尚未有独立复现；不能把该方法泛化成所有视频世界模型的通用最优训练策略。",
+        "evidence": "技术报告 Sections 4.3.3、5.2 与 Figure 10 描述 LongForcing 与 Causal-Forcing-style baseline 的比较。",
+        "confidence": "中高"
+      },
+      {
+        "claim": "WorldExplorer 把训练反馈驱动的数据采集、同步动作/相机/状态捕获、质量检查和 VLM 评估组合成可扩展交互世界建模数据闭环。",
+        "scope_boundary": "500 小时训练数据集仍是计划发布；当前只能记录系统设计与数据类型，不能记录完整公开数据规模或复现训练。",
+        "evidence": "技术报告 Section 3 与 README 2026-07-10 roadmap/news。",
+        "confidence": "中"
+      },
+      {
+        "claim": "核心 causal student 权重已开放，ModelScope 可核验 5.270B BF16 safetensors 核心生成器。",
+        "scope_boundary": "该数字不包含 VAE、UMT5/T5 编码器和整条推理流水线；Hugging Face 匿名 API 本轮不可访问，因此权重元数据采用 ModelScope。",
+        "evidence": "ModelScope API 对 amap_cvlab/ABot-World-0-5B-LF 的 ModelInfos.safetensor 与官方 README 下载说明。",
+        "confidence": "高"
+      }
+    ],
+    "comparison_eligible": true,
+    "history_eligible": true,
+    "unknown_fields": [
+      "bidirectional teacher 权重、参数量、发布时间与许可；官方 roadmap 标记为未发布",
+      "500 小时动作标注训练数据集的正式下载地址、许可、过滤后小时数和样本分布",
+      "完整流水线参数总量，包括 Wan2.2 VAE、T5/UMT5 编码器与辅助模块",
+      "训练加速器型号、设备数量、节点数、互联拓扑、训练 FLOPs、能耗与 wall-clock time",
+      "各训练阶段 batch size、学习率、优化器、训练步数、数据配比和噪声日程",
+      "低比特量化校准方法、每个模块精度分布及质量损失曲线",
+      "Hugging Face 模型仓匿名 API 401 的原因，以及 HF 元数据是否与 ModelScope 完全一致",
+      "WorldRoamBench 的完整公开评测集、独立复现结果和与通用 T2V 榜单之间的可比关系"
+    ],
+    "sources": [
+      {
+        "title": "ABot-World-0: Infinite Interactive World Rollout on a Single Desktop GPU",
+        "url": "https://arxiv.org/abs/2607.19191",
+        "source_type": "official_preprint"
+      },
+      {
+        "title": "amap-cvlab/ABot-World official repository",
+        "url": "https://github.com/amap-cvlab/ABot-World",
+        "source_type": "official_github"
+      },
+      {
+        "title": "ABot-World project page",
+        "url": "https://amap-cvlab.github.io/ABot-World/",
+        "source_type": "official_project_page"
+      },
+      {
+        "title": "ModelScope API metadata for amap_cvlab/ABot-World-0-5B-LF",
+        "url": "https://modelscope.cn/api/v1/models/amap_cvlab/ABot-World-0-5B-LF",
+        "source_type": "official_model_repository"
+      }
+    ],
+    "notes": "AI HOT discovery: https://aihot.virxact.com/items/cmrvls9qg03jtbihbfhtx203y；attribution canonical 同 URL；发现日期 2026-07-23。本条按动作条件交互世界模型映射到 T2V/生成研究主入口，而不是 LLM 模型目录手写项。需要严格区分 2026-07-09 的权重/代码发布、2026-07-10 的 500 小时数据集预告、2026-07-13 的 Reactor 上线，以及 2026-07-21 的 arXiv 技术报告公开。",
+    "research_file": "research/model-briefs/abot-world-0.json",
+    "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
   }
 ]
