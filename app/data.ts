@@ -7,6 +7,7 @@ import { generativeResearchEvents } from "./generative-research";
 const ACCESSED = "2026-07-18";
 const DAILY_ACCESSED = "2026-07-21";
 const TODAY_ACCESSED = "2026-07-22";
+const CURRENT_RUN_ACCESSED = "2026-07-24";
 
 function source(
   id: string,
@@ -36,6 +37,16 @@ function todaySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: TODAY_ACCESSED };
+}
+
+function currentRunSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: CURRENT_RUN_ACCESSED };
 }
 
 function fact(
@@ -1127,6 +1138,59 @@ const qwenOmni = modelEvent({
   score: "AA 未收录",
 });
 
+const qwenAudio30Tts = modelEvent({
+  id: "qwen-audio-3-0-tts-plus",
+  date: "2026-07-23",
+  tier: "frontier",
+  title: "Qwen-Audio-3.0-TTS-Plus",
+  organization: "Qwen Audio / Alibaba",
+  eyebrow: "Omni / Text-to-Speech / 托管服务",
+  summary:
+    "Qwen 的生产级语音合成系统，用 12.5 Hz 低帧率语音 tokenizer 降低自回归解码成本，并以五阶段 LM/FM 训练、自然语言指令和细粒度 inline tags 扩展多语、方言、长文本与鲁棒克隆能力。",
+  confidence: "中",
+  tags: ["Omni", "TTS", "Speech", "12.5 Hz Tokenizer", "RL", "Qwen Audio"],
+  officialSourceIds: ["qwen-audio30-page", "qwen-audio30-launch"],
+  aaSourceId: "qwen-audio30-aa",
+  sources: [
+    currentRunSource("qwen-audio30-page", "Qwen-Audio-3.0-TTS project page", "Qwen Audio / Alibaba", "https://funaudiollm.github.io/qwen-audio-3.0-tts/", "官方博客"),
+    currentRunSource("qwen-audio30-launch", "Introducing Qwen-Audio-3.0-TTS", "Qwen Team", "https://x.com/Alibaba_Qwen/status/2080270065547809133", "官方博客"),
+    currentRunSource("qwen-audio30-aa", "Text to Speech Leaderboard - Top AI Speech Models", "Artificial Analysis", "https://artificialanalysis.ai/text-to-speech/leaderboard/provider-voice", "第三方测量"),
+  ],
+  totalParameters: "未知：官方项目页未披露 LM、FM、vocoder 或完整系统参数量",
+  activeParameters: "未知",
+  weightSize: "未知：未发现官方公开权重或模型卡",
+  precision: "未知：训练、服务端推理与音频生成精度均未披露",
+  architecture: "生产级 TTS 系统：12.5 Hz 低帧率 speech tokenizer + language model + flow model + vocoder / super-resolution pipeline",
+  attention: "未知：官方项目页未披露 Transformer 层数、attention 结构或上下文长度",
+  moe: "未知：官方未披露是否使用 MoE",
+  otherArchitecture: "自然语言风格指令、86 个细粒度 inline tags、16 种语言、20 个中文方言区域、最长约 3 分钟单次合成和鲁棒参考音频适配",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "官方只披露覆盖多语、跨语种、情绪、方言、长文本、文本规范化、噪声/混响参考音频等评测场景；训练数据来源、规模与许可口径未知",
+  stages: "独立 LM/FM 预训练 → 高质量数据退火的联合训练 → LM 强化学习 → FM 鲁棒性训练 → FM 强化学习",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "低帧率语音 tokenization、LM/FM 渐进训练、自然语言与 inline-tag 控制、LM RL、FM robustness training、FM RL",
+  lowPrecision: "未知",
+  infra: "托管服务可用性由官方发布帖与 Artificial Analysis 收录间接确认；服务端硬件、批处理、缓存和 vocoder 部署栈未知",
+  aaIndex: "TTS Arena Elo 1234；Artificial Analysis FAQ 标为 Text-to-Speech Arena 当前 #1（2026-07-24 访问）",
+  aaContext: "Speech Arena blind pairwise user votes；provider-voice leaderboard；动态 Elo 会随样本、对手池和日期变化",
+  aaSpeed: "不适用：TTS 榜单未提供与 LLM tokens/s 同口径速度",
+  score: "TTS Elo 1234",
+  breakthroughs: [
+    "12.5 Hz 低帧率 speech tokenizer 把语音 token 率降到低频 AR 解码口径，目标是降低推理延迟而保留内容和说话人信息。",
+    "五阶段 LM/FM 训练把内容一致性、韵律自然度、音色相似度、鲁棒性和感知质量分阶段优化。",
+    "细粒度 inline tags 与自然语言控制把情绪、语速、音色、口音和非语言事件局部化到短语/词级控制。",
+  ],
+  notes: [
+    "事件日期采用 Qwen 官方发布帖的 2026-07-23；官方项目页本身未给独立发布日期。",
+    "Artificial Analysis 的 1234 Elo 是 2026-07-24 访问时页面结构化 FAQ 暴露的动态榜单值，不能与图像/视频 Elo 或 LLM Intelligence Index 混用。",
+    "参数量、训练硬件、训练数据规模、权重许可与服务端推理精度均未知，未从 CosyVoice 或 Qwen2.5-Omni 邻近项目补齐。",
+    "AI HOT 发现链接：https://aihot.virxact.com/items/cmrxihn0u00e7ro4jy78efqxq；保留 AI HOT attribution/canonical，仅作为发现来源，不作为技术事实来源。",
+  ],
+});
+
 const qwenImage = modelEvent({
   id: "qwen-image-20b",
   date: "2025-08-04",
@@ -1777,7 +1841,7 @@ export const historyData: TimelinePageData = {
       title: "Omni 理解 / 生成",
       description: "跨文本、图像、视频与音频的统一模型",
       color: "violet",
-      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge],
+      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge, qwenAudio30Tts],
     },
     {
       id: "generation-methods",
