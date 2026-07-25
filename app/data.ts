@@ -49,6 +49,16 @@ function currentRunSource(
   return { id, title, publisher, url, type, accessedAt: CURRENT_RUN_ACCESSED };
 }
 
+function latestRunSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: "2026-07-25" };
+}
+
 function fact(
   label: string,
   value: string,
@@ -910,6 +920,61 @@ const gemini36Flash = modelEvent({
     "Google 博客还发布 3.5 Flash-Lite 与 3.5 Flash Cyber；3.5 Flash Cyber 仅面向政府和可信伙伴通过 CodeMender 提供，未并入本模型节点。",
     "AA 50.07 略低于同页 3.5 Flash 的 50.20；3.6 Flash 的入库理由是同厂迭代后的 token efficiency、coding/knowledge 指标和可用性，而不是总榜第一。",
     "参数、训练数据、硬件、精度与底层架构均未公开，保持未知。",
+  ],
+});
+
+const claudeOpus5 = modelEvent({
+  id: "claude-opus-5",
+  date: "2026-07-24",
+  tier: "frontier",
+  title: "Claude Opus 5",
+  organization: "Anthropic",
+  eyebrow: "当前前沿 / Opus tier / 1M Context",
+  summary:
+    "Anthropic 发布 Opus 5，定位为接近 Fable 5 智能、但保持 Opus 4.8 价格的日常前沿模型；官方披露其在 Frontier-Bench、GDPval-AA 等编码和知识工作评测上达到新高，AA 动态测量给出约 61 Intelligence。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Claude", "Opus", "1M", "Agentic", "API"],
+  officialSourceIds: ["claude-opus5-launch", "claude-opus5-docs", "claude-opus5-whats-new", "claude-opus5-system-card"],
+  aaSourceId: "claude-opus5-aa",
+  sources: [
+    latestRunSource("claude-opus5-launch", "Introducing Claude Opus 5", "Anthropic", "https://www.anthropic.com/news/claude-opus-5", "官方博客"),
+    latestRunSource("claude-opus5-docs", "Claude Platform models overview", "Anthropic", "https://platform.claude.com/docs/en/about-claude/models/overview", "官方博客"),
+    latestRunSource("claude-opus5-whats-new", "What's new in Claude Opus 5", "Anthropic", "https://platform.claude.com/docs/en/about-claude/models/whats-new-opus-5", "官方博客"),
+    latestRunSource("claude-opus5-system-card", "Claude Opus 5 System Card", "Anthropic", "https://www-cdn.anthropic.com/c5fbac3f0b1280a933ebd26d3cb8bb9f5bdeaf48/Claude%20Opus%205%20System%20Card.pdf", "技术报告"),
+    latestRunSource("claude-opus5-aa", "Claude Opus 5 (max)", "Artificial Analysis", "https://artificialanalysis.ai/models/claude-opus-5", "第三方测量"),
+  ],
+  totalParameters: "未知",
+  activeParameters: "未知",
+  weightSize: "未知；闭源 API 模型未发布权重",
+  precision: "未知；Anthropic 未披露训练或服务端推理精度",
+  architecture: "闭源 Claude 5 系列模型；文本与图像输入、文本输出，Claude API ID 为 claude-opus-5",
+  attention: "未知；官方只披露 1M token context、128k max output 与 adaptive thinking，不披露 attention/KV cache 结构",
+  moe: "未知",
+  otherArchitecture: "Adaptive thinking 默认开启；支持 effort 控制思考深度；API beta 增加 mid-conversation tool changes、default fallbacks，Opus 5 prompt cache 最小可缓存长度降至 512 tokens",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；开发者文档披露 reliable knowledge cutoff 为 2026-05，training data cutoff 为 2026-05",
+  dataDetails: "未知",
+  stages: "未知；官方只描述相对 Opus 4.8 的能力、行为和安全更新",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方披露 deep reasoning、long-horizon tasks、test-time compute scaling 与 adaptive thinking 行为，不披露训练算法、RL 配方或蒸馏细节",
+  lowPrecision: "未知",
+  infra: "Claude API、Claude apps、Claude Code、Amazon Bedrock、Google Cloud 与 Microsoft Foundry 可用；Fast mode 为 Claude API research preview，价格为基础 Opus 5 的 2×",
+  aaIndex: "Intelligence Index v4.1：61（Claude Opus 5 Adaptive Reasoning, Max Effort；观察日期 2026-07-25）",
+  aaContext: "1M token context；同步 Messages API max output 128k tokens；模型 ID 使用无日期但固定快照的 claude-opus-5",
+  aaSpeed: "AA provider 页面观测：Google 61.6 tok/s、Anthropic 54.8 tok/s、Amazon 52.4 tok/s；7:2:1 cache/input/output blended price 约 $3.85 / MTok",
+  score: "AA 61 · 1M context",
+  breakthroughs: [
+    "在 Opus 价格层提供接近 Fable 5 的前沿能力：官方称在 Frontier-Bench、GDPval-AA 等编码和知识工作评测上达到新 SOTA，同时保持 $5 / $25 每百万输入/输出 token。",
+    "把 1M token context、128k max output 和 adaptive thinking 默认行为下放到 Opus tier，并提供 effort 参数控制思考深度。",
+    "AA 2026-07-25 动态测量给出约 61 Intelligence，是当前总榜前沿；该值必须随观察日期阅读，不替代官方训练规格。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmrz7mrck00gprox8j0j9qfst；attribution canonical 同 URL；发现日期 2026-07-25。",
+    "Anthropic 同时强调 Opus 5 仍落后 Mythos 5 的生物与进攻网络安全高风险能力；不能把 Frontier-Bench/GDPval-AA 的优势泛化到所有安全敏感能力。",
+    "参数量、训练硬件、训练数据规模、精度、架构细节和完整训练阶段均未公开，保持未知。",
+    "AA Intelligence、速度和价格是动态榜单/供应商测量；本条冻结为 2026-07-25 访问快照。",
   ],
 });
 
@@ -1806,7 +1871,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5],
     },
     {
       id: "t2i-training",

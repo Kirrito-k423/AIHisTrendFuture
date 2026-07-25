@@ -1,0 +1,179 @@
+{
+  "slug": "flux-3",
+  "name": "FLUX 3",
+  "family": "FLUX",
+  "entry_kind": "model",
+  "modality": "Omni",
+  "organization": "Black Forest Labs",
+  "release_date": "2026-07-23",
+  "release_date_basis": "Black Forest Labs 的 FLUX 3 发布博客标注 July 23, 2026，并称 FLUX 3 Video 已进入 Early Access；FLUX 3 模型页仍显示 Coming Soon。这里采用首次官方公开发布日，不把后续 API、private weight 或 Dev 权重计划当作已经完成。",
+  "access": "Early Access / 待发布。BFL 模型页提供 Request early access；发布计划称未来会提供 FLUX 3 Video API 与 private weight access、FLUX 3 Image API 与 private weight access、FLUX 3 Action / FLUX-mimic partner access，以及 FLUX 3 Dev 多模态 backbone。上述能力在 2026-07-25 核验时仍按待发布或受邀访问处理。",
+  "license": "未知。FLUX 3 Video / Image / Action / Dev 的正式许可证、API 条款差异和 private weight 许可未披露；不能沿用 FLUX.2 或 FLUX.1 的许可。",
+  "official_model_ids": [
+    "FLUX 3 Video",
+    "FLUX 3 Image",
+    "FLUX 3 Action",
+    "FLUX-mimic",
+    "FLUX 3 Dev"
+  ],
+  "parameter_total": "未知",
+  "parameter_active": "未知",
+  "weight_size": "未知；截至 2026-07-25 未发布公开权重、模型卡或文件树",
+  "precision": "未知；官方未披露训练或推理精度",
+  "architecture": "统一多模态 flow-matching / Self-Flow foundation model，联合学习图像、视频、音频，并把 action prediction 作为同一世界模型 backbone 的扩展。BFL 称它不是单独的内容生成模型，而是面向 visual intelligence、physical AI 与内容创作的统一 backbone。",
+  "attention_or_sequence_design": "未知。官方只披露统一架构、Self-Flow 路线、视频/图像/音频/action 共同训练和多模态输入输出形态；没有公开层数、hidden size、attention 类型、RoPE/KV cache、DiT block 配置或 action token 编码。",
+  "vae_or_tokenizer": "未知。官方未披露 FLUX 3 所用图像/视频/audio tokenizer、VAE、latent channel、压缩倍率、音频 codec 或是否沿用 FLUX.2 VAE。",
+  "text_encoder_or_conditioner": "未知。官方未披露文本编码器、语言模型条件器、tokenizer、上下文长度或多语言对话生成的条件管线。",
+  "training_hardware": "未知",
+  "training_hardware_scale": "未知",
+  "training_data_scale": "BFL 的 FLUX 3 x mimic 博客称 FLUX 3 使用 tens of millions of hours of general video content，并使用 hundreds of thousands of hours focused on human and robot manipulation tasks；精确小时数、去重后规模、图像/音频样本量、语言数据规模和许可分布未知。",
+  "training_data_composition": "图像、视频、音频的联合训练数据，视频预测占训练算力主体；面向 action 的数据包含人类与机器人操作视频。BFL 未公开来源占比、过滤规则、版权/许可分布、合成数据比例或安全过滤细节。",
+  "training_stages": [
+    {
+      "stage": 1,
+      "name": "FLUX 3 multimodal backbone training",
+      "description": "基于 Self-Flow 思路扩大 compute 与数据资源，同时训练图像、视频和音频。官方没有披露从头训练还是继承 FLUX.2 checkpoint、训练步数或 batch。"
+    },
+    {
+      "stage": 2,
+      "name": "Action prediction curriculum",
+      "description": "在大规模训练中把 action prediction 加入 curriculum。BFL 称视频生成质量先下降最多 10%，约 3500 steps 后恢复到加入 action 前水平，并能预测动作。"
+    },
+    {
+      "stage": 3,
+      "name": "Capability-specific rollout",
+      "description": "按 Video、Image、Action / FLUX-mimic、Dev backbone 分阶段 Early Access、API、private weight 与未来开放权重发布；截至本轮只有官方博客和 Early Access 入口。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "FLUX 3 multimodal backbone training",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Action prediction curriculum",
+      "optimization_steps": "3500 steps 后恢复视频质量的观察值；完整阶段总步数未知",
+      "wall_clock_time": "未知"
+    },
+    {
+      "stage": "Capability-specific rollout",
+      "optimization_steps": "不适用",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "Self-Flow / self-supervised flow matching 路线；统一多模态 flow matching；在视频 backbone 上加入 action prediction；FLUX-mimic 使用 frozen 或 finetuned FLUX 3 backbone 加 action decoder。优化器、loss 权重、noise schedule、distillation、RL 或 safety fine-tuning 配方未披露。",
+  "training_infra": "未知。BFL 只披露显著扩大 compute 和数据资源，未披露训练集群、分布式并行、容错、checkpoint、数据管道或 serving 栈。FLUX-mimic 部署栈声称把 backbone 输入到 world representation 的延迟优化到单张 NVIDIA RTX 5090 小于 80ms，完整机器人系统 reaction time 为 101ms。",
+  "inference_hardware": "内容生成服务硬件未知。FLUX-mimic 机器人侧披露单张 NVIDIA RTX 5090 上 backbone 输入到 world representation 小于 80ms；该硬件口径只适用于 mimic 优化部署栈，不代表 FLUX 3 Video / Image API。",
+  "inference_performance": "FLUX 3 Video 可单次生成最长 20 秒、带原生音频的视频；官方早期评估使用 10 秒 720p text-to-video clips with audio。FLUX-mimic 优化部署栈在单张 RTX 5090 上 backbone latency <80ms，完整机器人系统 reaction time 101ms。",
+  "max_output_resolution": "Video 早期评估口径为 720p；Image 支持多种 styles、aspect ratios 和 resolutions，但精确最大分辨率未知",
+  "max_output_duration_seconds": 20,
+  "native_fps": null,
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "未知；官方只披露单次最长 20 秒视频、早期评估用 10 秒 720p clips with audio，未披露采样步数、服务端硬件、端到端延迟或每秒生成耗时。",
+  "benchmark_scores": [
+    {
+      "benchmark": "BFL early video preference evaluation",
+      "variant": "FLUX 3 Video",
+      "observed_at": "2026-07-23 official blog",
+      "metrics": {
+        "vs_grok_imagine_video": "up to 69% preference",
+        "vs_kling_v3_pro": "60% preference",
+        "vs_happy_horse_v1": "59% preference",
+        "vs_happy_horse_1_1": "57% preference",
+        "vs_seedance_2_0": "52% preference",
+        "vs_gemini_omni_flash": "52% preference",
+        "vs_runway_gen_4_5": "77% preference",
+        "vs_luma_ray_3_2": "93% preference"
+      },
+      "scope": "官方早期评估，BFL 明确称 model 与 harness 仍在开发、结果是 preliminary；未披露评测集、标注者、提示词分布、采样参数和统计置信区间，不能当作独立公开榜单。"
+    },
+    {
+      "benchmark": "Action prediction curriculum disturbance",
+      "variant": "FLUX 3 with action prediction",
+      "observed_at": "2026-07-23 official FLUX 3 x mimic blog",
+      "metrics": {
+        "initial_video_quality_drop": "up to 10%",
+        "recovery_steps": 3500
+      },
+      "scope": "每条质量曲线归一化到加入 action prediction 前的自身基线；只证明 BFL 观察到同一 backbone 可吸收 action modality，不等于所有机器人任务的独立 SOTA。"
+    },
+    {
+      "benchmark": "FLUX-mimic deployment latency",
+      "variant": "mimic optimized deployment stack",
+      "observed_at": "2026-07-23 official FLUX 3 x mimic blog",
+      "metrics": {
+        "backbone_latency_ms": "<80 on 1x NVIDIA RTX 5090",
+        "robot_system_reaction_time_ms": 101
+      },
+      "scope": "工业机器人部署栈口径，包含 mimic 的 action decoder、传感器/模型/执行器链路优化和实时 chunking；不可外推到 FLUX 3 Video API 的生成速度。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "把图像、视频、音频联合训练成同一 FLUX 3 多模态 foundation model，并用同一 backbone 支持 video+audio 生成、图像生成/编辑和 action prediction。",
+      "scope_boundary": "官方尚未公开权重、模型卡、完整架构表或独立评测；统一多模态本身不是行业首次，入库理由是 BFL 把 FLUX 主线从图像/视频扩展到音频与动作的明确路线。",
+      "evidence": "BFL FLUX 3 发布博客与 FLUX 3 模型页。",
+      "confidence": "中高"
+    },
+    {
+      "claim": "FLUX 3 Video 可单次生成最长 20 秒、带原生音频的视频，并支持 text-to-video、image-to-video、video-to-video、video+audio continuation、keyframe-to-video 和多语言对话等能力。",
+      "scope_boundary": "当前为 Early Access / Coming Soon 状态；官方未给公开 API latency、定价、采样设置或独立质量榜单，不能写成可复现开放能力。",
+      "evidence": "BFL FLUX 3 发布博客的 Video 与 Launch Plan sections。",
+      "confidence": "中"
+    },
+    {
+      "claim": "加入 action prediction 后，BFL 观察到视频质量短暂下降后在约 3500 steps 内恢复，支持同一 video backbone 同时服务 action prediction 的假设。",
+      "scope_boundary": "该实验由 BFL 官方披露，曲线是归一化质量，没有公开原始任务、数据、评分协议或误差条；只能作为官方技术路线证据。",
+      "evidence": "BFL FLUX 3 x mimic 博客的 A single backbone section。",
+      "confidence": "中"
+    },
+    {
+      "claim": "FLUX-mimic 将 FLUX 3 backbone 用于工业机器人视频-动作模型，BFL/mimic/Audi 披露已在真实生产任务中测试与部署。",
+      "scope_boundary": "Audi 与 mimic 案例证明官方合作路径存在，不自动证明通用机器人 SOTA 或论文收益可独立复现；任务集、试验次数和失败率未完整公开。",
+      "evidence": "BFL FLUX 3 x mimic 博客与 mimic Robotics 站点 recent highlights。",
+      "confidence": "中"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "总参数量、激活参数量、层数、hidden size、head 数、DiT / Transformer block 配置",
+    "文本、图像、视频、音频和 action tokenizer / encoder / decoder 的精确 checkpoint 与参数拆分",
+    "正式许可证、API 服务条款、private weight 条款和 FLUX 3 Dev 权重发布日期",
+    "训练硬件、设备数量、互联、训练 FLOPs、能耗、wall-clock time 与完整训练阶段",
+    "训练数据精确规模、数据来源占比、授权/版权状态、过滤和去重规则",
+    "图像/视频/音频的公开模型卡、独立第三方榜单、AA Elo、稳定 API latency 和定价",
+    "FLUX-mimic 公开评测集、任务数、成功率原始表、失败案例和跨机器人泛化边界"
+  ],
+  "sources": [
+    {
+      "title": "FLUX 3 - Real World Models: Towards Multimodal Flow Models as the Backbone of Visual Intelligence",
+      "url": "https://bfl.ai/blog/flux-3",
+      "source_type": "official_blog"
+    },
+    {
+      "title": "FLUX 3 model page",
+      "url": "https://bfl.ai/models/flux-3",
+      "source_type": "official_model_page"
+    },
+    {
+      "title": "FLUX 3 x mimic: The Next Generation of Video-Action Models",
+      "url": "https://bfl.ai/blog/flux-3-mimic",
+      "source_type": "official_blog"
+    },
+    {
+      "title": "Self-Supervised Flow Matching for Scalable Multi-Modal Synthesis",
+      "url": "https://bfl.ai/research/self-flow",
+      "source_type": "official_research"
+    },
+    {
+      "title": "mimic Robotics recent highlights",
+      "url": "https://www.mimicrobotics.com/",
+      "source_type": "official_partner_page"
+    }
+  ],
+  "notes": "AI HOT discovery: https://aihot.virxact.com/items/cmrykywyx026jrolgq06set4j and https://aihot.virxact.com/items/cmrywwsva05zgrolgrh7uc4ls；attribution canonical 分别同 URL；发现日期 2026-07-24。FLUX 3 入库是因为官方首次明确发布统一 image/video/audio/action foundation model 路线与 Early Access，不因为官方偏好率自动认定公开 SOTA。必须区分 FLUX 3 Video Early Access、FLUX 3 Image future early access、FLUX-mimic partner deployment、FLUX 3 Dev future open-weight backbone。"
+}
