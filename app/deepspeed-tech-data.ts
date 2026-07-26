@@ -33,6 +33,8 @@ interface DeepSpeedMethod {
   tags: string[];
   score?: string;
   paper?: { id: string; title: string; url: string; publisher: string };
+  extraSources?: Source[];
+  extraRevisionNotes?: string[];
 }
 
 function source(
@@ -68,6 +70,7 @@ function deepSpeedEvent(input: DeepSpeedMethod): TimelineEvent {
     ...(input.paper
       ? [source(input.paper.id, input.paper.title, input.paper.publisher, input.paper.url, "论文")]
       : []),
+    ...(input.extraSources ?? []),
   ];
   const sourceIds = sources.map((item) => item.id);
   const comparison: TechnologyComparison = {
@@ -104,6 +107,7 @@ function deepSpeedEvent(input: DeepSpeedMethod): TimelineEvent {
     comparison,
     revisionNotes: [
       `事件日期采用官方教程文件 ${input.tutorialFile} 在 DeepSpeed 仓库首次出现的提交日期；网页底部 Updated 是站点构建时间，不作为发布日期。`,
+      ...(input.extraRevisionNotes ?? []),
     ],
     facts: [
       disclosedFact("Situation / 动机", input.situation, sourceIds),
@@ -215,16 +219,29 @@ const autoTp = deepSpeedEvent({
   summary: "根据模型层结构、预设或 Hugging Face `tp_plan` 自动生成张量并行切分，减少逐模型手写 injection policy。",
   situation: "Tensor Parallel 通常要求按模型结构维护切分规则，模型版本变化会带来适配成本。",
   target: "自动识别可切分层并生成行/列并行规则，同时保留自定义覆盖能力。",
-  action: "推理路径通过 AutoTP 注入替换层；训练路径可结合 DP、ZeRO 0/1/2、preset、正则规则与 Hugging Face `tp_plan`。",
-  result: "官方实现支持多类 Hugging Face 模型；训练 AutoTP 目前明确不支持 ZeRO Stage 3。",
+  action: "推理路径通过 AutoTP 注入替换层；训练路径可结合 DP、ZeRO 0/1/2、preset、正则规则与 Hugging Face `tp_plan`；ZeRO-3 仅在无 optimizer 的推理初始化路径开放。",
+  result: "官方实现支持多类 Hugging Face 模型；2026-07-25 起 AutoTP + ZeRO-3 inference 可初始化，带 optimizer 的训练路径仍因 TP-aware checkpoint consolidation 未实现而阻断。",
   mechanism: "模型解析 → layer policy/spec → 权重分片 → TP collective → 输出合并。",
   bestFor: "结构符合 Transformer 常见模式、希望降低 TP 接入成本的训练或推理。",
   experiment: "官方教程的支持模型与配置路径；新模型仍需检查融合层、GQA 和整除约束。",
   computeMemory: "参数和大矩阵按 TP 度分片；通信 buffer、复制层与 activation 不保证严格按 TP 度反比。",
-  parallelism: "Tensor Parallel，可在训练中组合 DP 与 ZeRO 0/1/2。",
-  limitations: "维度必须可整除；自定义/融合层可能需要 pattern 或 layer spec；训练不支持 ZeRO-3。",
-  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程。",
+  parallelism: "Tensor Parallel，可在训练中组合 DP 与 ZeRO 0/1/2；推理路径可组合 ZeRO-3（无 optimizer）。",
+  limitations: "维度必须可整除；自定义/融合层可能需要 pattern 或 layer spec；ZeRO-3 training / optimizer 路径仍不支持。",
+  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 inference 的官方 commit、配置页和教程限制说明已更新。",
   tags: ["AutoTP", "Tensor Parallel", "Hugging Face"],
+  extraSources: [
+    {
+      id: "deepspeed-autotp-zero3-inference-commit",
+      title: "[AutoTP] Allow ZeRO stage 3 inference with tensor parallelism",
+      publisher: "deepspeedai/DeepSpeed",
+      url: "https://github.com/deepspeedai/DeepSpeed/commit/d3265209f1198f8d8f467241463700d6f9cd63a5",
+      type: "代码仓",
+      accessedAt: "2026-07-26",
+    },
+  ],
+  extraRevisionNotes: [
+    "2026-07-25 官方 commit d326520 将 AutoTP + ZeRO stage 3 从完全不支持修订为仅支持 inference（无 optimizer）；本次只修订既有 AutoTP 节点的可用性边界，不新增技术事件。",
+  ],
 });
 
 const oneBitAdam = deepSpeedEvent({
