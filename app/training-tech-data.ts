@@ -14,6 +14,7 @@ const ACCESSED_AT = "2026-07-19";
 const CURRENT_ACCESSED_AT = "2026-07-20";
 const DAILY_ACCESSED_AT = "2026-07-21";
 const LATEST_ACCESSED_AT = "2026-07-23";
+const RUN_ACCESSED_AT = "2026-07-28";
 
 function source(
   id: string,
@@ -53,6 +54,16 @@ function latestSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: LATEST_ACCESSED_AT };
+}
+
+function runSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: RUN_ACCESSED_AT };
 }
 
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
@@ -106,10 +117,10 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-dsa": { name: "DeepSeek-AI", role: "project-team", organization: "DeepSeek-AI", sourceUrl: "https://github.com/deepseek-ai/DeepSeek-V3.2-Exp", profileLabel: "官方项目", profileUrl: "https://github.com/deepseek-ai/DeepSeek-V3.2-Exp" },
   "tech-kda": { name: "Yu Zhang", role: "first-author", organization: "Moonshot AI", sourceUrl: "https://arxiv.org/abs/2510.26692", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2510.26692" },
   "tech-latent-moe": { name: "Venmugil Elango", role: "first-author", organization: "NVIDIA", sourceUrl: "https://arxiv.org/abs/2601.18089", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2601.18089" },
-  "tech-stable-latent-moe": { name: "Moonshot AI Kimi 团队", role: "project-team", organization: "Moonshot AI", sourceUrl: "https://www.kimi.com/blog/kimi-k3", profileLabel: "官方项目", profileUrl: "https://www.kimi.com/blog/kimi-k3", note: "Stable LatentMoE 的完整定义待 Kimi K3 技术报告与代码公开。" },
+  "tech-stable-latent-moe": { name: "Moonshot AI Kimi 团队", role: "project-team", organization: "Moonshot AI", sourceUrl: "https://huggingface.co/moonshotai/Kimi-K3", profileLabel: "模型卡", profileUrl: "https://huggingface.co/moonshotai/Kimi-K3", note: "Kimi K3 模型卡与 config 已公开 latent 维度、专家数、top-k、shared experts 与 router 设置；单项消融仍未披露。" },
   "tech-attnres": { name: "Guangyu Chen", role: "first-author", organization: "Moonshot AI", sourceUrl: "https://arxiv.org/abs/2603.15031", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2603.15031" },
   "tech-dsv4-compressed-indexer": { name: "DeepSeek-AI", role: "project-team", organization: "DeepSeek-AI", sourceUrl: "https://arxiv.org/abs/2606.19348", profileLabel: "官方项目", profileUrl: "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro" },
-  "tech-situ": { name: "Moonshot AI Kimi 团队", role: "project-team", organization: "Moonshot AI", sourceUrl: "https://www.kimi.com/blog/kimi-k3", profileLabel: "官方项目", profileUrl: "https://www.kimi.com/blog/kimi-k3", note: "截至 2026-07-20 技术报告与权重尚待发布，公式细节按用户提供的实现线索标为待交叉核验。" },
+  "tech-situ": { name: "Moonshot AI Kimi 团队", role: "project-team", organization: "Moonshot AI", sourceUrl: "https://huggingface.co/moonshotai/Kimi-K3/blob/main/modeling_kimi_linear.py", profileLabel: "官方实现", profileUrl: "https://huggingface.co/moonshotai/Kimi-K3/blob/main/modeling_kimi_linear.py", note: "Kimi K3 config 与 modeling_kimi_linear.py 已公开 SituAndMul、β=4.0 与 linear_β=25.0。" },
   "tech-qat": { name: "Benoit Jacob", role: "first-author", organization: "Google", sourceUrl: "https://arxiv.org/abs/1712.05877", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/1712.05877", note: "以现代 fake-quant 训练图的规范化里程碑标注，不主张其首创所有 QAT 思想。" },
   "tech-muon": { name: "Jingyuan Liu", role: "first-author", organization: "Moonshot AI", sourceUrl: "https://arxiv.org/abs/2502.16982", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2502.16982", note: "此处一作对应 Muon 可扩展训练论文；Muon 原始实现由 Keller Jordan 发布。" },
   "tech-grpo": { name: "Zhihong Shao", role: "first-author", organization: "DeepSeek-AI", sourceUrl: "https://arxiv.org/abs/2402.03300", profileLabel: "个人主页", profileUrl: "https://zhihongshao.github.io/" },
@@ -149,7 +160,7 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
   "tech-dsa": [{ modelId: "glm-5", relation: "采用" }, { modelId: "glm-5-2", relation: "采用" }, { modelId: "deepseek-v4-pro", relation: "采用", note: "V4 的 CSA 在压缩 KV 上继续使用 DSA top-k。" }],
   "tech-kda": [{ modelId: "kimi-k3", relation: "采用" }],
   "tech-latent-moe": [{ modelId: "kimi-k3", relation: "技术谱系", note: "K3 官方称 Stable LatentMoE；与 NVIDIA LatentMoE 的实现关系需等待 K3 技术报告确认。" }],
-  "tech-stable-latent-moe": [{ modelId: "kimi-k3", relation: "采用", note: "16/896 experts 已由官方博客确认，Stable 的具体增量待技术报告。" }],
+  "tech-stable-latent-moe": [{ modelId: "kimi-k3", relation: "采用", note: "K3 模型卡确认 896 experts、top-16、2 shared experts、latent MoE dimension 3,584；单项收益仍未拆分。" }],
   "tech-attnres": [{ modelId: "kimi-k3", relation: "采用" }],
   "tech-dsv4-compressed-indexer": [{ modelId: "deepseek-v4-pro", relation: "采用" }],
   "tech-situ": [{ modelId: "kimi-k3", relation: "采用" }],
@@ -671,26 +682,30 @@ const stableLatentMoe = technology({
   organization: "Moonshot AI",
   category: "模型结构",
   family: "MoE",
-  eyebrow: "官方预告 / MoE / Details Pending",
-  summary: "Kimi K3 公布的 LatentMoE 变体，896 个 experts 每 token 路由 16 个；可见架构仍含 full-width router 与 latent routed path，但 Stable 的技术增量待报告。",
+  eyebrow: "官方模型卡 / MoE / Kimi K3",
+  summary: "Kimi K3 公布的 LatentMoE 变体，896 个 experts 每 token 路由 16 个，另含 2 个 shared experts、3,584 latent MoE dimension 与 3,072 per-expert hidden dimension；单项消融未披露。",
   score: "16 / 896 experts",
-  tags: ["Stable LatentMoE", "Kimi K3", "MoE", "Quantile Balancing", "Watch"],
+  tags: ["Stable LatentMoE", "Kimi K3", "MoE", "Quantile Balancing", "LatentMoE"],
   situation: "2.8T 模型把专家稀疏度推到 16/896 后，路由失衡、优化稳定性和 expert-parallel 吞吐成为一阶约束。",
   target: "在极高专家数下保持可训练、可均衡和高 scaling efficiency。",
-  action: "官方披露采用 Stable LatentMoE，并配合按 router-score quantiles 分配的 Quantile Balancing；完整方程、latent 维度和消融尚未公开。",
+  action: "官方披露采用 Stable LatentMoE，并配合按 router-score quantiles 分配的 Quantile Balancing；模型卡/config 已给出 latent 维度、shared experts、top-k 与 router 设置。",
   result: "官方称 KDA、AttnRes、Stable LatentMoE 与训练/数据配方合计带来相对 Kimi K2 约 2.5× overall scaling efficiency；没有 Stable LatentMoE 单项结果。",
-  mechanism: "已确认 16/896 sparse routing 和 latent routed-path 示意；暂作 LatentMoE 的 provisional variant，Stable 的新增稳定化机制尚未知。",
-  bestFor: "3T 级超稀疏 MoE；现阶段主要用于跟踪 Kimi K3，而非可复用工程配方。",
-  experiment: "Kimi K3 2.8T、1M context；技术报告、权重、active parameters 与单项 ablation 截至 2026-07-20 均未公开。",
-  computeMemory: "latent routed path 理论上压缩 expert payload；实际 latent width、active parameters、通信量和额外投影成本未知。",
+  mechanism: "确认 16/896 sparse routing、2 shared experts、latent routed path、sigmoid router、top-k weight renormalization 与 latent_moe_use_norm；Stable 的新增稳定化机制与单项贡献仍未知。",
+  bestFor: "3T 级超稀疏 MoE；当前可复核的是 Kimi K3 架构采用，不等于已给出可移植单项训练 recipe。",
+  experiment: "Kimi K3 2.8T total / 104B active、1M context；官方披露总体 scaling efficiency 相对 Kimi K2 约 2.5×，未给 Stable LatentMoE 单项 ablation。",
+  computeMemory: "latent MoE dimension 3,584、per-expert hidden 3,072；实际 EP 通信量、额外投影成本和 shared expert 开销未单独量化。",
   parallelism: "官方同时披露全平衡 expert parallel、静态 shape、关键路径无 host synchronization，但未说明这些是否属于 Stable 定义。",
-  limitations: "不能与 NVIDIA LatentMoE 合并为同一已证实节点；Quantile Balancing 与 Stable 命名的边界待技术报告。",
-  availability: "API 已上线；官方承诺 2026-07-27 前发布权重，技术报告 forthcoming。",
-  confidence: "中",
+  limitations: "不能与 NVIDIA LatentMoE 合并为同一已证实节点；2.5× 是 K3 总体 scaling-efficiency 主张，不是 Stable LatentMoE 单项收益。",
+  availability: "Kimi K3 权重、模型卡、config、许可证和技术报告已于 2026-07-27 公开；生产 kernel 支持仍依 SGLang/vLLM 等后端。",
+  confidence: "高",
   tier: "watch",
   breakthroughs: ["896 experts / top-16", "Stable LatentMoE 命名", "Quantile Balancing 配套"],
-  revisionNotes: ["provisional_variant_of: tech-latent-moe；待 Kimi K3 技术报告公开后复核，不把同名视为实现完全相同。"],
-  sources: [currentSource("stable-latent-moe-k3", "Kimi K3: Open Frontier Intelligence", "Moonshot AI", "https://www.kimi.com/blog/kimi-k3", "官方博客")],
+  revisionNotes: ["provisional_variant_of: tech-latent-moe；2026-07-27 Kimi K3 模型卡/config 公开后补充 latent dimension、shared experts 与官方开放状态，但仍不把同名视为与 NVIDIA LatentMoE 实现完全相同。"],
+  sources: [
+    runSource("stable-latent-moe-k3", "Kimi K3: Open Frontier Intelligence", "Moonshot AI", "https://www.kimi.com/blog/kimi-k3", "官方博客"),
+    runSource("stable-latent-moe-k3-card", "moonshotai/Kimi-K3", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3", "模型卡"),
+    runSource("stable-latent-moe-k3-config", "Kimi K3 config.json", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3/blob/main/config.json", "模型卡"),
+  ],
 });
 
 const situActivation = technology({
@@ -700,29 +715,31 @@ const situActivation = technology({
   organization: "Moonshot AI",
   category: "模型结构",
   family: "激活函数",
-  eyebrow: "官方预告 + 实现线索 / Activation",
-  summary: "Kimi K3 官方确认 SiTU 用于 activation control；精确双路公式由用户提供，但权重、技术报告和官方 modeling_kimi.py 尚未公开，需显式区分已披露名称与待核验实现。",
-  score: "公式待官方复核",
-  tags: ["SiTU", "Sigmoid Tanh Unit", "Kimi K3", "Activation", "Watch"],
+  eyebrow: "官方实现 / Activation / SiTU-GLU",
+  summary: "Kimi K3 官方 config 与 modeling_kimi_linear.py 确认 SiTU-GLU：对 gate 做 β·tanh(gate/β)·sigmoid(gate)，并可对 up 做 linear_β·tanh(up/linear_β)，K3 取 β=4.0、linear_β=25.0。",
+  score: "β=4.0 / linear_β=25.0",
+  tags: ["SiTU", "Sigmoid Tanh Unit", "Kimi K3", "Activation", "SiTU-GLU"],
   situation: "3T 级稀疏模型训练需要控制 gate/up 激活幅值与饱和；官方只披露 SiTU 改善 activation control。",
   target: "为 MoE MLP 的 gate 与 linear/up 两路提供有界、平滑的幅值控制。",
-  action: "用户提供的实现线索为 hidden_act=\"situ\"，自定义 SituAndMul 并注入 ACT2FN；但双路公式要求同时处理 gate 和 up，不能由标准单输入 ACT2FN 调用自动证明。",
-  result: "Kimi K3 官方确认采用 SiTU，但未发布单项消融、训练曲线或质量/稳定性数字。",
-  mechanism: "待核验实现：β·tanh(gate/β)·σ(gate) × linear_β·tanh(up/linear_β)，β=4.0、linear_β=25.0；官方目前仅确认名称与 activation-control 用途。",
-  mechanismStatus: "推导",
-  mechanismMethod: "SiTU 名称/K3 采用来自官方博客；公式、常数、SituAndMul 与 ACT2FN 注入来自用户提供的实现描述，待 2026-07-27 权重或技术报告交叉核验。",
-  bestFor: "当前仅能归入 Kimi K3 activation 结构跟踪；复用前必须等待官方实现或可审计 checkpoint。",
-  experiment: "Kimi K3 2.8T；截至 2026-07-20 官方未公开 SiTU 专属实验。K2.5/K2.6 明确仍是 SwiGLU/hidden_act=\"silu\"。",
+  action: "官方实现把 gate/up projection 拼接后传入 SituAndMul，并注册 ACT2FN[\"situ\"]；config 中 hidden_act=\"situ\"，activation_situ_beta=4.0，activation_situ_linear_beta=25.0。",
+  result: "Kimi K3 官方确认采用 SiTU-GLU，但未发布 SiTU 单项消融、训练曲线或质量/稳定性数字。",
+  mechanism: "β·tanh(gate/β)·σ(gate) × linear_β·tanh(up/linear_β)，K3 配置 β=4.0、linear_β=25.0；输出回写原 dtype。",
+  mechanismStatus: "直接证据",
+  mechanismMethod: "公式、常数、SituAndMul、ACT2FN 注入与 gate/up 拼接路径来自 Kimi K3 官方 modeling_kimi_linear.py 与 config.json。",
+  bestFor: "当前可作为 Kimi K3 activation 结构的官方实现记录；迁移到其他 MoE 前仍需单项 ablation 或复现实验。",
+  experiment: "Kimi K3 2.8T total / 104B active；官方未公开 SiTU 专属实验。K2.5/K2.6 明确仍是 SwiGLU/hidden_act=\"silu\"。",
   computeMemory: "tanh + sigmoid 及双路截幅会增加逐元素算子；融合后的实际吞吐/显存未知。",
   parallelism: "逐 token/hidden 元素本地计算，可与 TP/EP 融合；官方 kernel 和 fusion 路径未知。",
-  limitations: "精确公式与代码尚非公开一手事实；仅把单输入函数注册到 ACT2FN 不足以实现同时作用于 gate/up 的双路公式。不可倒灌到 K2.5/K2.6。",
-  availability: "K3 API 已上线；权重承诺 7 月 27 日前公开，当前无官方 Kimi-K3 HF 仓或 modeling_kimi.py。",
-  confidence: "中",
+  limitations: "只有 K3 采用与实现路径可核验；稳定性收益、训练曲线和与 SwiGLU 的同口径比较仍未知。不可倒灌到 K2.5/K2.6。",
+  availability: "Kimi K3 权重、config 与 modeling_kimi_linear.py 已公开；Transformers 需 trust_remote_code 加载官方自定义实现。",
+  confidence: "高",
   tier: "watch",
   breakthroughs: ["SiTU activation-control 命名", "双路有界激活实现线索", "K3 采用已确认"],
-  revisionNotes: ["implementation_claim: 用户提供；status=待官方代码复核。K2.5/K2.6 官方 config 均为 silu/SwiGLU。"],
+  revisionNotes: ["2026-07-27 官方 Kimi K3 config/modeling_kimi_linear.py 公开后，将 SiTU 从用户实现线索修订为直接证据；K2.5/K2.6 官方 config 均为 silu/SwiGLU。"],
   sources: [
-    currentSource("situ-k3-blog", "Kimi K3: Open Frontier Intelligence", "Moonshot AI", "https://www.kimi.com/blog/kimi-k3", "官方博客"),
+    runSource("situ-k3-blog", "Kimi K3: Open Frontier Intelligence", "Moonshot AI", "https://www.kimi.com/blog/kimi-k3", "官方博客"),
+    runSource("situ-k3-config", "Kimi K3 config.json", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3/blob/main/config.json", "模型卡"),
+    runSource("situ-k3-code", "Kimi K3 modeling_kimi_linear.py", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3/blob/main/modeling_kimi_linear.py", "代码仓"),
     currentSource("situ-k25-config", "Kimi K2.5 config.json", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K2.5/blob/main/config.json#L49", "模型卡"),
     currentSource("situ-k26-config", "Kimi K2.6 config.json", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K2.6/blob/main/config.json#L49", "模型卡"),
   ],

@@ -8,6 +8,7 @@ const ACCESSED = "2026-07-18";
 const DAILY_ACCESSED = "2026-07-21";
 const TODAY_ACCESSED = "2026-07-22";
 const CURRENT_RUN_ACCESSED = "2026-07-24";
+const KIMI_K3_OPEN_ACCESSED = "2026-07-28";
 
 function source(
   id: string,
@@ -47,6 +48,16 @@ function currentRunSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: CURRENT_RUN_ACCESSED };
+}
+
+function kimiK3OpenSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: KIMI_K3_OPEN_ACCESSED };
 }
 
 function latestRunSource(
@@ -825,47 +836,55 @@ const glm52 = modelEvent({
 const kimiK3 = modelEvent({
   id: "kimi-k3",
   date: "2026-07-16",
-  tier: "watch",
+  tier: "frontier",
   title: "Kimi K3",
   organization: "Moonshot AI",
-  eyebrow: "前沿观察 / 原生视觉 MoE / 权重待发布",
+  eyebrow: "当前前沿 / 2.8T MoE / 开放权重",
   summary:
-    "2.8T 参数、原生视觉与 1M 上下文的最新 Kimi。API 已上线，但截至 2026-07-18 权重和技术报告尚未发布；官方承诺最晚 7 月 27 日补齐，因此暂不计作开放权重模型。",
-  confidence: "中",
-  tags: ["LLM", "VLM", "2.8T", "MoE", "KDA", "MXFP4", "1M", "Watch"],
-  officialSourceIds: ["kimi-k3-blog"],
+    "2.8T 总参数、104B 激活参数的开放权重原生多模态模型；Moonshot 于 2026-07-27 公开权重、模型卡、配置、许可证和技术报告，确认 93 层、69 KDA + 24 Gated MLA、Stable LatentMoE、SiTU-GLU 与 MXFP4/MXFP8 QAT。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "2.8T", "104B Active", "MoE", "KDA", "MXFP4", "1M", "Open Weights"],
+  officialSourceIds: ["kimi-k3-blog", "kimi-k3-card", "kimi-k3-config", "kimi-k3-license", "kimi-k3-report"],
   aaSourceId: "kimi-k3-aa",
   sources: [
-    source("kimi-k3-blog", "Kimi K3: Open Agentic Intelligence at 3T Scale", "Moonshot AI", "https://www.kimi.com/blog/kimi-k3", "官方博客"),
+    kimiK3OpenSource("kimi-k3-blog", "Kimi K3: Open Agentic Intelligence at 3T Scale", "Moonshot AI", "https://www.kimi.com/blog/kimi-k3", "官方博客"),
+    kimiK3OpenSource("kimi-k3-card", "moonshotai/Kimi-K3", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3", "模型卡"),
+    kimiK3OpenSource("kimi-k3-config", "Kimi K3 config.json", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3/blob/main/config.json", "模型卡"),
+    kimiK3OpenSource("kimi-k3-license", "Kimi K3 License", "Moonshot AI", "https://huggingface.co/moonshotai/Kimi-K3/blob/main/LICENSE", "模型卡"),
+    kimiK3OpenSource("kimi-k3-report", "Kimi K3 Full Report", "Moonshot AI", "https://github.com/MoonshotAI/Kimi-K3/blob/main/k3_tech_report.pdf", "技术报告"),
+    kimiK3OpenSource("kimi-k3-sglang", "SGLang and Miles Add Day-0 Support for Kimi K3", "LMSYS / SGLang Team", "https://www.lmsys.org/blog/2026-07-27-kimi-k3-day0-support/", "官方博客"),
+    kimiK3OpenSource("kimi-k3-agentenv", "kvcache-ai/AgentENV", "kvcache-ai", "https://github.com/kvcache-ai/AgentENV", "代码仓"),
+    kimiK3OpenSource("kimi-k3-aihot-open", "Kimi K3 开源：2.8T MoE 模型与技术报告", "AI HOT", "https://aihot.virxact.com/items/cms3dxit00betro3fiwkotg0j", "讲座整理"),
     source("kimi-k3-aa", "Kimi K3 模型评测页", "Artificial Analysis", "https://artificialanalysis.ai/models/kimi-k3", "第三方测量"),
   ],
   totalParameters: "2.8T（官方也使用 3T 量级表述）",
-  activeParameters: "未知；公开信息只有 896 个专家中每 token 路由 16 个，不能据此准确反推激活参数",
-  weightSize: "未知；截至 2026-07-18 权重尚未发布",
-  precision: "从 SFT 起进行 QAT：MXFP4 权重 / MXFP8 激活；预训练精度未知",
-  architecture: "原生多模态稀疏 MoE，1M token 上下文；层数、hidden size 等完整规格待技术报告",
-  attention: "Kimi Delta Attention（KDA）、Gated MLA 与 Attention Residuals；公式、head 数和分层配置待技术报告",
-  moe: "Stable LatentMoE：896 个专家、每 token 激活 16 个；Quantile Balancing 改善专家负载",
-  otherArchitecture: "原生视觉；SiTU 稳定训练；Per-Head Muon；模型卡与完整架构表未知",
+  activeParameters: "104B / token（官方模型卡）",
+  weightSize: "未知；HF 公共 API 显示 96 个 safetensors 分片但未返回分片字节数，不能仅按 4-bit 压缩率反推完整 checkpoint 体积",
+  precision: "发布 checkpoint 为 compressed-tensors MXFP4 权重；模型卡披露 MXFP4 weights / MXFP8 activations 的 QAT；config 顶层 dtype 为 bfloat16",
+  architecture: "原生多模态稀疏 MoE；93 层，hidden 7,168，96 heads，1M token 上下文，MoonViT-V2 视觉编码器约 401M 参数",
+  attention: "69 层 Kimi Delta Attention（KDA）+ 24 层 Gated MLA；KDA head_dim 128，MLA 含 output gate，Attention Residual block size 12",
+  moe: "Stable LatentMoE：896 个 experts、top-16、2 个 shared experts；latent MoE dimension 3,584，单 expert hidden 3,072，sigmoid router 与归一化 top-k weight",
+  otherArchitecture: "SiTU-GLU；Per-Head Muon；MoonViT-V2；模型卡表格只列 Text/Image，文案另称视频理解，故模态字段不扩展到可生成视频",
   hardware: "官方建议部署在 64+ accelerator supernode；训练硬件类别未知",
   hardwareCount: "训练规模未知；64+ 是部署建议，不是训练卡数",
   dataScale: "未知",
   dataDetails: "未知",
-  stages: "预训练（细节未知）→ SFT + MXFP4/MXFP8 QAT → 后续阶段未知",
+  stages: "预训练（细节未知）→ SFT + MXFP4/MXFP8 QAT → 后训练与 Agentic RL 细节待报告逐项核验",
   stageDurations: "未知",
   totalDuration: "未知",
-  algorithms: "SiTU、Per-Head Muon、Quantile Balancing、SFT 阶段量化感知训练；RL 配方未知",
-  lowPrecision: "QAT 从 SFT 阶段开始，目标为 MXFP4 权重 / MXFP8 激活；预训练低精度方案未知",
-  infra: "全平衡 expert parallel、静态 shape、无 host synchronization；Mooncake 分离式推理，编码工作负载 cache hit >90%；KDA prefill cache 的 vLLM 实现待补齐",
+  algorithms: "KDA、Attention Residuals、Stable LatentMoE、SiTU-GLU、Per-Head Muon、Quantile Balancing、QAT；RL 配方需以技术报告为准",
+  lowPrecision: "MXFP4 权重 / MXFP8 激活 QAT；HF config 的 quantization_config 标记 mxfp4-pack-quantized，忽略 attention、shared experts、lm_head、vision tower 等模块",
+  infra: "Mooncake 分离式推理与官方 partner 支持；SGLang/Miles Day-0 支持 K3，披露 KDA recurrent-state prefix caching、ReplaySSM、DSpark draft model、phase-split parallelism 与 MXFP4 checkpoint 上的 LoRA RL；AgentENV 支撑 K3 agentic RL 环境编排",
   aaIndex: "Intelligence Index v4.1：57（2026-07-18 快照）",
   aaContext: "1M；AA 当前总榜约第 3。动态榜单值按访问日冻结",
   aaSpeed: "62 tokens/s；TTFT 1.99s；第一方 blended price 约 $2.31 / MTok",
-  score: "AA 57 · 权重待发布",
+  score: "AA 57 · 开放权重",
   notes: [
-    "截至 2026-07-18，Kimi K3 已发布 API，但权重与技术报告尚不可下载；官方承诺最晚 2026-07-27 发布。",
-    "营销文案中的 open / 3T 不替代可下载权重；状态将在权重实际发布后改为“当前前沿”。",
-    "SiTU 的名称与 K3 采用已由官方确认；β=4.0、linear_β=25.0、SituAndMul/ACT2FN 注入来自用户提供的实现线索，截至 2026-07-20 尚无公开官方代码可交叉核验。",
-    "Stable LatentMoE 暂按 NVIDIA LatentMoE 的待确认变体关联，不在 K3 技术报告公开前宣称两者实现完全相同。",
+    "日期口径：Kimi K3 的 API / 官方博客事件日期仍为 2026-07-16；权重、模型卡、配置、许可证和技术报告在 2026-07-27 公开，HF API lastModified 为 2026-07-27T16:29:18Z。",
+    "Kimi K3 License 允许使用、复制、修改、发布和部署，但 Model-as-a-Service 超过 12 个月累计 2000 万美元收入等场景需另签协议；不是 OSI 意义的无条件开源许可证。",
+    "SiTU 的 β=4.0、linear_β=25.0 与 SituAndMul 双路实现已由官方 config/modeling_kimi_linear.py 公开确认。",
+    "SGLang 的 113 tok/s、DSpark 423 tok/s、2,808 tok/s/GPU 和 AIME-2024 43.3%→76.7% 均是 SGLang/Miles 博客的系统报告，不能替代 Moonshot 官方模型质量基准。",
+    "AI HOT discovery: https://aihot.virxact.com/items/cms3dxit00betro3fiwkotg0j；attribution canonical 同 URL；发现日期 2026-07-27。相关 SGLang、Modal、AgentENV AI HOT 条目作为同一 K3 开放事件的派生候选去重。",
     "Artificial Analysis 的排名、价格和速度是动态测量，本页固定为 2026-07-18 快照。",
   ],
 });

@@ -272,7 +272,8 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(dataSource, /selectorCompressor/);
   assert.match(dataSource, /Indexer with kpool：[\s\S]*?无官方一手依据/);
   assert.match(dataSource, /β=4\.0、linear_β=25\.0/);
-  assert.match(dataSource, /待 2026-07-27 权重或技术报告交叉核验/);
+  assert.match(dataSource, /mechanismStatus: "直接证据"/);
+  assert.match(dataSource, /modeling_kimi_linear\.py/);
   assert.match(dataSource, /5–66% 吞吐/);
   assert.match(dataSource, /尚不能视为已公开可用/);
   assert.match(timelineSource, /STAR 技术档案/);
