@@ -234,7 +234,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 35);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 36);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -256,6 +256,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "DiffusionNFT",
     "On-Policy Distillation",
     "Tunix Agentic RL",
+    "AgentENV",
     "Triton-Ascend",
     "Ascend C",
     "Liger Kernel",
@@ -289,6 +290,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(html, /Stable LatentMoE/);
   assert.match(html, /Sigmoid Tanh Unit/);
   assert.match(html, /Quantization-Aware Training/);
+  assert.match(html, /AgentENV/);
   assert.match(html, /UltraEP/);
   assert.match(html, /veScale-FSDP/);
 });
@@ -323,12 +325,13 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 35);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 35);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 36);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 36);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
   assert.match(dataSource, /Google Tunix 团队/);
+  assert.match(dataSource, /Moonshot AI AgentENV 团队/);
   assert.match(dataSource, /Huawei Ascend C 团队/);
   assert.match(dataSource, /PyTorch Distributed 团队/);
   assert.match(dataSource, /DeepSeek-AI 开源基础设施团队/);

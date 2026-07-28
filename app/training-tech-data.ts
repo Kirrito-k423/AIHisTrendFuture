@@ -125,6 +125,7 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-muon": { name: "Jingyuan Liu", role: "first-author", organization: "Moonshot AI", sourceUrl: "https://arxiv.org/abs/2502.16982", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2502.16982", note: "此处一作对应 Muon 可扩展训练论文；Muon 原始实现由 Keller Jordan 发布。" },
   "tech-grpo": { name: "Zhihong Shao", role: "first-author", organization: "DeepSeek-AI", sourceUrl: "https://arxiv.org/abs/2402.03300", profileLabel: "个人主页", profileUrl: "https://zhihongshao.github.io/" },
   "tech-tunix-agentic-rl": { name: "Google Tunix 团队", role: "project-team", organization: "Google", sourceUrl: "https://github.com/google/tunix", profileLabel: "官方项目", profileUrl: "https://github.com/google/tunix", note: "Tunix 是持续维护的开源库与工程发布，官方材料未声明单一论文一作。" },
+  "tech-agentenv": { name: "MADSys Lab / Moonshot AI AgentENV 团队", role: "project-team", organization: "Tsinghua MADSys Lab / Moonshot AI", sourceUrl: "https://github.com/kvcache-ai/AgentENV", profileLabel: "官方项目", profileUrl: "https://github.com/kvcache-ai/AgentENV", note: "AgentENV 是工程系统发布，官方材料未声明论文式个人一作；按项目团队标注。" },
   "tech-dancegrpo": { name: "Zeyue Xue", role: "first-author", organization: "ByteDance Seed / The University of Hong Kong", sourceUrl: "https://arxiv.org/abs/2505.07818", profileLabel: "GitHub", profileUrl: "https://github.com/XueZeyue" },
   "tech-diffusionnft": { name: "Kaiwen Zheng", role: "first-author", organization: "Tsinghua University / NVIDIA", sourceUrl: "https://arxiv.org/abs/2506.01347", profileLabel: "个人主页", profileUrl: "https://zhengkw18.github.io/" },
   "tech-opd": { name: "Kevin Lu", role: "first-author", organization: "Thinking Machines Lab", sourceUrl: "https://thinkingmachines.ai/blog/on-policy-distillation/", profileLabel: "个人主页", profileUrl: "https://kevinlu.ai/" },
@@ -167,6 +168,7 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
   "tech-qat": [{ modelId: "glm-5", relation: "采用", note: "公开报告披露 SFT 使用 INT4 QAT。" }, { modelId: "deepseek-v4-pro", relation: "采用" }, { modelId: "kimi-k3", relation: "采用" }],
   "tech-muon": [{ modelId: "kimi-k2", relation: "采用" }, { modelId: "kimi-k2-5", relation: "采用" }, { modelId: "kimi-k2-6", relation: "技术谱系" }, { modelId: "kimi-k3", relation: "技术谱系" }],
   "tech-grpo": [{ modelId: "deepseek-v3-2024-12", relation: "技术谱系" }, { modelId: "qwen3-235b-a22b", relation: "训练 / 推理支撑" }],
+  "tech-agentenv": [{ modelId: "kimi-k3", relation: "训练 / 推理支撑", note: "官方博客称 AgentENV 已用于包括 Kimi K3 在内的 advanced models 的 Agentic RL 训练；未披露对 Kimi K3 质量的单项收益。" }],
   "tech-dancegrpo": [{ modelId: "flux-1-dev", relation: "基础模型" }, { modelId: "hunyuanvideo-2024-12", relation: "实验验证" }],
   "tech-diffusionnft": [{ modelId: "flux-1-dev", relation: "实验验证", note: "链接表示扩散模型实验语境，不声称 FLUX 产品采用。" }],
   "tech-opd": [{ modelId: "qwen3-235b-a22b", relation: "技术谱系" }],
@@ -837,6 +839,42 @@ const tunixAgenticRl = technology({
   ],
 });
 
+const agentEnv = technology({
+  id: "tech-agentenv",
+  date: "2026-07-27",
+  title: "AgentENV",
+  organization: "Tsinghua MADSys Lab / Moonshot AI",
+  category: "算法流程",
+  family: "训练算法",
+  eyebrow: "官方博客 + 代码仓 / Agentic RL Environments",
+  summary: "以 Firecracker microVM、OverlayBD、增量快照/分叉和 E2B-compatible API，把 Agentic RL 的大量有状态执行环境做成可暂停、可恢复、可横向扩展的训练基础设施。",
+  score: "30k env / −88.6–96.8%",
+  tags: ["AgentENV", "Agentic RL", "Firecracker", "Sandbox", "Snapshot", "Kimi K3"],
+  situation: "Agentic RL 训练需要让大量智能体读写代码、执行命令、调用工具并保持任务状态；若每个环境长期保留固定 CPU、内存和磁盘资源，环境成本与隔离风险会成为模型训练扩展瓶颈。",
+  target: "在强隔离前提下，把数千到数万个 Agent 执行环境的启动、暂停、恢复、分叉和资源回收变成低延迟、低闲置成本的系统能力。",
+  action: "AgentENV 使用 Firecracker microVM 隔离每个沙箱，通过 OverlayBD/ublk 按需加载 OCI 镜像，结合 copy-on-write、本地热缓存、增量内存/文件系统快照、pause/resume 与 fork，使等待模型推理的空闲环境释放 CPU 和可回收内存。",
+  result: "官方博客披露生产集群已扩展到 30,000 个 Agent 执行环境；典型 128 vCPU / 512 GB 节点可稳定运行 400 个并发环境，模板恢复最低 49 ms、快照创建最低 133 ms、并发 fan-out 子环境摊销 fork latency 最低 122 ms；高负载 70 节点、约 225,000 个环境的生产数据中，CPU allocation-to-usage ratio 平均 27.9×，内存平均 9.6×，300 个 4 vCPU / 8 GB 环境的测算成本比按请求资源计费方案低约 88.6%–96.8%。",
+  mechanism: "microVM-based sandbox runtime + snapshot-backed lifecycle management + image/storage copy-on-write sharing + idle resource reclamation + E2B-compatible API。",
+  bestFor: "大规模代码、工具使用、浏览器/软件操作等 Agentic RL rollout，尤其环境长时间等待模型输出、状态需要 fork/resume、且需要比容器更强隔离的场景。",
+  experiment: "官方披露来自真实生产数据：70 节点高负载时段、约 225,000 个执行环境；成本测算采用 300 个 4 vCPU / 8 GB 环境连续 720 小时与多类云沙箱/容器计费模型对比。未公开固定模型、任务集、奖励函数和质量提升 ablation。",
+  computeMemory: "节省目标是环境侧 CPU/内存/存储闲置成本，不是训练 accelerator FLOPs 或模型显存；收益取决于环境活跃率、写放大、镜像分布、对象存储/共享文件系统和云计费模型。",
+  parallelism: "多节点 gateway/scheduler 原型，执行环境可跨机器运行；rollout 侧通过大量独立 microVM 并行，模型训练/推理侧仍需与外部 trainer、serving 和 reward pipeline 集成。",
+  limitations: "GitHub README 明确当前不支持 authorization，不能把 API 暴露到公网；官方未给出可复核的训练质量收益，也未证明所有 Agentic RL 栈迁移后能得到同等成本下降。Kimi K3 关联只证明官方训练路径使用，不证明 Kimi K3 能力提升可由 AgentENV 单项归因。",
+  availability: "MIT 开源；GitHub 仓库、文档、Quick Start、Docker/self-host 路径与 E2B-compatible API 说明已公开。服务器侧要求 Linux kernel 6.8+ 与 /dev/kvm；安装脚本目标 Ubuntu 24.04。",
+  breakthroughs: ["Firecracker microVM agent sandbox", "incremental snapshot and fork", "idle environment resource reclamation", "E2B-compatible API", "production-scale Agentic RL environment orchestration"],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cms3dxit00berro3f8etbfxfh；attribution canonical 同 URL；发现日期 2026-07-27。",
+    "成本下降 88.6%–96.8% 来自官方博客对 8.8×–31.7× 成本差的换算；原始口径受 workload、资源价格和云计费方式限制。",
+    "本条按训练基础设施入库，不把 AgentENV 当作新模型或 Kimi K3 质量 benchmark。"
+  ],
+  sources: [
+    runSource("agentenv-blog", "AgentENV: When LLMs Learn to Get the Job Done, We're Open-Sourcing the Infrastructure Behind Them", "KVCache.AI / AgentENV Team", "https://kvcache.ai/blog/agentenv-open-sourced/", "官方博客"),
+    runSource("agentenv-repo", "kvcache-ai/AgentENV", "kvcache-ai", "https://github.com/kvcache-ai/AgentENV", "代码仓"),
+    runSource("agentenv-docs", "AgentENV Documentation", "kvcache-ai", "https://kvcache-ai.github.io/AgentENV/", "代码仓"),
+  ],
+});
+
 const danceGrpo = technology({
   id: "tech-dancegrpo",
   date: "2025-05-12",
@@ -1303,9 +1341,9 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-algorithm",
     group: "训练技术 / 02",
     title: "算法流程 / Post-training",
-    description: "QAT、GRPO、Agentic RL、视觉生成 RL、DiffusionNFT 与 On-Policy Distillation",
+    description: "QAT、GRPO、Agentic RL、Agent 环境基础设施、视觉生成 RL、DiffusionNFT 与 On-Policy Distillation",
     color: "violet",
-    events: [quantizationAwareTraining, grpo, tunixAgenticRl, danceGrpo, diffusionNft, opd],
+    events: [quantizationAwareTraining, grpo, tunixAgenticRl, agentEnv, danceGrpo, diffusionNft, opd],
   },
   {
     id: "training-tech-kernel",
