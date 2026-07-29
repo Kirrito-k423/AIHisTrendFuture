@@ -9,6 +9,7 @@ const DAILY_ACCESSED = "2026-07-21";
 const TODAY_ACCESSED = "2026-07-22";
 const CURRENT_RUN_ACCESSED = "2026-07-24";
 const KIMI_K3_OPEN_ACCESSED = "2026-07-28";
+const DAILY_RUN_ACCESSED = "2026-07-29";
 
 function source(
   id: string,
@@ -58,6 +59,16 @@ function kimiK3OpenSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: KIMI_K3_OPEN_ACCESSED };
+}
+
+function dailyRunSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: DAILY_RUN_ACCESSED };
 }
 
 function latestRunSource(
@@ -997,6 +1008,59 @@ const claudeOpus5 = modelEvent({
   ],
 });
 
+const maiCyber1Flash = modelEvent({
+  id: "mai-cyber-1-flash",
+  date: "2026-07-27",
+  tier: "frontier",
+  title: "MAI-Cyber-1-Flash",
+  organization: "Microsoft AI",
+  eyebrow: "专业模型 / Cyber Defense / MDASH Private Preview",
+  summary:
+    "Microsoft AI 发布面向 MDASH 漏洞发现与修复工作流的网络安全专用 MoE 模型：137B 总参数、5B 激活参数、256K 上下文；官方只披露其在 MDASH 多模型系统中把 CyberGym 成功率提升到 95.95%，并以受限私有预览提供。",
+  confidence: "高",
+  tags: ["LLM", "Cybersecurity", "MoE", "Agentic", "MDASH", "Private Preview", "256K"],
+  officialSourceIds: ["mai-cyber-blog", "mai-cyber-card"],
+  aaSourceId: "mai-cyber-blog",
+  sources: [
+    dailyRunSource("mai-cyber-blog", "Introducing MAI-Cyber-1-Flash inside MDASH", "Microsoft AI", "https://microsoft.ai/news/introducing-mai-cyber-1-flash-inside-mdash/", "官方博客"),
+    dailyRunSource("mai-cyber-card", "MAI-Cyber-1-Flash Model Summary", "Microsoft AI", "https://microsoft.ai/pdf/MAI-Cyber-1-Flash-Model-Card.pdf", "模型卡"),
+    dailyRunSource("mai-cyber-aihot", "Microsoft 发布 MAI-Cyber-1-Flash", "AI HOT", "https://aihot.virxact.com/items/cms4fb2n603f4roeprjoopbix", "讲座整理"),
+  ],
+  totalParameters: "137B",
+  activeParameters: "5B / token",
+  weightSize: "未知；Microsoft 未发布权重或文件大小",
+  precision: "未知；模型卡未披露训练或推理精度",
+  architecture: "文本到文本 Transformer；MAI-Code-1-Flash 的网络安全专用微调版本，含 sparse Mixture-of-Experts layers",
+  attention: "Self-attention；上下文长度 256K，未披露 attention 变体、KV cache 或长上下文实现",
+  moe: "Sparse MoE；137B total / 5B active，未披露专家数量、路由 top-k 或 shared expert 设置",
+  otherArchitecture: "面向 MDASH 多模型 agentic scanning harness；Microsoft 称该小模型处理多数任务，GPT-5.4 留给约 10% 特别困难任务",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "内部 Microsoft 网络安全、安全对齐与真实可执行安全环境数据；具体语料、规模和许可未知",
+  stages: "MAI-Code-1-Flash 基座 → 网络安全微调 → Microsoft safety training / red-team calibration；训练日期未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "网络安全专用微调、MDASH 多模型路由与 100+ agents harness；模型卡未披露优化器、RL 或采样训练细节",
+  lowPrecision: "未知",
+  infra: "仅可通过 Azure AI Foundry Private Preview 在 Microsoft codename MDASH 内使用；官方称 MDASH 是多模型漏洞识别和修复 harness",
+  aaIndex: "不适用；Microsoft 官方口径为 MDASH + MAI-Cyber-1-Flash + GPT-5.4 在 CyberGym 达到 95.95%，较原 MDASH 88.4% 提升；模型单独外部 benchmark 为 CVEBench 0.314、CyberSecEval4 Threat Intel 0.553 / Malware Analysis 0.33、CRSBench 0.651、ExploitGym 0",
+  aaContext: "CyberGym 覆盖 188 个软件项目的 1,500+ 真实漏洞分析任务；MDASH 系统成绩与模型单独成绩分开记录，观察日期 2026-07-29",
+  aaSpeed: "未知；Microsoft 只披露 MDASH 组合相对当前最佳 MDASH 配置节省 50% 成本，未披露 tokens/s、TTFT 或单次任务延迟",
+  score: "CyberGym 95.95% in MDASH",
+  breakthroughs: [
+    "把 5B active / 137B total 的专业 cyber MoE 放进 MDASH 多模型路由，用较小模型覆盖多数漏洞分析任务，官方称在同一系统中节省 50% 成本。",
+    "Microsoft 模型卡把 MDASH 系统评测和模型单独外部 cyber benchmark 分开披露，避免把组合 harness 成绩误写为单模型能力。",
+    "受限 Azure AI Foundry Private Preview 体现双用风险控制：仅限 MDASH 防御场景，不是开放权重或通用 API 模型。",
+  ],
+  notes: [
+    "日期口径：Microsoft AI 官方发布页和模型卡均给出 2026-07-27；AI HOT selected item 发布时间为 2026-07-28T08:33:30Z。",
+    "AI HOT discovery: https://aihot.virxact.com/items/cms4fb2n603f4roeprjoopbix；attribution canonical 同 URL；发现日期 2026-07-28。",
+    "CyberGym 95.95% 是 MDASH + MAI-Cyber-1-Flash + GPT-5.4 的组合系统结果，不是 MAI-Cyber-1-Flash 单模型结果；Project Perception 是同期 agentic security system，不并入本模型参数字段。",
+    "模型仅限 select MDASH customers，且需 review / approval；任何 MDASH 外防御、进攻或通用代码任务能力均保持未知。",
+  ],
+});
+
 const fluxDev = modelEvent({
   id: "flux-1-dev",
   date: "2024-08-01",
@@ -1890,7 +1954,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash],
     },
     {
       id: "t2i-training",

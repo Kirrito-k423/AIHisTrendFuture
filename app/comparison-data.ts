@@ -281,6 +281,7 @@ const historyEventIdByCatalogId: Partial<Record<string, string>> = {
   "kimi-k3": "kimi-k3",
   "gemini-36-flash": "gemini-3-6-flash",
   "claude-opus-5": "claude-opus-5",
+  "mai-cyber-1-flash": "mai-cyber-1-flash",
   "flux-1-dev": "flux-1-dev",
   "hunyuanvideo": "hunyuanvideo-2024-12",
   "wan21-t2v-14b": "wan2.1-t2v-14b",
