@@ -1935,6 +1935,78 @@ const dspark: TimelineEvent = {
   sources: dsparkSources,
 };
 
+const angelSpecSources: Source[] = [
+  {
+    id: "angelspec-paper",
+    title: "AngelSpec: Towards Real-World High Performance Inference with Speculative Decoding",
+    publisher: "Tencent Hy Team",
+    url: "https://arxiv.org/abs/2607.25852",
+    type: "论文",
+    accessedAt: "2026-07-30",
+  },
+  {
+    id: "angelspec-repo",
+    title: "Tencent/AngelSpec",
+    publisher: "Tencent",
+    url: "https://github.com/Tencent/AngelSpec",
+    type: "代码仓",
+    accessedAt: "2026-07-30",
+  },
+  {
+    id: "angelslim-news",
+    title: "AngelSlim Latest News",
+    publisher: "Tencent / AngelSlim",
+    url: "https://github.com/Tencent/AngelSlim",
+    type: "代码仓",
+    accessedAt: "2026-07-30",
+  },
+  {
+    id: "angelspec-models",
+    title: "AngelSpec Model Collection",
+    publisher: "AngelSlim",
+    url: "https://huggingface.co/collections/AngelSlim/angelspec",
+    type: "模型卡",
+    accessedAt: "2026-07-30",
+  },
+  {
+    id: "angelspec-aihot",
+    title: "腾讯混元开源 AngelSpec 投机解码框架",
+    publisher: "AI HOT",
+    url: "https://aihot.virxact.com/items/cms639jt416x6robksy69dzel",
+    type: "第三方测量",
+    accessedAt: "2026-07-30",
+  },
+];
+const angelSpec: TimelineEvent = {
+  id: "paper-angelspec",
+  date: "2026-07-29",
+  tier: "frontier",
+  title: "AngelSpec / DFly",
+  organization: "Tencent Hy Team",
+  eyebrow: "论文 + 开源 / Speculative Decoding",
+  summary: "统一训练 MTP 与 block-parallel speculative decoding 的 draft models，并提出 DFly；官方在 Hy3-A21B 上报告 1.98–2.40× 端到端加速和已发布 draft 权重。",
+  confidence: "高",
+  score: "1.98–2.40×",
+  tags: ["AngelSpec", "DFly", "Speculative", "MTP", "DFlash", "Hy3"],
+  facts: [
+    fact("目标模型", "Hy3 系列；主结果为 Hy3-295B-A21B / TP=8，另有 Qwen3-8B 示例与 draft 权重", ["angelspec-paper", "angelspec-repo"]),
+    fact("硬件", "离线主结果的 GPU 型号未知；D-cut live traffic 图注明 Hy3-295B-A21B、TP=8、8×H20", ["angelspec-repo", "angelslim-news"]),
+    fact("方法", "一个 torch-native 训练框架覆盖 MTP、DFly、DFlash、DFlare、Eagle3 与 DSpark；DFly 组合 hybrid target conditioning、hidden-correction AR head 与在线 verification-depth 调度", ["angelspec-paper", "angelspec-repo"]),
+    fact("加速效果", "Hy3-A21B 上 DFly 平均 accepted length 约 +30%；concurrency 4–64 下相对 autoregressive decoding 1.98–2.40×，吞吐比 DFlash 高 10.5–11.8%", ["angelspec-paper", "angelspec-repo"]),
+    fact("吞吐口径", "README 图注为 output-token throughput，temperature=1，六个数据集平均，每个 cell 使用 3 × 120s windows；不能外推为任意模型/负载的固定倍数", ["angelspec-repo"]),
+    fact("精度影响", "speculative decoding 目标是不改变 target distribution；摘要未给完整逐任务精度差值表，需按论文细节逐项核验", ["angelspec-paper"]),
+    fact("额外训练", "需要训练 draft model；官方释放了 Hy3-DFly、Hy3-MTP、Qwen3-8B DFly/MTP 等 draft 权重", ["angelspec-repo", "angelspec-models"]),
+    fact("开放状态", "AngelSpec v0.1.0 于 2026-07-29 开源；LICENSE 文本说明主体 Apache-2.0，第三方组件另列", ["angelspec-repo"]),
+    fact("发现来源", "AI HOT selected item cms639jt416x6robksy69dzel；attribution canonical 为 https://aihot.virxact.com/items/cms639jt416x6robksy69dzel", ["angelspec-aihot"]),
+  ],
+  sources: angelSpecSources,
+  revisionNotes: [
+    "事件日期采用 Tencent/AngelSlim 2026-07-29 开源公告；arXiv v1 发布时间为 2026-07-28T15:25:05Z。",
+    "本条作为推理技术事件入库，不把 AngelSpec 写成首个 speculative decoding，也不把 DFly 在 Hy3-A21B 上的收益外推到 EAGLE、DSpark 或其它模型。",
+    "AI HOT discovery: https://aihot.virxact.com/items/cms639jt416x6robksy69dzel；attribution canonical 同 URL；发现日期 2026-07-30。",
+  ],
+};
+
 export const historyData: TimelinePageData = {
   page: "history",
   kicker: "Observed / Verified",
@@ -2011,9 +2083,9 @@ export const historyData: TimelinePageData = {
       id: "inference-papers",
       group: "模型推理 / 02",
       title: "推理技术论文",
-      description: "MTP、EAGLE、DSpark 与树式推测解码",
+      description: "MTP、EAGLE、DSpark、AngelSpec 与树式推测解码",
       color: "green",
-      events: [specInfer, deepseekMtp, eagle3, dspark],
+      events: [specInfer, deepseekMtp, eagle3, dspark, angelSpec],
     },
   ],
 };

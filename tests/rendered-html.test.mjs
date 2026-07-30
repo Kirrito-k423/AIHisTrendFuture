@@ -363,6 +363,9 @@ test("history includes five source-backed DeepSpeed columns and all 21 requested
   ]) assert.match(dataSource, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(historySource, /import \{ deepSpeedTechnologyLanes \}/);
   assert.match(historySource, /\.\.\.deepSpeedTechnologyLanes/);
+  assert.match(historySource, /paper-angelspec/);
+  assert.match(historySource, /AngelSpec \/ DFly/);
+  assert.match(dataSource, /colwise_gather_output/);
 
   const response = await render("/history");
   const html = await response.text();
