@@ -10,6 +10,7 @@ const TODAY_ACCESSED = "2026-07-22";
 const CURRENT_RUN_ACCESSED = "2026-07-24";
 const KIMI_K3_OPEN_ACCESSED = "2026-07-28";
 const DAILY_RUN_ACCESSED = "2026-07-29";
+const PRICE_RUN_ACCESSED = "2026-07-31";
 
 function source(
   id: string,
@@ -69,6 +70,16 @@ function dailyRunSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: DAILY_RUN_ACCESSED };
+}
+
+function priceRunSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: PRICE_RUN_ACCESSED };
 }
 
 function latestRunSource(
@@ -1742,31 +1753,38 @@ const gptOssFast: TimelineEvent = {
 
 const prioritySources = [
   source("priority-openai", "Priority Processing for API Customers", "OpenAI", "https://openai.com/api-priority-processing/", "官方博客"),
+  priceRunSource("gpt56-price-frontier-openai", "Advancing the price-performance frontier with GPT-5.6", "OpenAI", "https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/", "官方博客"),
 ];
 const openAiPriority: TimelineEvent = {
   id: "openai-priority-2026",
   date: "2026-07-09",
   tier: "frontier",
-  title: "OpenAI Priority Processing",
+  title: "OpenAI Priority / Fast mode",
   organization: "OpenAI",
   eyebrow: "极致性能 / 商业 SLA",
-  summary: "Priority 服务把“高速”变成可购买的 SLA：GPT‑5.6 Sol/Terra/Luna 的每 5 分钟窗口请求 p50，99% 时间高于 50/70/100 tok/s；这不是单请求、TTFT 或聚合吞吐口径。",
+  summary: "OpenAI 把 GPT‑5.6 的高速与低价拆成服务层和模型层：Priority 首发给 Sol/Terra/Luna 设窗口级速度 SLA；7 月 30 日 Fast mode 替代 Priority，Sol 最高 2.5× 加速、价格 2×，Terra/Luna API 单价同步下调。",
   confidence: "高",
-  score: ">100 tok/s",
-  tags: ["OpenAI", "Priority", "SLA", "Latency", "GPT-5.6"],
+  score: ">100 tok/s / 2.5× Fast",
+  tags: ["OpenAI", "Priority", "Fast Mode", "SLA", "Latency", "GPT-5.6"],
   facts: [
     fact("硬件", "未知", ["priority-openai"]),
     fact("硬件规模", "未知", ["priority-openai"]),
-    fact("模型", "GPT‑5.6 Sol / Terra / Luna", ["priority-openai"]),
+    fact("模型", "GPT‑5.6 Sol / Terra / Luna", ["priority-openai", "gpt56-price-frontier-openai"]),
     fact("权重精度", "未知", ["priority-openai"]),
-    fact("核心技术", "service_tier=priority 的资源调度与容量保障；底层推理技术未披露", ["priority-openai"]),
+    fact("核心技术", "service_tier=priority / Fast mode 的资源调度与容量保障；OpenAI 称模型、推理系统和 agent harness 共同提高效率，但底层推理实现未披露", ["priority-openai", "gpt56-price-frontier-openai"]),
     fact("速度 SLA", "每 5 分钟窗口的请求 p50，99% 时间 > 50 / 70 / 100 tokens/s（Sol / Terra / Luna）", ["priority-openai"]),
+    fact("Fast mode", "2026-07-30 起 Fast mode 替代 Priority Processing；GPT‑5.6 Sol Fast mode 最高比 Standard 快 2.5×，价格为 2×，请求标记 priority 会兼容映射", ["gpt56-price-frontier-openai"]),
+    fact("API 价格", "2026-07-30 起 Terra $2/M input、$12/M output；Luna $0.20/M input、$1.20/M output；Sol 价格不变", ["gpt56-price-frontier-openai"]),
     fact("可用性 SLA", "99.9%", ["priority-openai"]),
     fact("吞吐口径", "窗口级 p50 在线生成速度 SLA；不是 99% 单请求、TTFT 或批量 aggregate throughput", ["priority-openai"]),
-    fact("精度影响", "同一模型服务层级；页面未报告由高速服务导致的精度变化", ["priority-openai"]),
+    fact("精度影响", "同一模型服务层级；OpenAI 称 Fast mode 对智能水平无变化，但页面未报告独立精度评测", ["gpt56-price-frontier-openai"]),
     fact("长上下文限制", "页面注明 >272K prompt 的 long context 不计入该 SLA/价格", ["priority-openai"]),
   ],
   sources: prioritySources,
+  revisionNotes: [
+    "2026-07-09：Priority Processing 首次把 GPT‑5.6 家族的速度保障产品化，并给出窗口级 tok/s SLA。",
+    "2026-07-30：OpenAI 宣布 Fast mode 替代 Priority Processing，同时把 Terra/Luna API 价格下调；本条修订为同一服务/成本事件，不新增基础模型节点。",
+  ],
 };
 
 const kimiK27FastSources = [
@@ -2125,6 +2143,13 @@ const aaCostSource = source(
   "https://artificialanalysis.ai/articles/gpt-5-6-has-landed",
   "第三方测量",
 );
+const openAiPriceFrontierSource = priceRunSource(
+  "openai-gpt56-price-frontier",
+  "Advancing the price-performance frontier with GPT-5.6",
+  "OpenAI",
+  "https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/",
+  "官方博客",
+);
 const glm52Source = source(
   "glm52-blog",
   "GLM‑5.2: Built for Long-Horizon Tasks",
@@ -2312,17 +2337,17 @@ const costPerIntelligence = forecastEvent({
   confidence: "高",
   score: "↓ 50–80% signal",
   tags: ["Cost per Task", "Routing", "MoE", "FP4", "Speed"],
-  sources: [aaCostSource, rubinSource, ossFastSources[0], openAiPriority.sources[0]],
+  sources: [aaCostSource, openAiPriceFrontierSource, rubinSource, ossFastSources[0], openAiPriority.sources[0]],
   basisIds: [gptOss.id, gptOssFast.id, openAiPriority.id, b200Mlperf.id],
   conclusion: "到 2028，相同能力区间的 cost-per-task 还将下降一个数量级级别的可能性高于原始 token 单价等比下降。",
   window: "2027 Q1—2028 Q4",
-  evidence: "GPT‑5.6 Terra/Luna 在接近 Sol 的智能区间将 cost/task 降约 50%/80%；Rubin 宣称 token cost 最高降 10×；gpt‑oss‑120b 已达到 3,000 tok/s 厂商速度。",
+  evidence: "GPT‑5.6 Terra/Luna 在接近 Sol 的智能区间将 cost/task 降约 50%/80%；OpenAI 于 2026-07-30 把 Terra 降至 $2/M input、$12/M output，Luna 降至 $0.20/M input、$1.20/M output；Rubin 宣称 token cost 最高降 10×；gpt‑oss‑120b 已达到 3,000 tok/s 厂商速度。",
   method: "同时跟踪 cost-per-task（包含输出 token 数）而非单纯 $/M token；把模型路由、稀疏 active compute、硬件 cost/token 视为乘法项。",
   assumptions: "竞争继续把硬件效率传导到 API 价格；推理输出 token 数不会抵消所有单 token 降本。",
   indicators: "同一 Intelligence Index 分段的最低 cost/task；每个成功 agent task 的总 tokens、重试次数与 wall time。",
   invalidation: "推理长度、工具调用与 agent 重试增长快于单 token 成本下降，导致有效任务成本上升。",
   uncertainty: "“一个数量级”是区间判断；能力基准与任务权重更新会改变绝对值。",
-  revisionNotes: ["2025‑08：gpt‑oss 把 117B 模型下沉到单 80GB GPU。", "2026‑07：GPT‑5.6 家族显示同实验室内部按能力/成本分层已经系统化。"],
+  revisionNotes: ["2025‑08：gpt‑oss 把 117B 模型下沉到单 80GB GPU。", "2026‑07：GPT‑5.6 家族显示同实验室内部按能力/成本分层已经系统化。", "2026‑07‑30：OpenAI 进一步把 Terra/Luna 降价传导到 API，强化同一模型族内按任务路由的成本证据。"],
 });
 
 export const trendsData: TimelinePageData = {
