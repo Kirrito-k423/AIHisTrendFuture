@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 29);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 31);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -68,6 +68,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const qwenAudio30Tts = modelEvent/);
   assert.match(source, /const claudeOpus5 = modelEvent/);
   assert.match(source, /const maiCyber1Flash = modelEvent/);
+  assert.match(source, /const deepseekV4Flash0731 = modelEvent/);
+  assert.match(source, /const inklingSmall = modelEvent/);
   assert.match(source, /Agent Swarm/);
   assert.match(source, /Muon Split/);
   assert.match(source, /Prefix Tree Merging/);
@@ -93,14 +95,16 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /https:\/\//);
 
   const research = JSON.parse(await readFile(new URL("../app/generative-research.json", import.meta.url), "utf8"));
-  assert.equal(research.length, 29);
-  assert.equal(research.filter((item) => item.entry_kind === "model").length, 26);
+  assert.equal(research.length, 31);
+  assert.equal(research.filter((item) => item.entry_kind === "model").length, 28);
   assert.equal(research.filter((item) => item.entry_kind === "method").length, 3);
   assert.ok(research.every((item) => item.unknown_fields && item.sources?.length && item.novelty_claims?.length));
   assert.ok(research.every((item) => item.source_article === "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"));
   assert.ok(research.some((item) => item.slug === "nextstep-1-1" && item.modality === "T2I"));
   assert.ok(research.some((item) => item.slug === "abot-world-0" && item.modality === "T2V"));
   assert.ok(research.some((item) => item.slug === "flux-3" && item.modality === "Omni"));
+  assert.ok(research.some((item) => item.slug === "minimax-h3" && item.modality === "Omni"));
+  assert.ok(research.some((item) => item.slug === "seedance-2-5" && item.modality === "T2V"));
   assert.ok(research.some((item) => item.slug === "self-forcing" && item.entry_kind === "method"));
 });
 
@@ -115,6 +119,8 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /Claude Opus 5/);
   assert.match(source, /MAI-Cyber-1-Flash/);
   assert.match(source, /MiniMax‑M3/);
+  assert.match(source, /DeepSeek V4 Flash 0731/);
+  assert.match(source, /Inkling Small/);
   assert.match(source, /Wan2\.2‑T2V‑A14B/);
   assert.match(source, /Qwen-Image/);
   assert.match(source, /Z-Image-Turbo/);
@@ -129,6 +135,8 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(research, /Seedance 2\.0/);
   assert.match(research, /ABot-World-0/);
   assert.match(research, /FLUX 3/);
+  assert.match(research, /MiniMax H3/);
+  assert.match(research, /Seedance 2\.5/);
 });
 
 test("metric charts use interactive ECharts with linear axes and sortable tables", async () => {
@@ -185,6 +193,8 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /Qwen-Audio-3\.0-TTS/);
   assert.match(html, /Claude Opus 5/);
   assert.match(html, /MAI-Cyber-1-Flash/);
+  assert.match(html, /DeepSeek V4 Flash 0731/);
+  assert.match(html, /Inkling Small/);
   assert.match(html, /Z-Image-Turbo/);
   assert.match(html, /拖动排序/);
   assert.match(html, /开创 \/ 关键方案/);
@@ -198,6 +208,8 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /Step-Video-T2V 30B/);
   assert.match(html, /ABot-World-0/);
   assert.match(html, /FLUX 3/);
+  assert.match(html, /MiniMax H3/);
+  assert.match(html, /Seedance 2\.5/);
   assert.match(html, /Agent Swarm/);
   assert.match(html, /Muon Split/);
   assert.match(html, /Prefix Tree Merging/);

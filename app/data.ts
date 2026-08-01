@@ -11,6 +11,7 @@ const CURRENT_RUN_ACCESSED = "2026-07-24";
 const KIMI_K3_OPEN_ACCESSED = "2026-07-28";
 const DAILY_RUN_ACCESSED = "2026-07-29";
 const PRICE_RUN_ACCESSED = "2026-07-31";
+const AUGUST_RUN_ACCESSED = "2026-08-01";
 
 function source(
   id: string,
@@ -80,6 +81,16 @@ function priceRunSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: PRICE_RUN_ACCESSED };
+}
+
+function augustRunSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_RUN_ACCESSED };
 }
 
 function latestRunSource(
@@ -753,6 +764,61 @@ const deepseekV4Pro = modelEvent({
   ],
 });
 
+const deepseekV4Flash0731 = modelEvent({
+  id: "deepseek-v4-flash-0731",
+  date: "2026-07-31",
+  tier: "frontier",
+  title: "DeepSeek-V4-Flash-0731",
+  organization: "DeepSeek",
+  eyebrow: "当前前沿 / 开放权重 / 284B MoE / Agentic",
+  summary:
+    "DeepSeek-V4-Flash 正式版 API 与 Flash-0731 开放权重同日完成：结构、尺寸与 Preview 保持一致但重新后训练，13B 激活参数版本在多项 agentic coding 基准上超过 V4-Pro Preview，并原生支持 Responses API 与 Codex 集成。",
+  confidence: "高",
+  tags: ["LLM", "MoE", "CSA", "HCA", "DSpark", "Agentic", "1M", "MIT", "Open Weights"],
+  officialSourceIds: ["dsv4-flash-updates", "dsv4-flash-card", "dsv4-flash-config", "dsv4-flash-report"],
+  aaSourceId: "dsv4-flash-aa",
+  sources: [
+    augustRunSource("dsv4-flash-updates", "DeepSeek-V4-Flash 更新", "DeepSeek", "https://api-docs.deepseek.com/zh-cn/updates#%E6%97%B6%E9%97%B4-2026-07-31", "官方博客"),
+    augustRunSource("dsv4-flash-card", "deepseek-ai/DeepSeek-V4-Flash-0731", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731", "模型卡"),
+    augustRunSource("dsv4-flash-config", "DeepSeek-V4-Flash-0731 config.json", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731/blob/main/config.json", "模型卡"),
+    augustRunSource("dsv4-flash-report", "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence", "DeepSeek-AI", "https://arxiv.org/abs/2606.19348", "技术报告"),
+    augustRunSource("dsv4-flash-aa", "DeepSeek V4 Flash 0731 (max)", "Artificial Analysis", "https://artificialanalysis.ai/models/deepseek-v4-flash", "第三方测量"),
+    augustRunSource("dsv4-flash-aihot", "DeepSeek V4 Flash 0731 开源，登顶开源模型前三", "AI HOT", "https://aihot.virxact.com/items/cms9hiyz80fdvro9kepvm1qvk", "讲座整理"),
+  ],
+  totalParameters: "284B（Artificial Analysis 参数口径；HF safetensors API 显示约 304.18B typed tensor entries，二者口径不同）",
+  activeParameters: "13B / token（Artificial Analysis；官方 README 只写 far smaller activated parameter count）",
+  weightSize: "HF safetensors typed tensor entries 合计约 304.18B；实际下载字节和官方概念参数不同，不能按单一精度反推",
+  precision: "HF 模型卡标记 8-bit / FP8；config 量化为 FP8 E4M3 dynamic activation，scale_fmt 为 ue8m0，weight block 128x128",
+  architecture: "43 层 DeepSeek-V4 decoder-only MoE；hidden 4,096，最大位置 1,048,576；与 DeepSeek-V4-Flash-DSpark 同结构并附带 speculative decoding module",
+  attention: "DeepSeek-V4 系 CSA/HCA 压缩注意力；Flash config 显示 64 Q heads、1 KV head、Q-LoRA rank 1024；具体 CSA/HCA 层分布未在 Flash README 单独展开",
+  moe: "256 routed experts + 1 shared expert，top-6；相比 Pro 是小激活参数版本",
+  otherArchitecture: "DSpark speculative decoding；reasoning_effort 支持 low/high/max；提供专用 OpenAI-compatible encoding 脚本而非 Jinja chat template",
+  hardware: "推理示例为单 4xGB300 节点 vLLM；训练硬件未知",
+  hardwareCount: "训练规模未知；4xGB300 是官方 vLLM serving 示例，不是训练卡数",
+  dataScale: "未知；沿用 DeepSeek-V4 技术报告的家族背景，未披露 Flash-0731 单独数据规模",
+  dataDetails: "未知；官方只说明正式版重新进行了后训练并增强 Agent 能力",
+  stages: "DeepSeek-V4-Flash Preview 同结构 checkpoint → 重新后训练 → API 公测与 Flash-0731 开放权重",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "DeepSeek-V4 家族 CSA/HCA、MoE、DSpark speculative decoding 与 agentic post-training；Flash-0731 的后训练配方未披露",
+  lowPrecision: "FP8 E4M3 dynamic activation；KV cache serving 示例建议 fp8；CSA indexer cache 可用 FP4",
+  infra: "vLLM recipe 支持 tool_calling、reasoning、expert parallel、deep_gemm_mega_moe、FP8 KV cache 与 DSpark speculative decoding；Responses API 和 Codex 集成为官方 API 能力",
+  aaIndex: "Intelligence Index v4.1：49.93（Reasoning Max Effort，2026-08-01 访问）；开放权重大模型中位于前列",
+  aaContext: "1.0M tokens；AA 同页给出 total 284B / active 13B",
+  aaSpeed: "AA 页面给出动态价格与速度；本轮未稳定提取到中位输出速度，保持未知",
+  score: "AA 49.9 · 13B active · open weights",
+  breakthroughs: [
+    "在 13B 激活参数级别通过后训练把 Terminal Bench 2.1、NL2Repo、DeepSWE、Toolathlon-Verified 等 agentic coding 指标提升到超过 V4-Pro Preview 的官方口径。",
+    "正式版 API、Responses API/Codex 集成与 MIT 开放权重同日闭环，使 DeepSeek-V4 小激活版本从 preview 变成可下载、可部署、可评测对象。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cms9hiyz80fdvro9kepvm1qvk；attribution canonical 同 URL；发现日期 2026-08-01。",
+    "DeepSeek 官方更新说明强调：模型结构、尺寸和 Preview 保持一致，仅重新后训练；本次只升级 Flash API，V4-Pro API 与 App/Web 端未变。",
+    "DSBench-FullStack 与 DSBench-Hard 是 DeepSeek 内部测试集；公开基准中的 Code Agent 任务使用即将发布的 DeepSeek Harness minimal mode、max reasoning effort、temperature 1.0、top_p 0.95。",
+    "284B/13B 来自 Artificial Analysis 参数口径；官方 HF README 未直接列数，因此与 HF safetensors typed tensor entries 并列说明，不混作同一字段。",
+  ],
+});
+
 const minimaxM3 = modelEvent({
   id: "minimax-m3",
   date: "2026-06-01",
@@ -801,6 +867,60 @@ const minimaxM3 = modelEvent({
     "主仓与 MXFP8 是两个独立官方仓，不能相加为单一权重体积。",
     "Community License 含商业展示、通知及年营收阈值条款，不是标准宽松开源许可。",
     "训练 tokens、GPU 型号/数量与总时长保持未知。",
+  ],
+});
+
+const inklingSmall = modelEvent({
+  id: "inkling-small",
+  date: "2026-07-30",
+  tier: "frontier",
+  title: "Inkling-Small",
+  organization: "Thinking Machines Lab",
+  eyebrow: "当前前沿 / 开放权重 / 276B MoE / 多模态",
+  summary:
+    "Thinking Machines Lab 发布 276B 总参数、12B 激活的开放权重多模态 MoE；模型支持文本、图像和音频输入到文本输出，1M 上下文、可控 thinking effort，并可在 Tinker、SGLang、vLLM 等路径上使用或微调。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Audio", "MoE", "Open Weights", "Apache-2.0", "1M", "GB300"],
+  officialSourceIds: ["inkling-small-blog", "inkling-small-card", "inkling-small-config", "inkling-small-hf-api"],
+  aaSourceId: "inkling-small-aa",
+  sources: [
+    augustRunSource("inkling-small-blog", "Introducing Inkling-Small", "Thinking Machines Lab", "https://thinkingmachines.ai/news/inkling-small/", "官方博客"),
+    augustRunSource("inkling-small-card", "thinkingmachines/Inkling-Small", "Thinking Machines Lab", "https://huggingface.co/thinkingmachines/Inkling-Small", "模型卡"),
+    augustRunSource("inkling-small-config", "Inkling-Small config.json", "Thinking Machines Lab", "https://huggingface.co/thinkingmachines/Inkling-Small/blob/main/config.json", "模型卡"),
+    augustRunSource("inkling-small-hf-api", "Inkling-Small Hugging Face model metadata", "Hugging Face", "https://huggingface.co/api/models/thinkingmachines/Inkling-Small", "模型卡"),
+    augustRunSource("inkling-small-aa", "Inkling Small", "Artificial Analysis", "https://artificialanalysis.ai/models/inkling-small", "第三方测量"),
+    augustRunSource("inkling-small-aihot", "Inkling-Small 发布，276B 参数性能持平原版", "AI HOT", "https://aihot.virxact.com/items/cms7tgf3q03p5ropbe0xhilwo", "讲座整理"),
+  ],
+  totalParameters: "276B（官方博客与模型卡）；AA 页面按 266B typed/effective 参数口径展示",
+  activeParameters: "12B / token",
+  weightSize: "HF safetensors API：BF16 265,956,428,810 + F32 10,280 entries；32 个 safetensors 分片",
+  precision: "官方发布 BF16 与 NVFP4 权重；HF 主仓为 BF16，另有 Inkling-Small-NVFP4",
+  architecture: "42 层 decoder-only multimodal autoregressive transformer；文本、图像、音频投影到 shared hidden space 后由同一 decoder 处理",
+  attention: "Hybrid local/global attention；具体窗口、全局层位置和 KV cache 结构未披露",
+  moe: "稀疏 MoE FFN：256 experts、每 token routed 到 6 个，再加 2 个 shared experts",
+  otherArchitecture: "图像使用 hierarchical patch encoder；音频使用 discrete token encoding；支持 variable thinking effort 与 1M context",
+  hardware: "NVIDIA GB300 NVL72 systems（官方博客披露）",
+  hardwareCount: "未知；未披露 NVL72 系统数量、节点数或累计 accelerator-hours",
+  dataScale: "未知",
+  dataDetails: "广泛文本、图像、音频、视频数据；来自公开来源、第三方获得数据、合成或增强数据；精确规模、比例、授权结构和过滤规则未知",
+  stages: "预训练 → Inkling-Small preview 后训练（部分使用 Inkling 教师 on-policy distillation）→ 从 preview 继续两周 agentic coding RL",
+  stageDurations: "agentic coding RL 继续 scaling 两周；其他阶段未知",
+  totalDuration: "未知",
+  algorithms: "MoE routing、native multimodal training、on-policy distillation、agentic coding RL、variable thinking effort；优化器和 RL 细节未知",
+  lowPrecision: "BF16 发布权重与 NVFP4 变体；训练精度、QAT 或量化流程未知",
+  infra: "Tinker fine-tuning、Tinker Playground、SGLang、vLLM、TokenSpeed、Unsloth 与 Hugging Face recipe；第三方 inference provider API 可用",
+  aaIndex: "Intelligence Index v4.1：40.17（2026-08-01 访问）；AA 同页列 active 12B",
+  aaContext: "1.0M tokens",
+  aaSpeed: "96.61 output tok/s（AA 动态测量，2026-08-01 访问）",
+  score: "AA 40.2 · open weights",
+  breakthroughs: [
+    "以 276B/12B MoE 开放权重覆盖文本、图像、音频输入，并提供 1M 上下文与可控 thinking effort。",
+    "官方披露通过改进数据 mix/recipe、Inkling 教师 on-policy distillation 和两周 agentic coding RL，使 Small 在 reasoning 与 agentic coding 上超过原 Inkling，但知识覆盖和 factuality 仍落后。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cms7tgf3q03p5ropbe0xhilwo；attribution canonical 同 URL；发现日期 2026-08-01。",
+    "官方博客的 276B 与 HF API/AA 的 typed/effective 参数口径存在差异；主字段保留官方模型卡口径，并在目录里按官方 276B 记录。",
+    "训练硬件只披露 GB300 NVL72 systems，未给出系统数量；不能把 NVL72 机架规格扩展为训练集群规模。",
   ],
 });
 
@@ -2044,7 +2164,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731],
     },
     {
       id: "t2i-training",

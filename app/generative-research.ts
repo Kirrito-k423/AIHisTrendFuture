@@ -217,6 +217,7 @@ function accessFor(brief: GenerativeResearchBrief): RawModelCatalogEntry["access
 
 function catalogModality(brief: GenerativeResearchBrief): string {
   if (brief.modality === "T2V") return "text+image→video";
+  if (brief.modality === "Omni") return "text+image+audio+video→video+audio";
   return "text+image→image";
 }
 

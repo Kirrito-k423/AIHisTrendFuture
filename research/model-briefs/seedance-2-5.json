@@ -1,0 +1,101 @@
+{
+  "slug": "seedance-2-5",
+  "name": "Seedance 2.5",
+  "family": "Seedance",
+  "entry_kind": "model",
+  "modality": "T2V",
+  "organization": "ByteDance Seed / Volcano Engine",
+  "release_date": "2026-07-31",
+  "release_date_basis": "采用字节跳动 Seed 官方博客《一镜成片，随心参考 | Seedance 2.5 正式发布》页面标注的 2026-07-31。AI HOT 发布时间只作为发现线索。",
+  "access": "闭源托管模型。官方称 Seedance 2.5 正在陆续上线即梦 AI、豆包专业版等平台，API 服务近期上线火山方舟；截至 2026-08-01 未发现官方权重或本地推理包。",
+  "license": "专有闭源服务；使用受即梦、豆包专业版、火山方舟等产品服务条款和内容合规规则约束。API 即将上线不等于开放模型或开源许可。",
+  "official_model_ids": [
+    "Seedance 2.5"
+  ],
+  "parameter_total": "官方未披露。不得沿用 Seedance 2.0 的二手参数传闻或从视频长度推断规模。",
+  "parameter_active": "未知。官方没有披露 MoE、稀疏结构、专家数或 active parameters。",
+  "weight_size": "未知且当前不可获得；未发布官方权重文件。",
+  "precision": "未知。官方未披露训练精度、推理精度或量化格式。",
+  "architecture": "官方称 Seedance 2.5 延续 Seedance 2.0 统一多模态音视频联合生成架构，重点突破长叙事能力、多模态参考能力和编辑能力；底层 DiT/VAE/音频生成架构未披露。",
+  "attention_or_sequence_design": "未知。官方未披露时空注意力、位置编码、长视频记忆、分镜规划或镜头衔接机制。",
+  "vae_or_tokenizer": "未知。官方未披露视频/音频 tokenizer、VAE、latent 压缩率、通道数、码率或重建指标。",
+  "text_encoder_or_conditioner": "未知。官方未披露文本编码器、VLM/LLM 提示增强器、参考素材编码器或多模态融合方式。",
+  "training_hardware": "未知。官方未披露训练或推理硬件。",
+  "training_hardware_scale": "未知。未披露 GPU/加速器数量、节点数、互联、累计 accelerator-hours、训练 FLOPs、能耗或成本。",
+  "training_data_scale": "未知。官方没有披露样本数、视频小时数、音频小时数、token 数或去重后数据规模。",
+  "training_data_composition": "未知。官方只按能力描述长叙事、多模态参考和编辑场景，未披露素材来源、授权结构、语言/行业分布、合成数据比例、去重和过滤流程。",
+  "training_stages": [
+    {
+      "stage": "未披露",
+      "name": "Seedance 2.5 训练流程",
+      "description": "官方只说明延续 Seedance 2.0 的统一多模态音视频联合生成架构并围绕长叙事、参考和编辑能力升级；没有公开预训练、后训练、偏好优化、蒸馏或服务端增强各阶段。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "全部训练阶段",
+      "optimization_steps": "未知",
+      "wall_clock_time": "未知"
+    }
+  ],
+  "training_algorithms": "未知。官方未披露损失函数、扩散/流匹配目标、噪声日程、长视频延长策略、参考/编辑训练目标、偏好优化或蒸馏细节。",
+  "training_infra": "未知。未披露训练框架、数据流水线、并行策略、通信库、checkpoint、容错、吞吐或存储系统。",
+  "inference_hardware": "未知。即梦、豆包专业版和未来火山方舟 API 均为托管服务，官方没有公开单请求使用的 GPU/加速器型号、数量、显存或并行配置。",
+  "inference_performance": "官方未披露指定硬件、分辨率、时长和排队条件下的端到端生成耗时。只披露单次 30 秒视频、支持多轮延长和平台上线状态。",
+  "max_output_resolution": "未知。官方本次发布没有披露 Seedance 2.5 的最高输出分辨率；不得沿用 Seedance 2.0 火山引擎 1080p 商业档位。",
+  "max_output_duration_seconds": 30,
+  "native_fps": "未知。官方未披露默认或最高 FPS。",
+  "aa_elo": null,
+  "aa_elo_observed_at": null,
+  "generation_time_seconds": null,
+  "generation_time_context": "未知。未发现 Artificial Analysis 对 Seedance 2.5 的动态榜单条目或官方指定硬件/分辨率/时长下的生成耗时。",
+  "benchmark_scores": [
+    {
+      "benchmark": "ByteDance Seed 官方能力声明",
+      "variant": "Seedance 2.5",
+      "observed_at": "2026-08-01",
+      "metrics": {
+        "single_generation_duration_seconds": 30,
+        "reference_images_per_request": 30,
+        "reference_videos_per_request": 10,
+        "reference_audio_clips_per_request": 10
+      },
+      "scope": "官方产品能力声明；没有公开同口径 benchmark、人工偏好榜单或独立复测，因此不写成 SOTA 排名。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "Seedance 2.5 把单次生成时长提升到 30 秒，并支持多轮延长，面向数分钟连贯内容生产。",
+      "scope_boundary": "这是官方产品能力口径；未披露分辨率、帧率、硬件、耗时和失败率，也没有独立长视频一致性基准。",
+      "evidence": "字节跳动 Seed 官方博客明确写明单次 30 秒高质量视频片段、支持多轮延长、优化镜头衔接和场景过渡。",
+      "confidence": "中高"
+    },
+    {
+      "claim": "单次最多支持 30 张图片、10 段视频和 10 段音频作为参考，并强化时间戳控制、绿幕编辑、视角编辑和参考编辑。",
+      "scope_boundary": "官方未披露参考素材长度、分辨率、音频时长、API 请求限制和底层编码机制；只能记录为平台能力更新。",
+      "evidence": "字节跳动 Seed 官方博客发布段落列出多模态参考数量和编辑能力升级，并说明即梦 AI、豆包专业版陆续上线。",
+      "confidence": "中高"
+    }
+  ],
+  "comparison_eligible": true,
+  "history_eligible": true,
+  "unknown_fields": [
+    "参数量、激活参数、权重大小、训练/推理精度和是否稀疏 MoE",
+    "输出分辨率、默认 FPS、端到端生成耗时和平台价格",
+    "训练硬件、训练规模、训练数据量、数据来源比例和训练时长",
+    "长视频延长、镜头衔接、多参考融合与时间戳编辑的底层机制",
+    "Artificial Analysis 或其他独立动态榜单上的 Seedance 2.5 分数"
+  ],
+  "sources": [
+    {
+      "title": "一镜成片，随心参考 | Seedance 2.5 正式发布",
+      "url": "https://seed.bytedance.com/zh/blog/%E4%B8%80%E9%95%9C%E6%88%90%E7%89%87-%E9%9A%8F%E5%BF%83%E5%8F%82%E8%80%83-seedance-2-5-%E6%AD%A3%E5%BC%8F%E5%8F%91%E5%B8%83",
+      "source_type": "official_blog"
+    },
+    {
+      "title": "Seedance 2.5 AI HOT discovery",
+      "url": "https://aihot.virxact.com/items/cms8f7n9q0bezrot06im88lqu",
+      "source_type": "discovery"
+    }
+  ]
+}
