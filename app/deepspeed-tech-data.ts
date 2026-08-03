@@ -219,15 +219,15 @@ const autoTp = deepSpeedEvent({
   summary: "根据模型层结构、预设或 Hugging Face `tp_plan` 自动生成张量并行切分，减少逐模型手写 injection policy。",
   situation: "Tensor Parallel 通常要求按模型结构维护切分规则，模型版本变化会带来适配成本。",
   target: "自动识别可切分层并生成行/列并行规则，同时保留自定义覆盖能力。",
-  action: "推理路径通过 AutoTP 注入替换层；训练路径可结合 DP、ZeRO 0/1/2、preset、正则规则与 Hugging Face `tp_plan`；ZeRO-3 仅在无 optimizer 的推理初始化路径开放。",
-  result: "官方实现支持多类 Hugging Face 模型；2026-07-29 起 Hugging Face `colwise_gather_output` / `colwise_rep` 可用于 untied `lm_head`，输出 shards 会 AllGather 为完整 logits。",
+  action: "推理路径通过 AutoTP 注入替换层；训练路径可结合 DP、ZeRO 0/1/2/3、preset、正则规则与 Hugging Face `tp_plan`；ZeRO-3 checkpoint save/load 与 universal checkpoint conversion 会同时 gather ZeRO-DP 和 TP 维度。",
+  result: "官方实现支持多类 Hugging Face 模型；2026-07-29 起 Hugging Face `colwise_gather_output` / `colwise_rep` 可用于 untied `lm_head`，2026-08-02 起 AutoTP + ZeRO-3 training 取消 optimizer block 并补齐 checkpoint consolidation 测试。",
   mechanism: "模型解析 → layer policy/spec → 权重分片 → TP collective → 输出合并。",
   bestFor: "结构符合 Transformer 常见模式、希望降低 TP 接入成本的训练或推理。",
-  experiment: "官方教程的支持模型与配置路径；新模型仍需检查融合层、GQA 和整除约束。",
+  experiment: "官方教程、配置文档、commit diff 与新增单元/分布式测试；新模型仍需检查融合层、GQA、整除约束和 checkpoint 拓扑。",
   computeMemory: "参数和大矩阵按 TP 度分片；gathered column output 额外产生 AllGather 输出通信。tied `lm_head` fallback 不减少 embedding/output-layer 内存。",
-  parallelism: "Tensor Parallel，可在训练中组合 DP 与 ZeRO 0/1/2；推理路径可组合 ZeRO-3（无 optimizer）。",
-  limitations: "gathered column output 当前只支持 untied output layers；tied `lm_head` 保持复制，uneven TP fallback 到 legacy 路径，`local_colwise` / `local_rowwise` 仍未处理；ZeRO-3 training / optimizer 路径仍不支持。",
-  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 inference、Hugging Face `colwise_gather_output`/`colwise_rep` 支持和限制说明均有官方 commit 与教程文本。",
+  parallelism: "Tensor Parallel，可在训练中组合 DP 与 ZeRO 0/1/2/3；AutoTP + ZeRO-3 的 16-bit consolidated export 与 universal checkpoint 转换会跨 DP/TP 合并。",
+  limitations: "gathered column output 当前只支持 untied output layers；tied `lm_head` 保持复制，`local_colwise` / `local_rowwise` 仍未处理；runtime TP math 仍要求 attention head count 和 hidden dimensions 可被 TP size 整除，跨不同 TP degree restore 需谨慎。",
+  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 training checkpoint、Hugging Face `colwise_gather_output`/`colwise_rep` 支持和限制说明均有官方 commit、教程和测试文本。",
   tags: ["AutoTP", "Tensor Parallel", "Hugging Face"],
   extraSources: [
     {
@@ -246,10 +246,19 @@ const autoTp = deepSpeedEvent({
       type: "代码仓",
       accessedAt: "2026-07-30",
     },
+    {
+      id: "deepspeed-autotp-zero3-training-commit",
+      title: "[AutoTP] Fix ZeRO-3 checkpoint consolidation to gather across TP and DP",
+      publisher: "deepspeedai/DeepSpeed",
+      url: "https://github.com/deepspeedai/DeepSpeed/commit/eec237ee892901f4f239bb23cfe2cfbd85f4dc3b",
+      type: "代码仓",
+      accessedAt: "2026-08-03",
+    },
   ],
   extraRevisionNotes: [
     "2026-07-25 官方 commit d326520 将 AutoTP + ZeRO stage 3 从完全不支持修订为仅支持 inference（无 optimizer）；本次只修订既有 AutoTP 节点的可用性边界，不新增技术事件。",
     "2026-07-29 官方 commit 48d54e0 将 Hugging Face `colwise_gather_output`/`colwise_rep` 纳入 AutoTP tp_plan 转换；untied `lm_head` 可做 gathered column output，tied output layers 与 uneven TP 仍有明确 fallback/限制。",
+    "2026-08-02 官方 commit eec237e 修复 AutoTP + ZeRO-3 checkpoint consolidation：保存与 universal checkpoint 转换会跨 ZeRO data-parallel 和 tensor-parallel 维度 gather；新增端到端 universal conversion 测试后取消 training optimizer block。本次仍视为既有 AutoTP 可用性/限制修订，不新增单独技术节点。",
   ],
 });
 

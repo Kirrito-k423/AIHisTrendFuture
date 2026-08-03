@@ -12,6 +12,7 @@ const KIMI_K3_OPEN_ACCESSED = "2026-07-28";
 const DAILY_RUN_ACCESSED = "2026-07-29";
 const PRICE_RUN_ACCESSED = "2026-07-31";
 const AUGUST_RUN_ACCESSED = "2026-08-01";
+const ASTRA_RUN_ACCESSED = "2026-08-03";
 
 function source(
   id: string,
@@ -91,6 +92,16 @@ function augustRunSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_RUN_ACCESSED };
+}
+
+function astraRunSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: ASTRA_RUN_ACCESSED };
 }
 
 function latestRunSource(
@@ -609,6 +620,59 @@ const gptOss = modelEvent({
   aaSpeed: "273.1 tokens/s（跨供应商中位）",
   score: "AA 24",
   notes: ["MXFP4 是发布与后训练/评测口径，不能表述为预训练使用 FP4。"],
+});
+
+const openaiAstra = modelEvent({
+  id: "openai-astra-internal",
+  date: "2026-08-01",
+  tier: "frontier",
+  title: "OpenAI Astra (internal)",
+  organization: "OpenAI",
+  eyebrow: "当前前沿 / 内部推理模型 / 数学形式化",
+  summary:
+    "OpenAI 披露其下一代主要模型 Astra 的内部版本在十个数学与理论计算机问题上产出新结果，并发布 249 页论文、Lean certificate 与 walkthrough；模型本体、API、权重和训练规格均未公开。",
+  confidence: "高",
+  tags: ["LLM", "Reasoning", "Mathematics", "Lean", "Internal Model", "OpenAI"],
+  officialSourceIds: ["openai-astra-math-blog", "openai-astra-math-paper", "openai-astra-lean"],
+  sources: [
+    astraRunSource("openai-astra-math-blog", "Ten advances in mathematics", "OpenAI", "https://openai.com/index/ten-advances-in-mathematics/", "官方博客"),
+    astraRunSource("openai-astra-math-paper", "Ten Mathematical Advances", "OpenAI", "https://cdn.openai.com/pdf/2cde4f31-430f-4794-94f6-5884a9492e86/ten-mathematical-advances.pdf", "技术报告"),
+    astraRunSource("openai-astra-lean", "openai/ten-proofs", "OpenAI", "https://github.com/openai/ten-proofs", "代码仓"),
+    astraRunSource("openai-astra-aihot", "OpenAI 发布“下一代主要模型”Astra", "AI HOT", "https://aihot.virxact.com/items/cmsa77lmk02tcrox0gfhj3rcq", "讲座整理"),
+  ],
+  totalParameters: "未知",
+  activeParameters: "未知",
+  weightSize: "未知；OpenAI 未发布权重",
+  precision: "未知；OpenAI 未披露训练或推理精度",
+  architecture: "闭源内部研究模型；OpenAI 称为 Astra 的 internal version、next major model，具体 Transformer/agent/工具架构未知",
+  attention: "未知；未披露 attention、上下文、KV cache 或长推理实现",
+  moe: "未知",
+  otherArchitecture: "与自动形式化和 Lean certificate 验证流程结合；官方未说明模型是否直接生成 Lean、自然语言证明或多轮工具轨迹",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方没有披露训练数据、合成数据比例、数学语料来源或去重口径",
+  stages: "未知；本次只披露研究结果，不披露预训练、后训练、RL 或工具使用训练阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方未披露 Astra 的训练算法、search / verifier 配方或 test-time compute 预算",
+  lowPrecision: "未知",
+  infra: "Lean certificate 与 reasoning walkthrough 公开；模型服务、API、权重、代码和复现实验环境未开放",
+  aaIndex: "不适用；无 Artificial Analysis 或同口径动态榜单观测",
+  aaContext: "十个研究问题覆盖组合、图论、理论计算机等数学方向；结果由 OpenAI 论文与 Lean certificate 支撑，但不是通用数学榜单分数",
+  aaSpeed: "未知",
+  score: "10 problems · Lean certificates",
+  breakthroughs: [
+    "OpenAI 首次把 Astra 下一代内部模型的数学研究产出以论文、Lean certificate 和 walkthrough 形式公开，而不是仅发布榜单分数。",
+    "事件价值限定在十个具体数学/理论计算机问题的研究结果；不能从中推出 Astra 在所有数学、科学或开放世界任务上 SOTA。",
+    "模型仍为内部版本：参数、权重、API、架构、训练数据、test-time compute 和独立社区复核进展均未披露。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmsa77lmk02tcrox0gfhj3rcq 与 https://aihot.virxact.com/items/cmscc62eo033broeusw72isi0；attribution canonical 同 URL；发现日期 2026-08-03。",
+    "日期口径采用 OpenAI 发布页日期 2026-08-01；AI HOT selected item 发布时间为 2026-08-02T21:25:27Z。",
+    "本条不把 Gary Marcus 等评论或 AI HOT 摘要当事实来源；只用其作为发现线索。技术事实来自 OpenAI 发布页、论文和 Lean certificate 仓库。",
+    "OpenAI 未发布模型卡、API 或权重，因此在模型对比中只保留结构化未知字段，不加入参数、速度、价格或 AA 指标图表。",
+  ],
 });
 
 const qwen36 = modelEvent({
@@ -2164,7 +2228,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra],
     },
     {
       id: "t2i-training",

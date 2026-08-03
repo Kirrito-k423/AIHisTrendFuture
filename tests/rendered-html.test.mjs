@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 31);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 32);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -70,6 +70,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const maiCyber1Flash = modelEvent/);
   assert.match(source, /const deepseekV4Flash0731 = modelEvent/);
   assert.match(source, /const inklingSmall = modelEvent/);
+  assert.match(source, /const openaiAstra = modelEvent/);
   assert.match(source, /Agent Swarm/);
   assert.match(source, /Muon Split/);
   assert.match(source, /Prefix Tree Merging/);
@@ -114,6 +115,7 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.ok((source.match(/id: /g) ?? []).length >= 50);
   assert.match(source, /2022-11-30/);
   assert.match(source, /Qwen3\.7/);
+  assert.match(source, /OpenAI Astra \(internal\)/);
   assert.match(source, /Qwen-Audio-3\.0-TTS/);
   assert.match(source, /Gemini 3\.6 Flash/);
   assert.match(source, /Claude Opus 5/);
@@ -194,6 +196,7 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /Claude Opus 5/);
   assert.match(html, /MAI-Cyber-1-Flash/);
   assert.match(html, /DeepSeek V4 Flash 0731/);
+  assert.match(html, /OpenAI Astra \(internal\)/);
   assert.match(html, /Inkling Small/);
   assert.match(html, /Z-Image-Turbo/);
   assert.match(html, /拖动排序/);
@@ -378,6 +381,7 @@ test("history includes five source-backed DeepSpeed columns and all 21 requested
   assert.match(historySource, /paper-angelspec/);
   assert.match(historySource, /AngelSpec \/ DFly/);
   assert.match(dataSource, /colwise_gather_output/);
+  assert.match(dataSource, /ZeRO-3 training checkpoint/);
 
   const response = await render("/history");
   const html = await response.text();
