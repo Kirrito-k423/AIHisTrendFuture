@@ -6689,5 +6689,154 @@
     ],
     "research_file": "research/model-briefs/seedance-2-5.json",
     "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
+  },
+  {
+    "slug": "sensenova-u1-5-preview",
+    "name": "SenseNova-U1.5-8B-MoT (Preview)",
+    "family": "SenseNova U1",
+    "entry_kind": "model",
+    "modality": "T2I",
+    "organization": "SenseTime / OpenSenseNova",
+    "release_date": "2026-07-31",
+    "release_date_basis": "采用 Hugging Face 模型卡 Updated News 中 `[2026.07.31] Released SenseNova-U1.5-8B-MoT (Preview)` 的版本发布日期；AI HOT selected item 发布时间只作为发现时间，不作为模型发布日期。",
+    "access": "开放权重 preview；Hugging Face 仓库 `sensenova/SenseNova-U1.5-8B-MoT-Preview` 非 gated、非 private，ModelScope 镜像和 GitHub 推理/训练代码均公开。官方提示更强的 production version 将稍后发布，因此本条限定为 preview checkpoint。",
+    "license": "模型卡未在 YAML 或正文明确写出权重许可证；GitHub 仓库许可边界需单独核验，因此许可证记为未知。",
+    "official_model_ids": [
+      "sensenova/SenseNova-U1.5-8B-MoT-Preview",
+      "SenseNova/SenseNova-U1.5-8B-MoT-Preview"
+    ],
+    "parameter_total": "8B-MoT（官方模型名口径）；Hugging Face safetensors metadata 报告 BF16 9,972,275,648 + F32 7,560,578,816，共 17,532,854,464 tensor elements。两者口径不同：8B-MoT 是模型系列标称，HF 统计覆盖公开 checkpoint 内全部张量。",
+    "parameter_active": "未知。官方未披露 MoT 路由含义、每 token/patch 激活参数、专家数或稀疏激活比例，不能从 8B-MoT 名称反推。",
+    "weight_size": "Hugging Face API usedStorage 为 50,187,015,408 bytes；公开 LFS safetensors 分片约 50.17 GB。该大小包含当前仓库文件，不代表最小推理显存。",
+    "precision": "config.json 标注 torch_dtype 为 bfloat16；HF safetensors metadata 同时包含 BF16 与 F32 tensor elements。训练精度、推理量化与低精度部署方式未披露。",
+    "architecture": "基于 NEO-unify 的原生统一多模态模型，模型卡称 U1.5 使用新的 patch encoding/decoding layers，并面向 text-to-image、image editing、image generation 和 any-to-any 管线开放 preview。",
+    "attention_or_sequence_design": "官方仍未披露完整 attention、位置编码、层数、head 数、上下文长度或 KV/cache 结构。config 只给出视觉侧 `patch_size=16`、`hidden_size=1024`、`llm_hidden_size=4096`、`max_pixels=16777216` 等可核验字段。",
+    "vae_or_tokenizer": "U1.5 从 U1 的 patchwise MLP head 转向 ConvDecoder：视觉 tokens reshape 成二维 feature grid，经多级 Pixel Shuffle 上采样，并用中间 3x3 convolution 让相邻 patch 交互，以减少高分辨率 grid artifacts。",
+    "text_encoder_or_conditioner": "模型卡没有披露独立 text encoder 名称或参数量；tokenizer 文件随模型仓发布，训练语料增加中英文平衡和更复杂编辑/参考设置，但具体文本编码器与 prompt enhance 组件边界未知。",
+    "training_hardware": "未知。官方未披露训练 GPU/NPU 型号、节点、显存或互联。",
+    "training_hardware_scale": "未知。未披露加速器数量、GPU-hours、训练 FLOPs、能耗、云成本或 wall-clock。",
+    "training_data_scale": "未知。官方只说明 expanded and refined text-to-image training corpus，以及 extensively filtering and synthesizing editing data；没有披露图像数、token 数、分辨率分布或授权比例。",
+    "training_data_composition": "官方披露扩展和清洗 text-to-image 训练语料，并对 single-image 与 multi-image reference 的编辑数据做过滤和合成，改善中英文平衡、纹理、材质、光照、复杂布局和局部编辑；具体来源、去重、安全过滤和合成比例未知。",
+    "training_stages": [
+      {
+        "stage": "预训练",
+        "name": "U1.5 8B-MoT pre-training",
+        "description": "官方开源了 U1.5 预训练 launcher 与 configuration，但未在模型卡披露完整阶段顺序、步数、优化器、batch、学习率或中间 checkpoint。"
+      },
+      {
+        "stage": "后训练 / 编辑增强",
+        "name": "图像生成与编辑数据增强",
+        "description": "模型卡说明清洗、过滤、合成编辑数据并扩展中英文与多参考设置；没有给出 SFT/RL/偏好优化或安全微调细节。"
+      }
+    ],
+    "training_stage_times": [
+      {
+        "stage": "全部训练阶段",
+        "optimization_steps": "未知",
+        "wall_clock_time": "未知"
+      }
+    ],
+    "training_algorithms": "NEO-unify 原生统一多模态建模；U1.5 新增 progressive spatial reconstruction / ConvDecoder，扩展 text-to-image 语料并清洗/合成编辑数据。优化器、loss、采样策略、RLHF/偏好优化和蒸馏细节未知。",
+    "training_infra": "官方开源预训练 launcher `training/shell/train_u1/U1.5_8B.sh` 与配置 `sensenovau1_5_8b_mot_pt.py`，但没有披露分布式训练框架、并行策略、通信库、checkpoint、容错或存储系统。",
+    "inference_hardware": "未知。模型卡提供示例和 demo 链接，但未披露官方榜单/示例使用的 GPU、显存、并行度或服务区域。",
+    "inference_performance": "模型卡未给端到端生成时间或吞吐。HF 仓库标签显示 4K，README 宣称 native 4K generation with remarkable efficiency，但未给硬件、步数、batch、并发或延迟数字，因此不写入可比较速度。",
+    "max_output_resolution": "native 4K（模型卡与标签均披露）；`vision_config.max_pixels=16777216` 对应 4096x4096 像素上限口径。",
+    "max_output_duration_seconds": null,
+    "native_fps": "不适用；本条记录为图像生成/编辑 preview。",
+    "aa_elo": null,
+    "aa_elo_observed_at": null,
+    "generation_time_seconds": null,
+    "generation_time_context": "未知。未发现 Artificial Analysis 或官方指定硬件/分辨率/采样步数下的端到端生成耗时；不把“remarkable efficiency”转写成数值优势。",
+    "benchmark_scores": [
+      {
+        "benchmark": "Qwen-Image Bench",
+        "variant": "U1.5-Preview",
+        "observed_at": "2026-08-04",
+        "metrics": {
+          "overall_en": 49.93,
+          "overall_zh": 50.25
+        },
+        "scope": "模型卡表格；U1.5-Preview 低于 GPT Image 2 与 Qwen Image 2 等闭源/商业基线，不写成 overall SOTA。"
+      },
+      {
+        "benchmark": "Qwen-Image Bench with Prompt Enhance",
+        "variant": "U1.5-Preview dagger",
+        "observed_at": "2026-08-04",
+        "metrics": {
+          "overall_en": 55.17,
+          "overall_zh": 55.22
+        },
+        "scope": "模型卡说明 dagger 为 Prompt Enhance，following Cosmos3 upsampling strategy；不能与不使用 PE 的基线无条件直接比较。"
+      },
+      {
+        "benchmark": "Image Editing",
+        "variant": "U1.5-Preview",
+        "observed_at": "2026-08-04",
+        "metrics": {
+          "imgedit_bench_overall": 4.37,
+          "gedit_bench_en_go": 8.172,
+          "gedit_bench_cn_go": 8.051,
+          "weedit_average": 6.852
+        },
+        "scope": "模型卡表格；在 WeEdit Average 上低于 Nano-Banana-Pro，高于 U1、Qwen-Image-2 和多项开源编辑基线，但榜单非独立动态服务。"
+      }
+    ],
+    "novelty_claims": [
+      {
+        "claim": "把 SenseNova U1 的高分辨率 patchwise reconstruction 改为 ConvDecoder/Pixel Shuffle progressive spatial reconstruction，并以开放 preview checkpoint 支持 native 4K 图像生成与编辑。",
+        "scope_boundary": "这是模型卡与公开代码层面的架构/可用性变化；未披露完整技术报告、训练成本或独立动态榜单，因此不写成开放图像模型总榜 SOTA。",
+        "evidence": "HF 模型卡的 Overview、What U1.5 Improves 与 Updated News，config.json 的视觉像素上限，以及公开 safetensors 权重共同支撑。",
+        "confidence": "高"
+      },
+      {
+        "claim": "U1.5 在官方 Qwen-Image Bench、ImgEdit-Bench/GEdit-Bench/WeEdit 表格中相对 U1 明显提升，尤其是 Prompt Enhance 口径下的整体生成得分和编辑能力。",
+        "scope_boundary": "这些是模型卡自报表格；Prompt Enhance 是额外处理口径，且部分商业基线仍领先，不能外推为所有图像任务或无 PE 条件下的 SOTA。",
+        "evidence": "模型卡 Text-to-Image 与 Image Editing 表格给出 U1、U1.5-Preview、U1.5-Preview dagger 及多个基线的逐项数字。",
+        "confidence": "中高"
+      }
+    ],
+    "comparison_eligible": true,
+    "history_eligible": true,
+    "unknown_fields": [
+      "权重许可证",
+      "MoT 路由含义、专家数、激活参数和完整层结构",
+      "训练硬件、训练规模、数据总量、数据来源比例和训练时长",
+      "优化器、loss、采样策略、偏好优化、安全后训练和蒸馏细节",
+      "指定硬件下生成耗时、显存、吞吐、服务价格和独立动态榜单 Elo"
+    ],
+    "sources": [
+      {
+        "title": "SenseNova-U1.5-8B-MoT (Preview) model card",
+        "url": "https://huggingface.co/sensenova/SenseNova-U1.5-8B-MoT-Preview",
+        "source_type": "model_card"
+      },
+      {
+        "title": "SenseNova-U1.5-8B-MoT (Preview) config.json",
+        "url": "https://huggingface.co/sensenova/SenseNova-U1.5-8B-MoT-Preview/blob/main/config.json",
+        "source_type": "model_card"
+      },
+      {
+        "title": "SenseNova-U1 model repository",
+        "url": "https://github.com/OpenSenseNova/SenseNova-U1",
+        "source_type": "source_code"
+      },
+      {
+        "title": "NEO-unify architecture blog",
+        "url": "https://huggingface.co/blog/sensenova/neo-unify",
+        "source_type": "official_blog"
+      },
+      {
+        "title": "SenseNova-U1 technical report",
+        "url": "https://arxiv.org/abs/2605.12500",
+        "source_type": "paper"
+      },
+      {
+        "title": "SenseNova U1.5 AI HOT discovery",
+        "url": "https://aihot.virxact.com/items/cmsdczxnl0138rotj8fjenm4b",
+        "source_type": "discovery"
+      }
+    ],
+    "research_file": "research/model-briefs/sensenova-u1-5-preview.json",
+    "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
   }
 ]

@@ -96,8 +96,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /https:\/\//);
 
   const research = JSON.parse(await readFile(new URL("../app/generative-research.json", import.meta.url), "utf8"));
-  assert.equal(research.length, 31);
-  assert.equal(research.filter((item) => item.entry_kind === "model").length, 28);
+  assert.equal(research.length, 32);
+  assert.equal(research.filter((item) => item.entry_kind === "model").length, 29);
   assert.equal(research.filter((item) => item.entry_kind === "method").length, 3);
   assert.ok(research.every((item) => item.unknown_fields && item.sources?.length && item.novelty_claims?.length));
   assert.ok(research.every((item) => item.source_article === "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"));
@@ -106,6 +106,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.ok(research.some((item) => item.slug === "flux-3" && item.modality === "Omni"));
   assert.ok(research.some((item) => item.slug === "minimax-h3" && item.modality === "Omni"));
   assert.ok(research.some((item) => item.slug === "seedance-2-5" && item.modality === "T2V"));
+  assert.ok(research.some((item) => item.slug === "sensenova-u1-5-preview" && item.modality === "T2I"));
   assert.ok(research.some((item) => item.slug === "self-forcing" && item.entry_kind === "method"));
 });
 
@@ -139,6 +140,7 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(research, /FLUX 3/);
   assert.match(research, /MiniMax H3/);
   assert.match(research, /Seedance 2\.5/);
+  assert.match(research, /SenseNova-U1\.5/);
 });
 
 test("metric charts use interactive ECharts with linear axes and sortable tables", async () => {
