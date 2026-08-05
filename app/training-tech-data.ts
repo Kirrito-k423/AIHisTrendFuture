@@ -15,6 +15,7 @@ const CURRENT_ACCESSED_AT = "2026-07-20";
 const DAILY_ACCESSED_AT = "2026-07-21";
 const LATEST_ACCESSED_AT = "2026-07-23";
 const RUN_ACCESSED_AT = "2026-07-28";
+const CURRENT_DAILY_ACCESSED_AT = "2026-08-05";
 
 function source(
   id: string,
@@ -64,6 +65,16 @@ function runSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: RUN_ACCESSED_AT };
+}
+
+function currentDailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: CURRENT_DAILY_ACCESSED_AT };
 }
 
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
@@ -129,6 +140,7 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-dancegrpo": { name: "Zeyue Xue", role: "first-author", organization: "ByteDance Seed / The University of Hong Kong", sourceUrl: "https://arxiv.org/abs/2505.07818", profileLabel: "GitHub", profileUrl: "https://github.com/XueZeyue" },
   "tech-diffusionnft": { name: "Kaiwen Zheng", role: "first-author", organization: "Tsinghua University / NVIDIA", sourceUrl: "https://arxiv.org/abs/2506.01347", profileLabel: "个人主页", profileUrl: "https://zhengkw18.github.io/" },
   "tech-opd": { name: "Kevin Lu", role: "first-author", organization: "Thinking Machines Lab", sourceUrl: "https://thinkingmachines.ai/blog/on-policy-distillation/", profileLabel: "个人主页", profileUrl: "https://kevinlu.ai/" },
+  "tech-specforge-v03": { name: "SpecForge Team", role: "project-team", organization: "LMSYS / SGLang", sourceUrl: "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3/", profileLabel: "官方博客", profileUrl: "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3/", note: "SpecForge v0.3 是工程系统发布，官方署名为团队与社区贡献者。" },
   "tech-triton": { name: "Philippe Tillet", role: "first-author", organization: "OpenAI", sourceUrl: "https://openai.com/index/triton/", profileLabel: "GitHub", profileUrl: "https://github.com/ptillet" },
   "tech-ascend-c": { name: "Huawei Ascend C 团队", role: "project-team", organization: "Huawei", sourceUrl: "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1alpha002/API/ascendcopapi/atlasascendc_api_07_0003.html", profileLabel: "官方项目", profileUrl: "https://www.hiascend.com/", note: "官方文档未列论文式个人一作，因此按主责团队标注。" },
   "tech-liger-kernel": { name: "Pin-Lun Hsu", role: "first-author", organization: "LinkedIn", sourceUrl: "https://arxiv.org/abs/2410.10989", profileLabel: "GitHub", profileUrl: "https://github.com/linkedin/Liger-Kernel" },
@@ -172,6 +184,14 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
   "tech-dancegrpo": [{ modelId: "flux-1-dev", relation: "基础模型" }, { modelId: "hunyuanvideo-2024-12", relation: "实验验证" }],
   "tech-diffusionnft": [{ modelId: "flux-1-dev", relation: "实验验证", note: "链接表示扩散模型实验语境，不声称 FLUX 产品采用。" }],
   "tech-opd": [{ modelId: "qwen3-235b-a22b", relation: "技术谱系" }],
+  "tech-specforge-v03": [
+    { modelId: "qwen3-5-397b-a17b", relation: "推理支撑", note: "SpecBundle 发布 Qwen3.5-397B-A17B DFlash draft；速度收益以模型卡/博客口径为准。" },
+    { modelId: "qwen3-6-35b-a3b", relation: "推理支撑", note: "SpecBundle 发布 Qwen3.6-27B Domino draft；不是 35B-A3B 主模型本身的训练收益。" },
+    { modelId: "kimi-k2-5", relation: "推理支撑" },
+    { modelId: "kimi-k2-6", relation: "推理支撑" },
+    { modelId: "kimi-k3", relation: "推理支撑" },
+    { modelId: "inkling-small", relation: "推理支撑" },
+  ],
   "tech-triton": [{ modelId: "deepseek-v3-2024-12", relation: "训练 / 推理支撑" }, { modelId: "gpt-oss-120b", relation: "训练 / 推理支撑" }],
   "tech-ascend-c": [{ modelId: "qwen3-235b-a22b", relation: "训练 / 推理支撑", note: "昇腾部署能力关联，不主张其官方训练硬件。" }],
   "tech-liger-kernel": [{ modelId: "qwen3-235b-a22b", relation: "训练 / 推理支撑" }],
@@ -953,6 +973,48 @@ const opd = technology({
   ],
 });
 
+const specForgeV03 = technology({
+  id: "tech-specforge-v03",
+  date: "2026-08-04",
+  title: "SpecForge v0.3",
+  organization: "LMSYS / SGLang",
+  category: "算法流程",
+  family: "训练算法",
+  eyebrow: "官方博客 + 代码仓 / Speculative Decoding",
+  summary: "把 target-model feature capture 与 draft-model training 解耦成在线/离线/分离式统一 pipeline，并发布 SpecBundle draft models，覆盖 EAGLE3、DFlash、Domino、DSpark 等多类 speculative decoding 方法。",
+  score: "1.10× train / up to 4.60× serve*",
+  tags: ["SpecForge", "Speculative Decoding", "SGLang", "Mooncake", "EAGLE3", "DFlash", "Domino", "DSpark"],
+  situation: "Speculative decoding 的 draft 训练常把 frozen target model 和 trainer 绑在同一进程/资源拓扑里，难以独立扩展 target inference、feature storage 与 draft optimization，也限制社区 draft checkpoint 覆盖。",
+  target: "用一个类型化训练入口覆盖在线、离线、colocated 与 disaggregated 工作流，让 target capture、feature transport、trainer 与 serving export 形成可验证契约。",
+  action: "用 patched SGLang capture server 生成 target features，Mooncake 承载大 tensor data plane，控制面只传 SampleRef；trainer workers 解析引用训练 draft，并通过 export / SGLang serving gate 验证训练与服务一致性。",
+  result: "8×H20、Qwen3-8B Domino、3K context 测试中，3 个 SGLang capture servers + 5 个 trainer workers 相对旧 colocated runtime 端到端训练吞吐约 1.10×；博客同时发布 11 个 SpecBundle drafts，部分 serving 评测在固定模型/并发下报告 3.14×、4.31×、4.60× 等上限。",
+  mechanism: "disaggregated online draft training pipeline + FeatureStore contract + SGLang target capture + Mooncake tensor transport + algorithm-specific heads for EAGLE3 / DFlash / Domino / DSpark。",
+  bestFor: "已有强 target model、需要为真实服务模型训练 draft、并希望把 capture capacity 和 trainer capacity 分离调度的推理团队。",
+  experiment: "训练实验为 8×H20、Qwen3-8B Domino、3K-token context；serving 图表覆盖 Qwen3.5-397B-A17B DFlash、Qwen3.6-27B Domino、Kimi-K3 DSpark 等固定硬件/并发/benchmark 设置。",
+  computeMemory: "大 hidden-state tensors 不经过 Python queue 或控制数据库，而由 FeatureStore/Mooncake 管理；收益来自资源重分配和 pipeline 解耦，不是单模型参数或显存压缩。",
+  parallelism: "Target model 的 tensor/expert parallel 属于 SGLang capture pool；draft model 的 data/sequence parallel 属于 SpecForge trainer pool，二者可独立扩缩容。",
+  limitations: "1.10× 是单个 8×H20 训练拓扑结果；4.60×/4.31×/3.14× 是特定 draft、硬件、并发和任务上的 serving 上限。官方 gate 只验证训练/export/serving 对一个受控样本一致，不替代 held-out 质量或生产压测。",
+  availability: "SpecForge 开源，v0.3 博客、sgl-project/SpecForge 仓库、SGLang capture patch、training/serving gate 与 Hugging Face SpecBundle collection 可公开访问。",
+  breakthroughs: [
+    "把 target capture 和 draft training 从进程内耦合改成 feature-store 契约驱动的 disaggregated pipeline。",
+    "一个 runtime 覆盖 EAGLE3、EAGLE3.1、P-EAGLE、DFlash、Domino、DSpark 和可选 D-PACE。",
+    "SpecBundle 一次性扩展到 11 个开源 draft checkpoints，其中 9 个来自社区贡献，并全部声明只用开放数据训练。",
+  ],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmseyfjcz1au8ro2enx0b7os6；attribution canonical 同 URL；发现日期 2026-08-04。",
+    "本条按训练/推理技术入库，不把任一 draft 的速度收益外推到所有模型，也不把 new tutorial/Examples 更新等同技术突破。",
+    "DeepSpeed 本轮 AutoTP smoke test 变更仅证明官方 Examples 路径存在；与 SpecForge 无直接证据关系，未混入本条结论。",
+  ],
+  sources: [
+    currentDailySource("specforge-v03-blog", "SpecForge v0.3.0: a Unified Disaggregated and Colocated Speculative Decoding Stack, and New Open SpecBundle Draft Models", "LMSYS", "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3/", "官方博客"),
+    currentDailySource("specforge-repo", "sgl-project/SpecForge", "SGLang / LMSYS", "https://github.com/sgl-project/SpecForge", "代码仓"),
+    currentDailySource("specforge-sglang-patch", "SpecForge SGLang capture patch", "SGLang / LMSYS", "https://github.com/sgl-project/SpecForge/blob/main/patches/sglang/v0.5.14/spec-capture.patch", "代码仓"),
+    currentDailySource("specforge-gate", "SpecForge training and serving gate", "SGLang / LMSYS", "https://github.com/sgl-project/SpecForge/blob/main/scripts/gates/README.md", "代码仓"),
+    currentDailySource("specbundle-hf", "SpecBundle", "LMSYS / Hugging Face", "https://huggingface.co/collections/lmsys/specbundle", "模型卡"),
+  ],
+});
+
 const quantizationAwareTraining = technology({
   id: "tech-qat",
   date: "2017-12-15",
@@ -1341,9 +1403,9 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-algorithm",
     group: "训练技术 / 02",
     title: "算法流程 / Post-training",
-    description: "QAT、GRPO、Agentic RL、Agent 环境基础设施、视觉生成 RL、DiffusionNFT 与 On-Policy Distillation",
+    description: "QAT、GRPO、Agentic RL、Agent 环境基础设施、视觉生成 RL、DiffusionNFT、On-Policy Distillation 与 SpecForge",
     color: "violet",
-    events: [quantizationAwareTraining, grpo, tunixAgenticRl, agentEnv, danceGrpo, diffusionNft, opd],
+    events: [quantizationAwareTraining, grpo, tunixAgenticRl, agentEnv, danceGrpo, diffusionNft, opd, specForgeV03],
   },
   {
     id: "training-tech-kernel",

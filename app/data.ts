@@ -13,6 +13,7 @@ const DAILY_RUN_ACCESSED = "2026-07-29";
 const PRICE_RUN_ACCESSED = "2026-07-31";
 const AUGUST_RUN_ACCESSED = "2026-08-01";
 const ASTRA_RUN_ACCESSED = "2026-08-03";
+const CURRENT_DAILY_ACCESSED = "2026-08-05";
 
 function source(
   id: string,
@@ -102,6 +103,16 @@ function astraRunSource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: ASTRA_RUN_ACCESSED };
+}
+
+function currentDailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: CURRENT_DAILY_ACCESSED };
 }
 
 function latestRunSource(
@@ -672,6 +683,112 @@ const openaiAstra = modelEvent({
     "日期口径采用 OpenAI 发布页日期 2026-08-01；AI HOT selected item 发布时间为 2026-08-02T21:25:27Z。",
     "本条不把 Gary Marcus 等评论或 AI HOT 摘要当事实来源；只用其作为发现线索。技术事实来自 OpenAI 发布页、论文和 Lean certificate 仓库。",
     "OpenAI 未发布模型卡、API 或权重，因此在模型对比中只保留结构化未知字段，不加入参数、速度、价格或 AA 指标图表。",
+  ],
+});
+
+const qwen38Max = modelEvent({
+  id: "qwen3-8-max",
+  date: "2026-08-04",
+  tier: "frontier",
+  title: "Qwen3.8-Max",
+  organization: "Alibaba / Qwen",
+  eyebrow: "当前前沿 / 2.4T MoE API / 多模态推理",
+  summary:
+    "QwenCloud 上线 Qwen3.8-Max：官方模型页披露为 2.4T 参数 MoE，支持文本、图像、视频输入到文本输出，并面向长周期编码、专业任务与视觉理解；权重、技术报告、训练规格和第三方动态榜单分数尚未公开。",
+  confidence: "中",
+  tags: ["LLM", "VLM", "MoE", "QwenCloud", "Coding", "Agentic", "API", "2.4T"],
+  officialSourceIds: ["qwen38-model-page", "qwen38-blog-route"],
+  aaSourceId: "qwen38-aa-leaderboard",
+  sources: [
+    currentDailySource("qwen38-model-page", "Qwen3.8-Max", "QwenCloud", "https://www.qwencloud.com/models/qwen3.8-max", "官方博客"),
+    currentDailySource("qwen38-blog-route", "Qwen blog route for qwen3.8", "Qwen", "https://qwen.ai/blog?id=qwen3.8", "官方博客"),
+    currentDailySource("qwen38-aa-leaderboard", "Artificial Analysis LLM leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/leaderboards/models", "第三方测量"),
+    currentDailySource("qwen38-aihot", "Qwen3.8-Max 发布候选", "AI HOT", "https://aihot.virxact.com/topics/cmsddp1e11bqcro2ei8qv2xqf", "讲座整理"),
+  ],
+  totalParameters: "2.4T（QwenCloud 模型页披露为 2.4-trillion-parameter MoE）",
+  activeParameters: "未知；官方未披露每 token 激活专家数或 active-parameter 口径",
+  weightSize: "未知；本轮未找到开放权重或模型卡权重文件，QwenCloud 页面只提供 Try AI / API Request 路径",
+  precision: "未知；官方未披露训练或推理精度",
+  architecture: "2.4T 参数 MoE API 模型；文本、图像、视频输入到文本输出；具体层数、专家数、hidden size、视觉编码器和 tokenizer 未披露",
+  attention: "未知；官方未披露 attention、上下文长度、KV cache 或长视频处理机制",
+  moe: "MoE；总参数 2.4T，激活参数、专家数量、top-k 和 shared expert 设计未知",
+  otherArchitecture: "官方强调 native visual understanding、long-horizon planning、closed feedback loops、10+ 天编码项目和法律/金融/设计等专业任务；未给 benchmark 明细",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方未披露训练数据规模、模态比例、代码/专业语料来源或过滤口径",
+  stages: "未知；官方未披露预训练、SFT、RL、工具使用或视觉后训练阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方未披露优化器、RL、蒸馏、agentic training 或 verifier 配方",
+  lowPrecision: "未知",
+  infra: "QwenCloud Try AI 与 DashScope MultiModalConversation API 可用；模型 ID 为 qwen3.8-max；未披露服务并行、推理硬件、限流或价格的逐 token 口径",
+  aaIndex: "未知；2026-08-05 访问 Artificial Analysis 未找到 Qwen3.8-Max 专页或可比较动态榜单记录",
+  aaContext: "只能记录为官方 API 上线和 2.4T MoE 规格；不能把 AI HOT 标题或 QwenCloud 营销描述等同于 SOTA benchmark",
+  aaSpeed: "未知",
+  score: "2.4T MoE · API live",
+  breakthroughs: [
+    "QwenCloud 官方页面确认 qwen3.8-max 已可通过 Try AI / API Request 使用，并披露 2.4T MoE 总参数。",
+    "官方能力描述集中在长周期编码、专业工作和原生视觉理解，但没有公开同口径榜单、技术报告或开放权重。",
+    "本条按闭源 API 旗舰入库：保留未知字段，等待模型卡、价格页、第三方测量或技术报告补齐。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/topics/cmsddp1e11bqcro2ei8qv2xqf；本轮仅把 AI HOT 作为候选雷达，不用其摘要替代官方事实。",
+    "日期口径采用 AI HOT 主题中 Qwen Blog Retrieval 候选最新时间 2026-08-04，并以 2026-08-05 QwenCloud 官方页面可访问作为核验；QwenCloud 静态 meta date 不是发布日。",
+    "Qwen.ai 博客页面在本轮静态抓取中只暴露 /blog?id=qwen3.8 路由和首屏壳，未稳定暴露正文；技术事实来自 QwenCloud 模型页。",
+  ],
+});
+
+const alpamayo2Super = modelEvent({
+  id: "nvidia-alpamayo-2-super",
+  date: "2026-08-04",
+  tier: "frontier",
+  title: "NVIDIA Alpamayo 2 Super",
+  organization: "NVIDIA",
+  eyebrow: "Physical AI / OpenMDW-1.1 / AV VLA",
+  summary:
+    "NVIDIA 发布面向自动驾驶开发的开放权重 VLA 模型 Alpamayo 2 Super：34B 参数，基于 Cosmos 3 Super Reasoner，组合 32B VLM backbone 与 2.3B diffusion action expert，在 LingoQA、AlpaSim 与开环轨迹指标上给出 NVIDIA 自报评测。",
+  confidence: "高",
+  tags: ["VLM", "VLA", "Physical AI", "Autonomous Vehicles", "Cosmos", "Open Weights", "OpenMDW-1.1", "NVIDIA"],
+  officialSourceIds: ["alpamayo2-blog", "alpamayo2-card", "alpamayo2-hf-api"],
+  aaSourceId: "alpamayo2-card",
+  sources: [
+    currentDailySource("alpamayo2-blog", "NVIDIA Alpamayo 2 Super, Frontier Open Model for Robotaxis and AVs, Available for Commercial Use", "NVIDIA", "https://blogs.nvidia.com/blog/alpamayo-2-super-open-model-for-robotaxis-avs/", "官方博客"),
+    currentDailySource("alpamayo2-card", "nvidia/Alpamayo2-Super", "NVIDIA", "https://huggingface.co/nvidia/Alpamayo2-Super", "模型卡"),
+    currentDailySource("alpamayo2-hf-api", "Alpamayo2-Super Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/nvidia/Alpamayo2-Super", "模型卡"),
+    currentDailySource("alpamayo2-aihot", "NVIDIA Alpamayo 2 Super 候选", "AI HOT", "https://aihot.virxact.com/items/cmsdu6bhs1bj6ro2eakd2zsi5", "讲座整理"),
+  ],
+  totalParameters: "34B（模型卡）；32B VLM backbone + 2.3B diffusion action expert",
+  activeParameters: "未知；官方未披露稀疏激活或每 token / 每帧激活参数口径",
+  weightSize: "未知；HF 仓库公开 32 个文件，但本轮未逐项下载并换算完整权重字节",
+  precision: "BF16 推理评测配置；训练精度未知",
+  architecture: "Vision-Language-Action model；基于 Cosmos 3 Super Reasoner，加入 diffusion-based action decoder；输入多摄像头、多时间步图像、ego-motion 历史与文本",
+  attention: "未知；官方未披露 VLM backbone 的 attention、KV cache 或长时序融合细节",
+  moe: "未知；模型卡未披露 MoE 结构",
+  otherArchitecture: "输出 64 个 0.1s 间隔、覆盖 6.4s 的 trajectory waypoints，也输出 Chain-of-Causation trace、meta-action、VQA、2D grounding 与 auto-labeling 字段",
+  hardware: "未知；模型卡只给 BF16 / PyTorch SDPA / batch size 1 / 10 diffusion steps 的 measured configuration",
+  hardwareCount: "未知",
+  dataScale: "约 115,000 小时多摄像头驾驶视频；约 3,700,000 条 Chain-of-Causation reasoning traces",
+  dataDetails: "NVIDIA PhysicalAI-Autonomous-Vehicles 与 PhysicalAI-Autonomous-Vehicles-NuRec；传感器包含 RGB cameras、IMU、GPS；含自动/人工混合标注与合成推理轨迹",
+  stages: "Cosmos 3 Super Reasoner 基座 → AV 数据与 action decoder 后训练；官方博客称使用 reinforcement learning post-training",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "VLA 多任务训练、diffusion action expert、reinforcement-learning post-training；优化器、RL 奖励与数据采样细节未知",
+  lowPrecision: "训练低精度未知；模型卡评测配置为 BF16",
+  infra: "OpenMDW-1.1 开放权重，可商用、微调、派生和再分发；适用于云端 AV 开发、推理 trace 生成、自动标注和 distillation，不等同车端实时部署模型",
+  aaIndex: "不适用；无 Artificial Analysis 通用模型榜单记录。官方模型卡给 Lingo-Judge 79.2、AlpaSim 1.50 ± 0.13、minADE_6@6.4s 0.911m",
+  aaContext: "NVIDIA 博客称其在 NVIDIA 测试中 LingoQA 接近 40 个模型第一，并较 Qwen2.5-VL 72B +17.0、Gemini 2.5 Pro +15.1、GPT-4o +23.2；这是 AV 专项/厂商评测，不是通用 VLM 排行",
+  aaSpeed: "未知；模型卡未披露 tokens/s 或端到端延迟，只披露 measured configuration 影响内存",
+  score: "Lingo-Judge 79.2 · OpenMDW",
+  breakthroughs: [
+    "把 Cosmos 3 Super Reasoner 扩展为 34B 自动驾驶 VLA 模型，并用 OpenMDW-1.1 给出商业可用的开放权重路径。",
+    "同一模型覆盖 trajectory、CoC reasoning、meta-action、VQA、2D grounding 与 auto-labeling，定位为 cloud-to-car 开发与蒸馏教师。",
+    "官方 AV 评测强，但结论必须限定在 NVIDIA 披露的驾驶场景和评测配置内。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmsdu6bhs1bj6ro2eakd2zsi5；attribution canonical 同 URL；发现日期 2026-08-04。",
+    "发布日期采用 NVIDIA 博客发布时间 2026-08-04；HF API 显示仓库 lastModified 为 2026-08-04T03:45:14Z，createdAt 早于正式发布。",
+    "本条不把 NVIDIA 自报 LingoQA 优势泛化为通用多模态 SOTA；它是自动驾驶/Physical AI 专项模型。",
   ],
 });
 
@@ -2228,7 +2345,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super],
     },
     {
       id: "t2i-training",
