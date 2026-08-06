@@ -14,6 +14,7 @@ const PRICE_RUN_ACCESSED = "2026-07-31";
 const AUGUST_RUN_ACCESSED = "2026-08-01";
 const ASTRA_RUN_ACCESSED = "2026-08-03";
 const CURRENT_DAILY_ACCESSED = "2026-08-05";
+const LATEST_DAILY_ACCESSED = "2026-08-06";
 
 function source(
   id: string,
@@ -113,6 +114,16 @@ function currentDailySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: CURRENT_DAILY_ACCESSED };
+}
+
+function latestDailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: LATEST_DAILY_ACCESSED };
 }
 
 function latestRunSource(
@@ -789,6 +800,61 @@ const alpamayo2Super = modelEvent({
     "AI HOT discovery: https://aihot.virxact.com/items/cmsdu6bhs1bj6ro2eakd2zsi5；attribution canonical 同 URL；发现日期 2026-08-04。",
     "发布日期采用 NVIDIA 博客发布时间 2026-08-04；HF API 显示仓库 lastModified 为 2026-08-04T03:45:14Z，createdAt 早于正式发布。",
     "本条不把 NVIDIA 自报 LingoQA 优势泛化为通用多模态 SOTA；它是自动驾驶/Physical AI 专项模型。",
+  ],
+});
+
+const ling30Flash = modelEvent({
+  id: "ling-3-0-flash",
+  date: "2026-08-02",
+  tier: "frontier",
+  title: "Ling-3.0-flash",
+  organization: "InclusionAI / Ant Ling",
+  eyebrow: "Open Weights / 124B MoE / KDA + MLA",
+  summary:
+    "InclusionAI 发布 Ling-3.0-flash 开放权重文本模型：124B 总参数、5.1B 激活，35 层 KDA + 7 层 Gated MLA，512 routed experts，训练上下文扩展到 256K，并提供 SGLang / vLLM 部署路径。",
+  confidence: "高",
+  tags: ["LLM", "Open Weights", "MoE", "KDA", "MLA", "256K", "SGLang", "vLLM"],
+  officialSourceIds: ["ling30-card", "ling30-config", "ling30-hf-api", "ling30-sglang", "ling30-vllm"],
+  sources: [
+    latestDailySource("ling30-card", "Ling-3.0-flash model card", "InclusionAI", "https://huggingface.co/inclusionAI/Ling-3.0-flash", "模型卡"),
+    latestDailySource("ling30-config", "Ling-3.0-flash config.json", "InclusionAI", "https://huggingface.co/inclusionAI/Ling-3.0-flash/blob/main/config.json", "模型卡"),
+    latestDailySource("ling30-hf-api", "Ling-3.0-flash Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/inclusionAI/Ling-3.0-flash", "模型卡"),
+    latestDailySource("ling30-sglang", "Ling-3.0-flash SGLang cookbook", "SGLang", "https://docs.sglang.io/cookbook/autoregressive/InclusionAI/Ling-3.0-flash", "代码仓"),
+    latestDailySource("ling30-vllm", "inclusionAI/vllm-ling-v3", "InclusionAI", "https://github.com/inclusionAI/vllm-ling-v3", "代码仓"),
+    latestDailySource("ling30-aihot", "Ling-3.0-flash open weights candidate", "AI HOT", "https://aihot.virxact.com/items/cmsesgyzp159kro2efe58vs2u", "讲座整理"),
+  ],
+  totalParameters: "124B（模型卡披露）",
+  activeParameters: "5.1B（模型卡披露）",
+  weightSize: "254.97 GB（HF model.safetensors.index.json metadata.total_size=254,973,142,144 bytes，按十进制 GB 换算）",
+  precision: "权重 dtype 为 bfloat16；训练精度、量化训练方案和服务端推理精度未知",
+  architecture: "Native hybrid-linear MoE；42 层主干，35 层 Kimi Delta Attention + 7 层 Gated MLA，前 2 层 dense，后续稀疏 MoE",
+  attention: "5:1 交替堆叠 KDA 与 Gated MLA；KDA 使用 fine-grained diagonal gating，配置中每 6 层一组插入 MLA；max_position_embeddings 为 262,144",
+  moe: "512 routed experts、每 token 8 experts、1 shared expert、1/64 sparse MoE；hidden size 2,560，MoE expert intermediate size 768",
+  otherArchitecture: "包含 1 个 MTP / NEXTN 预测层；模型卡称 thinking mode 默认开启，并面向 coding、general 与 deep research agent workflows",
+  hardware: "未知；官方未披露训练加速器型号",
+  hardwareCount: "未知；模型卡只披露推理建议为 4×141GB-class H20-3e 或 4-GPU Blackwell nodes，80GB H100/H800 需 TP=8",
+  dataScale: "未知",
+  dataDetails: "未知；模型卡只披露纳入 10,000+ interactive training environments，未披露预训练 token、语料来源、语言比例或过滤流程",
+  stages: "8K → 32K → 256K context training schedule；预训练、SFT、RL、agentic training 的阶段边界和顺序未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "KDA fine-grained diagonal gating、Gated MLA、sparse MoE、MTP / NEXTN speculative decoding；模型卡称使用 10,000+ 交互式训练环境，但未公开优化器、RL 奖励或数据采样配方",
+  lowPrecision: "训练低精度未知；开放权重为 BF16，SGLang cookbook 提供 BF16 / FP8 部署分支",
+  infra: "SGLang cookbook 提供 Ling3 parsers、NEXTN speculative decoding、HiCache + Mooncake L3 prefix storage；模型卡称该缓存架构在长输入场景降低 TTFT 60% 到 80% 以上。另有 Apache-2.0 的 vLLM Ling v3 分支。",
+  aaIndex: "未知；未找到 Artificial Analysis 可比较动态榜单记录",
+  aaContext: "官方模型卡声明在关键 benchmark 上匹配或超过上一代 Ring-2.6-1T，但数值主要在图片中，缺少可机器核验表格；本条不写成通用 SOTA 榜单第一",
+  aaSpeed: "未知；官方未披露 tokens/s，SGLang cookbook 只给部署 recipe 与缓存限制",
+  score: "124B / 5.1B active · 256K",
+  breakthroughs: [
+    "在 124B / 5.1B active 级别开放权重模型中原生采用 35 KDA + 7 Gated MLA 的 hybrid-linear 注意力结构。",
+    "以 512 routed experts、top-8、1 shared expert 组成 1/64 sparse MoE，并把上下文训练计划扩展到 256K。",
+    "官方提供 SGLang / vLLM 路径、NEXTN speculative decoding 与 HiCache + Mooncake 部署 recipe，但训练数据、硬件、完整 benchmark 数值和独立动态榜单仍未知。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsesgyzp159kro2efe58vs2u；发现日期 2026-08-06。本条不使用 AI HOT 摘要作为技术事实来源。",
+    "日期口径采用 Hugging Face API createdAt=2026-08-02T16:14:41Z，表示开放权重仓库首次创建；AI HOT 捕获的官方社媒发布时间为 2026-08-04T15:03:43Z，HF lastModified 为 2026-08-05T15:28:07Z。",
+    "模型卡 benchmark 主要以图片承载，当前未抽取可核验数值表；因此对性能只记录官方定性声明和可核验结构字段。",
+    "SGLang cookbook 的 HiCache + Mooncake 限制说明指出该 hybrid KDA 模型当前不暴露 host-memory L2 eviction，需跟踪 sglang issue #33713。",
   ],
 });
 
@@ -2345,7 +2411,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super, ling30Flash],
     },
     {
       id: "t2i-training",

@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 34);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 35);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -73,6 +73,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const openaiAstra = modelEvent/);
   assert.match(source, /const qwen38Max = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
+  assert.match(source, /const ling30Flash = modelEvent/);
   assert.match(source, /Agent Swarm/);
   assert.match(source, /Muon Split/);
   assert.match(source, /Prefix Tree Merging/);
@@ -86,6 +87,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Denoising-stage MoE/);
   assert.match(source, /Qwen3\.8-Max/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
+  assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
   assert.match(source, /注意力创新/);
@@ -123,6 +125,7 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /Qwen3\.8/);
   assert.match(source, /OpenAI Astra \(internal\)/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
+  assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /Qwen-Audio-3\.0-TTS/);
   assert.match(source, /Gemini 3\.6 Flash/);
   assert.match(source, /Claude Opus 5/);
@@ -206,6 +209,7 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /DeepSeek V4 Flash 0731/);
   assert.match(html, /OpenAI Astra \(internal\)/);
   assert.match(html, /Inkling Small/);
+  assert.match(html, /Ling-3\.0-flash/);
   assert.match(html, /Z-Image-Turbo/);
   assert.match(html, /拖动排序/);
   assert.match(html, /开创 \/ 关键方案/);

@@ -171,7 +171,7 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
   "tech-loss-free-balancing": [{ modelId: "deepseek-v3-2024-12", relation: "采用" }, { modelId: "deepseek-v4-pro", relation: "技术谱系" }],
   "tech-gated-deltanet": [{ modelId: "qwen3-5-397b-a17b", relation: "采用" }, { modelId: "qwen3-6-35b-a3b", relation: "技术谱系" }],
   "tech-dsa": [{ modelId: "glm-5", relation: "采用" }, { modelId: "glm-5-2", relation: "采用" }, { modelId: "deepseek-v4-pro", relation: "采用", note: "V4 的 CSA 在压缩 KV 上继续使用 DSA top-k。" }],
-  "tech-kda": [{ modelId: "kimi-k3", relation: "采用" }],
+  "tech-kda": [{ modelId: "kimi-k3", relation: "采用" }, { modelId: "ling-3-0-flash", relation: "采用", note: "模型卡与 config 确认 35 KDA + 7 Gated MLA 的 5:1 hybrid-linear stack；KDA 单项收益未拆分。" }],
   "tech-latent-moe": [{ modelId: "kimi-k3", relation: "技术谱系", note: "K3 官方称 Stable LatentMoE；与 NVIDIA LatentMoE 的实现关系需等待 K3 技术报告确认。" }],
   "tech-stable-latent-moe": [{ modelId: "kimi-k3", relation: "采用", note: "K3 模型卡确认 896 experts、top-16、2 shared experts、latent MoE dimension 3,584；单项收益仍未拆分。" }],
   "tech-attnres": [{ modelId: "kimi-k3", relation: "采用" }],
