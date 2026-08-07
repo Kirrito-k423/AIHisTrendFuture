@@ -9,6 +9,7 @@ import type {
 } from "./types";
 
 const ACCESSED_AT = "2026-07-23";
+const CURRENT_DEEPSPEED_ACCESS_DATE = "2026-08-07";
 
 interface DeepSpeedMethod {
   id: string;
@@ -45,6 +46,21 @@ function source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: ACCESSED_AT };
+}
+
+function currentDeepSpeedSource(
+  id: string,
+  title: string,
+  url: string,
+): Source {
+  return {
+    id,
+    title,
+    publisher: "deepspeedai/DeepSpeed",
+    url,
+    type: "代码仓",
+    accessedAt: CURRENT_DEEPSPEED_ACCESS_DATE,
+  };
 }
 
 function disclosedFact(label: string, value: string, sourceIds: string[]): Fact {
@@ -220,14 +236,14 @@ const autoTp = deepSpeedEvent({
   situation: "Tensor Parallel 通常要求按模型结构维护切分规则，模型版本变化会带来适配成本。",
   target: "自动识别可切分层并生成行/列并行规则，同时保留自定义覆盖能力。",
   action: "推理路径通过 AutoTP 注入替换层；训练路径可结合 DP、ZeRO 0/1/2/3、preset、正则规则与 Hugging Face `tp_plan`；ZeRO-3 checkpoint save/load 与 universal checkpoint conversion 会同时 gather ZeRO-DP 和 TP 维度。",
-  result: "官方实现支持多类 Hugging Face 模型；2026-07-29 起 Hugging Face `colwise_gather_output` / `colwise_rep` 可用于 untied `lm_head`，2026-08-02 起 AutoTP + ZeRO-3 training 取消 optimizer block 并补齐 checkpoint consolidation 测试，2026-08-04 DeepSpeedExamples OPSD 增加 AutoTP=2 / AutoTP+ZeRO-3 smoke 路径。",
+  result: "官方实现支持多类 Hugging Face 模型；2026-07-29 起 Hugging Face `colwise_gather_output` / `colwise_rep` 可用于 untied `lm_head`，2026-08-02 起 AutoTP + ZeRO-3 training 取消 optimizer block 并补齐 checkpoint consolidation 测试，2026-08-04 DeepSpeedExamples OPSD 增加 AutoTP=2 / AutoTP+ZeRO-3 smoke 路径；2026-08-06 v0.19.4 将这些 AutoTP 修订打包进官方 patch release。",
   mechanism: "模型解析 → layer policy/spec → 权重分片 → TP collective → 输出合并。",
   bestFor: "结构符合 Transformer 常见模式、希望降低 TP 接入成本的训练或推理。",
   experiment: "官方教程、配置文档、commit diff 与新增单元/分布式测试；新模型仍需检查融合层、GQA、整除约束和 checkpoint 拓扑。",
   computeMemory: "参数和大矩阵按 TP 度分片；gathered column output 额外产生 AllGather 输出通信。tied `lm_head` fallback 不减少 embedding/output-layer 内存。",
   parallelism: "Tensor Parallel，可在训练中组合 DP 与 ZeRO 0/1/2/3；AutoTP + ZeRO-3 的 16-bit consolidated export 与 universal checkpoint 转换会跨 DP/TP 合并。",
   limitations: "gathered column output 当前只支持 untied output layers；tied `lm_head` 保持复制，`local_colwise` / `local_rowwise` 仍未处理；runtime TP math 仍要求 attention head count 和 hidden dimensions 可被 TP size 整除，跨不同 TP degree restore 需谨慎。",
-  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 training checkpoint、Hugging Face `colwise_gather_output`/`colwise_rep` 支持和限制说明均有官方 commit、教程和测试文本；OPSD 示例仓已有 AutoTP=2 与 AutoTP+ZeRO-3 smoke 配置。",
+  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 inference 支持、AutoTP + ZeRO-3 training checkpoint、Hugging Face `colwise_gather_output`/`colwise_rep` 支持和限制说明均有官方 commit、教程和测试文本，并已随 DeepSpeed v0.19.4 发布；OPSD 示例仓已有 AutoTP=2 与 AutoTP+ZeRO-3 smoke 配置。",
   tags: ["AutoTP", "Tensor Parallel", "Hugging Face"],
   extraSources: [
     {
@@ -262,12 +278,18 @@ const autoTp = deepSpeedEvent({
       type: "代码仓",
       accessedAt: "2026-08-04",
     },
+    currentDeepSpeedSource(
+      "deepspeed-v0194-release-autotp",
+      "DeepSpeed v0.19.4 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.4",
+    ),
   ],
   extraRevisionNotes: [
     "2026-07-25 官方 commit d326520 将 AutoTP + ZeRO stage 3 从完全不支持修订为仅支持 inference（无 optimizer）；本次只修订既有 AutoTP 节点的可用性边界，不新增技术事件。",
     "2026-07-29 官方 commit 48d54e0 将 Hugging Face `colwise_gather_output`/`colwise_rep` 纳入 AutoTP tp_plan 转换；untied `lm_head` 可做 gathered column output，tied output layers 与 uneven TP 仍有明确 fallback/限制。",
     "2026-08-02 官方 commit eec237e 修复 AutoTP + ZeRO-3 checkpoint consolidation：保存与 universal checkpoint 转换会跨 ZeRO data-parallel 和 tensor-parallel 维度 gather；新增端到端 universal conversion 测试后取消 training optimizer block。本次仍视为既有 AutoTP 可用性/限制修订，不新增单独技术节点。",
     "2026-08-04 DeepSpeedExamples commit c230e2d 为 OPSD 增加 AutoTP=2、AutoTP+ZeRO-3 offload smoke 配置和纯 TP / TP+DP sampler 修正；它证明官方示例路径存在，但不自动证明论文级收益或任意模型可复现。",
+    "2026-08-06 DeepSpeed v0.19.4 patch release 将 AutoTP ZeRO-3 inference、HF `colwise_gather_output`、universal checkpoint metadata 与 checkpoint consolidation 修订打包发布；release 证明版本可获得，不改变各 PR 的适用限制。",
   ],
 });
 
@@ -401,15 +423,30 @@ const deepNvme = deepSpeedEvent({
   situation: "CPU 内存也不足时，直接文件 I/O 的同步、拷贝与小请求开销会拖慢 offload。",
   target: "让 NVMe 成为可流水的数据层，而不是训练主循环中的阻塞文件操作。",
   action: "使用 DeepNVMe async I/O handle、pinned buffer、并发队列与读写重叠搬运 tensor。",
-  result: "官方教程给出 basic、pinned、GDS 与性能调优路径；吞吐必须在本机盘阵和 NUMA 上测量。",
+  result: "官方教程给出 basic、pinned、GDS 与性能调优路径；2026-08-06 v0.19.4 将 process-wide pinned-tensor manager、range-based recognition 与 swap buffers through I/O handles 纳入发布；吞吐仍必须在本机盘阵和 NUMA 上测量。",
   mechanism: "tensor buffer → async I/O queue → NVMe；prefetch/read 与 compute、writeback 重叠。",
   bestFor: "ZeRO-Infinity、超大 checkpoint 和超出 host RAM 的 tensor/offload 工作负载。",
-  experiment: "官方 DeepNVMe 示例；无统一硬件倍数。",
+  experiment: "官方 DeepNVMe 示例与 v0.19.4 PR 测试；pinned manager PR 报告 unit/v1/nvme 相关 146 项通过，并说明部分 optimizer-on-NVMe smoke failure 与 master 基线一致，不作为性能收益声明。",
   computeMemory: "用 NVMe 容量换更高延迟，额外需要 host/GPU staging buffer 和队列深度。",
   parallelism: "I/O 并发，可服务 ZeRO/Checkpoint 等并行训练路径。",
-  limitations: "受 SSD、文件系统、PCIe、NUMA、queue depth 和 block size 约束。",
-  availability: "DeepSpeed `deepspeed.ops.aio` / DeepNVMe 教程公开。",
+  limitations: "受 SSD、文件系统、PCIe、NUMA、queue depth 和 block size 约束；v0.19.4 的 pinned manager 修订主要减少不必要 bounce-buffer copy 风险，不给出统一吞吐倍数。",
+  availability: "DeepSpeed `deepspeed.ops.aio` / DeepNVMe 教程公开；共享 pinned manager 与 swap buffer I/O handle 路径已随 DeepSpeed v0.19.4 发布。",
   tags: ["DeepNVMe", "NVMe Offload", "Async I/O"],
+  extraSources: [
+    currentDeepSpeedSource(
+      "deepspeed-v0194-release-deepnvme",
+      "DeepSpeed v0.19.4 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.4",
+    ),
+    currentDeepSpeedSource(
+      "deepspeed-deepnvme-pinned-manager-pr",
+      "Share DeepNVMe pinned-tensor manager and route swap buffers through I/O handles",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8212",
+    ),
+  ],
+  extraRevisionNotes: [
+    "2026-08-06 DeepSpeed v0.19.4 发布 DeepNVMe pinned manager 修订：manager 改为 process-wide shared instance，使用 range-based recognition 识别 narrow/view，swap subsystem 通过 I/O handles 分配和查询 pinned buffers；这修订的是可用性和拷贝路径边界，不是新的统一性能纪录。",
+  ],
 });
 
 const ulyssesOffload = deepSpeedEvent({
@@ -506,15 +543,15 @@ const deepSpeedMoe = deepSpeedEvent({
   summary: "把稀疏专家层、router、expert parallel group 和 capacity/drop 策略接入 DeepSpeed 训练。",
   situation: "稠密模型增加参数会同步增加每 token 计算，难以继续扩展模型容量。",
   target: "让每个 token 只激活少数专家，以较低计算获得更大参数容量。",
-  action: "将 Transformer FFN 替换为 MoE layer，配置 num_experts、ep_size、top-k、capacity 与 auxiliary loss。",
-  result: "官方教程提供训练与并行配置；质量和成本收益必须在相同 token、模型与硬件口径比较。",
+  action: "将 Transformer FFN 替换为 MoE layer，配置 num_experts、ep_size、top-k、capacity 与 auxiliary loss；v0.19.4 起 native path 可用 index/gather dispatch-combine，Tutel path 支持 shared MoE top-k 并修正 TP capacity sharding。",
+  result: "官方教程提供训练与并行配置；v0.19.4 发布 Tutel `k != 1` shared MoE 支持、Tutel+TP 静默错误修复、native sparse dispatch 与 Ampere/Ada Triton grouped-GEMM；质量和成本收益仍必须在相同 token、模型与硬件口径比较。",
   mechanism: "router top-k → token dispatch → local expert FFN → token combine。",
   bestFor: "需要扩展参数容量且集群具备高效 all-to-all 的训练。",
-  experiment: "DeepSpeed MoE 教程与论文模型；不把理论稀疏 FLOPs 等同端到端速度。",
+  experiment: "DeepSpeed MoE 教程、论文模型与 v0.19.4 PR 测试；MoE dispatch PR 在 2 GPU bf16 forward+backward 上报告 native path 58.33 ms / 4353 MB → 37.25 ms / 2918 MB（s=8192, m=2048, e=16, k=3），Tutel k=3 step-time ratio 1.078 → 1.01；Triton grouped-GEMM PR 在 Ampere/Ada 目标形状给出 grouped GEMM microbenchmark。",
   computeMemory: "专家参数按 EP 分布；router、dispatch buffer 和负载不均引入额外峰值。",
   parallelism: "Expert Parallel，可组合 DP/TP/PP。",
-  limitations: "负载均衡、capacity overflow、all-to-all 和 checkpoint 布局复杂。",
-  availability: "DeepSpeed `deepspeed.moe.layer.MoE` 可用。",
+  limitations: "负载均衡、capacity overflow、all-to-all 和 checkpoint 布局复杂；v0.19.4 的 MoE 数字来自 PR 内固定形状/硬件测试，不应外推为任意 MoE 训练收益。",
+  availability: "DeepSpeed `deepspeed.moe.layer.MoE` 可用；Tutel shared MoE top-k、Tutel+TP fix、native sparse dispatch 与 Ampere/Ada Triton grouped-GEMM 已随 DeepSpeed v0.19.4 发布。",
   tags: ["DeepSpeed-MoE", "Expert Parallel", "Sparse Model"],
   paper: {
     id: "deepspeed-moe-paper",
@@ -522,6 +559,31 @@ const deepSpeedMoe = deepSpeedEvent({
     publisher: "ICML",
     url: "https://arxiv.org/abs/2201.05596",
   },
+  extraSources: [
+    currentDeepSpeedSource(
+      "deepspeed-v0194-release-moe",
+      "DeepSpeed v0.19.4 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.4",
+    ),
+    currentDeepSpeedSource(
+      "deepspeed-moe-dispatch-pr",
+      "MoE dispatch: fix silent Tutel + TP corruption, speed up native and Tutel paths",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8195",
+    ),
+    currentDeepSpeedSource(
+      "deepspeed-moe-triton-grouped-gemm-pr",
+      "Add Triton grouped-GEMM for MoE experts on Ampere/Ada",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8180",
+    ),
+    currentDeepSpeedSource(
+      "deepspeed-shared-moe-tutel-topk-pr",
+      "Enable support for Tutel when k != 1 for shared moe",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8174",
+    ),
+  ],
+  extraRevisionNotes: [
+    "2026-08-06 DeepSpeed v0.19.4 把 shared MoE Tutel `k != 1`、Tutel+TP capacity sharding 修复、native sparse dispatch/combine、Ampere/Ada Triton grouped-GEMM 和相关测试打包发布；本次修订既有 DeepSpeed-MoE 可用性和 PR 级性能口径，不新增单独方法节点。",
+  ],
 });
 
 const moeInference = deepSpeedEvent({
@@ -686,15 +748,30 @@ const autotuning = deepSpeedEvent({
   situation: "DeepSpeed 配置空间大，手工调整 batch、ZeRO 与 offload 很难找到目标硬件的最优点。",
   target: "自动搜索可运行且性能较好的配置。",
   action: "定义 tuning space、metric、资源与 early stopping，运行多个 experiment 并选择 best config。",
-  result: "能减少人工试错，但结果只对指定模型、硬件、数据和目标函数有效。",
+  result: "能减少人工试错，但结果只对指定模型、硬件、数据和目标函数有效；v0.19.4 修复 nested subdict search，避免 tuned value 位于非首个兄弟子字典时被误判缺失。",
   mechanism: "configuration search → trial launch → metric collection → pruning/ranking。",
   bestFor: "已有稳定训练脚本，希望优化吞吐或资源配置。",
   experiment: "官方 Autotuning 教程；搜索成本和重现性需纳入预算。",
   computeMemory: "不直接改变内存；通过搜索选择 batch/stage/offload 组合。",
   parallelism: "搜索 DeepSpeed data/model parallel 相关配置。",
-  limitations: "试验成本高，错误 trial、噪声和动态环境会影响排名。",
-  availability: "DeepSpeed Autotuning 配置与命令公开。",
+  limitations: "试验成本高，错误 trial、噪声和动态环境会影响排名；v0.19.4 修复的是配置读取正确性，PR 未验证端到端 autotuning session。",
+  availability: "DeepSpeed Autotuning 配置与命令公开；nested subdict value lookup 修复已随 DeepSpeed v0.19.4 发布。",
   tags: ["Autotuning", "Configuration Search", "Throughput"],
+  extraSources: [
+    currentDeepSpeedSource(
+      "deepspeed-v0194-release-autotuning",
+      "DeepSpeed v0.19.4 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.4",
+    ),
+    currentDeepSpeedSource(
+      "deepspeed-autotuning-nested-subdict-pr",
+      "Fix autotuning get_val_by_key to search all nested subdicts",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8177",
+    ),
+  ],
+  extraRevisionNotes: [
+    "2026-08-06 DeepSpeed v0.19.4 发布 autotuning nested subdict lookup 修复；PR 只验证 helper 与单元测试，不声称某个端到端调优任务已产生新性能纪录。",
+  ],
 });
 
 const monitor = deepSpeedEvent({
