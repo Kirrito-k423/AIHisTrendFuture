@@ -264,7 +264,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 37);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 39);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -285,12 +285,14 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "DanceGRPO",
     "DiffusionNFT",
     "On-Policy Distillation",
+    "Categorical Flow Maps",
     "SpecForge v0.3",
     "Tunix Agentic RL",
     "AgentENV",
     "Triton-Ascend",
     "Ascend C",
     "Liger Kernel",
+    "HPC-Ops × SGLang",
     "LLM MegaKernel",
     "DeepSpeed ZeRO",
     "PyTorch FSDP1",
@@ -309,6 +311,8 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(dataSource, /5–66% 吞吐/);
   assert.match(dataSource, /尚不能视为已公开可用/);
   assert.match(dataSource, /Mooncake tensor transport/);
+  assert.match(dataSource, /4 inference steps/);
+  assert.match(dataSource, /TPOT 降低 15\.1–48\.8%/);
   assert.match(timelineSource, /STAR 技术档案/);
   assert.match(timelineSource, /Situation \/ 动机/);
   assert.match(timelineSource, /Action \/ 实验流程/);
@@ -323,7 +327,9 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(html, /Sigmoid Tanh Unit/);
   assert.match(html, /Quantization-Aware Training/);
   assert.match(html, /AgentENV/);
+  assert.match(html, /Categorical Flow Maps/);
   assert.match(html, /SpecForge v0\.3/);
+  assert.match(html, /HPC-Ops × SGLang/);
   assert.match(html, /UltraEP/);
   assert.match(html, /veScale-FSDP/);
 });
@@ -358,14 +364,16 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 37);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 37);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 39);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 39);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
   assert.match(dataSource, /Google Tunix 团队/);
   assert.match(dataSource, /Moonshot AI AgentENV 团队/);
   assert.match(dataSource, /SpecForge Team/);
+  assert.match(dataSource, /Oscar Davis/);
+  assert.match(dataSource, /Tencent Hunyuan AI Infra and the SGLang Team/);
   assert.match(dataSource, /Huawei Ascend C 团队/);
   assert.match(dataSource, /PyTorch Distributed 团队/);
   assert.match(dataSource, /DeepSeek-AI 开源基础设施团队/);

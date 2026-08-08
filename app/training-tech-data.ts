@@ -16,6 +16,7 @@ const DAILY_ACCESSED_AT = "2026-07-21";
 const LATEST_ACCESSED_AT = "2026-07-23";
 const RUN_ACCESSED_AT = "2026-07-28";
 const CURRENT_DAILY_ACCESSED_AT = "2026-08-05";
+const TODAY_ACCESSED_AT = "2026-08-08";
 
 function source(
   id: string,
@@ -75,6 +76,16 @@ function currentDailySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: CURRENT_DAILY_ACCESSED_AT };
+}
+
+function todaySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: TODAY_ACCESSED_AT };
 }
 
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
@@ -140,11 +151,13 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-dancegrpo": { name: "Zeyue Xue", role: "first-author", organization: "ByteDance Seed / The University of Hong Kong", sourceUrl: "https://arxiv.org/abs/2505.07818", profileLabel: "GitHub", profileUrl: "https://github.com/XueZeyue" },
   "tech-diffusionnft": { name: "Kaiwen Zheng", role: "first-author", organization: "Tsinghua University / NVIDIA", sourceUrl: "https://arxiv.org/abs/2506.01347", profileLabel: "个人主页", profileUrl: "https://zhengkw18.github.io/" },
   "tech-opd": { name: "Kevin Lu", role: "first-author", organization: "Thinking Machines Lab", sourceUrl: "https://thinkingmachines.ai/blog/on-policy-distillation/", profileLabel: "个人主页", profileUrl: "https://kevinlu.ai/" },
+  "tech-categorical-flow-maps": { name: "Oscar Davis", role: "first-author", organization: "University of Oxford / Apple", sourceUrl: "https://arxiv.org/abs/2605.07820", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2605.07820", note: "Apple 页面标注 work done while at Apple；技术首次公开日期采用 arXiv v1。" },
   "tech-specforge-v03": { name: "SpecForge Team", role: "project-team", organization: "LMSYS / SGLang", sourceUrl: "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3/", profileLabel: "官方博客", profileUrl: "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3/", note: "SpecForge v0.3 是工程系统发布，官方署名为团队与社区贡献者。" },
   "tech-triton": { name: "Philippe Tillet", role: "first-author", organization: "OpenAI", sourceUrl: "https://openai.com/index/triton/", profileLabel: "GitHub", profileUrl: "https://github.com/ptillet" },
   "tech-ascend-c": { name: "Huawei Ascend C 团队", role: "project-team", organization: "Huawei", sourceUrl: "https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/82RC1alpha002/API/ascendcopapi/atlasascendc_api_07_0003.html", profileLabel: "官方项目", profileUrl: "https://www.hiascend.com/", note: "官方文档未列论文式个人一作，因此按主责团队标注。" },
   "tech-liger-kernel": { name: "Pin-Lun Hsu", role: "first-author", organization: "LinkedIn", sourceUrl: "https://arxiv.org/abs/2410.10989", profileLabel: "GitHub", profileUrl: "https://github.com/linkedin/Liger-Kernel" },
   "tech-triton-ascend": { name: "Triton-Ascend 维护团队", role: "project-team", organization: "Huawei Ascend / Triton 社区", sourceUrl: "https://github.com/Ascend/triton-ascend", profileLabel: "官方项目", profileUrl: "https://github.com/Ascend/triton-ascend", note: "开源仓未声明论文式个人一作。" },
+  "tech-hpc-ops-sglang": { name: "Tencent Hunyuan AI Infra and the SGLang Team", role: "project-team", organization: "Tencent Hunyuan / SGLang", sourceUrl: "https://www.lmsys.org/blog/2026-08-07-hpc-ops-sglang/", profileLabel: "官方项目", profileUrl: "https://github.com/Tencent/hpc-ops", note: "LMSYS 文章署名为 Tencent Hunyuan AI Infra and the SGLang Team；按工程系统发布处理。" },
   "tech-megakernel": { name: "Benjamin Spector", role: "first-author", organization: "Stanford Hazy Research", sourceUrl: "https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles", profileLabel: "论文作者页", profileUrl: "https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles" },
   "tech-megatron-lm": { name: "Mohammad Shoeybi", role: "first-author", organization: "NVIDIA", sourceUrl: "https://arxiv.org/abs/1909.08053", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/1909.08053" },
   "tech-deepspeed-zero": { name: "Samyam Rajbhandari", role: "first-author", organization: "Microsoft Research", sourceUrl: "https://arxiv.org/abs/1910.02054", profileLabel: "GitHub", profileUrl: "https://github.com/samyam" },
@@ -191,6 +204,9 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
     { modelId: "kimi-k2-6", relation: "推理支撑" },
     { modelId: "kimi-k3", relation: "推理支撑" },
     { modelId: "inkling-small", relation: "推理支撑" },
+  ],
+  "tech-hpc-ops-sglang": [
+    { modelId: "qwen3-235b-a22b", relation: "实验验证", note: "LMSYS/HPC-Ops 文章报告 Qwen3 H200 MoE kernel benchmark；不表示 Qwen3 官方训练或服务默认采用该后端。" },
   ],
   "tech-triton": [{ modelId: "deepseek-v3-2024-12", relation: "训练 / 推理支撑" }, { modelId: "gpt-oss-120b", relation: "训练 / 推理支撑" }],
   "tech-ascend-c": [{ modelId: "qwen3-235b-a22b", relation: "训练 / 推理支撑", note: "昇腾部署能力关联，不主张其官方训练硬件。" }],
@@ -973,6 +989,46 @@ const opd = technology({
   ],
 });
 
+const categoricalFlowMaps = technology({
+  id: "tech-categorical-flow-maps",
+  date: "2026-05-08",
+  title: "Categorical Flow Maps (CFM)",
+  organization: "Apple / University of Oxford",
+  category: "算法流程",
+  family: "训练算法",
+  eyebrow: "论文 + 官方研究页 / Few-step LM",
+  summary: "把连续 flow matching 扩到离散语言建模：1.7B base flow model 在 2.1T tokens 上训练，再自蒸馏成可用少至 4 步生成文本的 CFM。",
+  score: "1.7B / 2.1T / 4 steps",
+  tags: ["Categorical Flow Maps", "Flow Matching", "Discrete Diffusion", "Language Modeling", "Few-step Generation", "Apple"],
+  situation: "自回归语言模型生成需逐 token 解码；离散扩散/flow matching 有并行和少步采样潜力，但此前 CFM 主要停留在小于 1B 参数规模。",
+  target: "验证 Categorical Flow Maps 是否能扩展到十亿参数级语言模型，并给出可用于标准 LM benchmark 打分的半离散似然界。",
+  action: "训练 1.7B 参数 base flow model，数据量 2.1T tokens；随后做 self-distillation 得到少步 CFM，并评估文本多样性、token entropy 与标准 LM benchmark。",
+  result: "论文报告自蒸馏 CFM 能用少至 4 inference steps 生成高质量文本，并在标准 LM benchmarks 上达到与离散 diffusion 方法同一量级的结果；不是与前沿自回归闭源模型的直接 SOTA 对比。",
+  mechanism: "在 Gaussian 与 one-hot 编码数据分布之间学习连续流；用 self-distillation 把 base flow model 压到少步 CFM，并引入 semi-discrete likelihood bound。",
+  bestFor: "研究非自回归/少步语言生成、需要连续模态 flow matching 优势迁移到离散 token 的团队。",
+  experiment: "arXiv v1 于 2026-05-08 提交、v2 于 2026-05-11 修订；Apple 研究页 2026-08-07 发布。核心实验为 1.7B 参数、2.1T tokens 语言模型。",
+  computeMemory: "推理步数可降到 4 步级别，但训练仍需大规模 base flow model 与自蒸馏；论文未披露训练硬件、wall-clock、能耗或与同规模 AR 模型的端到端服务成本对照。",
+  parallelism: "生成过程理论上比逐 token AR 更易做并行更新；实际并行效率、batching 和 kernel 支持仍取决于实现，论文未给生产服务栈。",
+  limitations: "技术首次公开是 2026-05 arXiv，不是 2026-08 新论文；实验规模仍远小于当前前沿 LLM，质量结论限定在论文 benchmark 与离散 diffusion 同类对比。",
+  availability: "Apple 研究页和 arXiv 论文公开；截至本轮未发现官方代码、权重或可复现实验配置。",
+  breakthroughs: [
+    "把 CFM 从小于 1B 的验证扩展到 1.7B 参数语言模型。",
+    "用 2.1T tokens base flow model + self-distillation 验证少至 4 步文本生成。",
+    "给出 semi-discrete likelihood bound，使 CFM 可在标准 LM benchmark 上打分。",
+  ],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmsj4jrne24d5ronkvb40rucl；attribution canonical 同 URL；发现日期 2026-08-08。",
+    "日期口径采用 arXiv v1 2026-05-08；Apple Machine Learning Research 页面 2026-08-07 是本轮发现来源，不倒写为技术首次公开。",
+    "本条按训练/推理技术入库，不把“4 steps”解释为所有语言任务或前沿闭源模型上的通用质量领先。",
+  ],
+  sources: [
+    todaySource("cfm-apple-page", "Scaling Categorical Flow Maps", "Apple Machine Learning Research", "https://machinelearning.apple.com/research/scaling-categorical-flow-maps", "官方博客"),
+    todaySource("cfm-arxiv", "Scaling Categorical Flow Maps", "arXiv", "https://arxiv.org/abs/2605.07820", "论文"),
+    todaySource("cfm-aihot", "Scaling Categorical Flow Maps AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmsj4jrne24d5ronkvb40rucl", "讲座整理"),
+  ],
+});
+
 const specForgeV03 = technology({
   id: "tech-specforge-v03",
   date: "2026-08-04",
@@ -1160,6 +1216,47 @@ const tritonAscend = technology({
   sources: [
     source("triton-ascend-repo", "Triton-Ascend", "Huawei Ascend", "https://github.com/Ascend/triton-ascend", "代码仓"),
     source("triton-ascend-ops", "Triton Ascend Ops", "Huawei Ascend", "https://github.com/Ascend/triton-ascend-ops", "代码仓"),
+  ],
+});
+
+const hpcOpsSglang = technology({
+  id: "tech-hpc-ops-sglang",
+  date: "2026-08-07",
+  title: "HPC-Ops × SGLang",
+  organization: "Tencent Hunyuan / SGLang",
+  category: "高效算子",
+  family: "高效算子",
+  eyebrow: "官方博客 + 代码仓 / MoE Serving Kernels",
+  summary: "把腾讯混元 HPC-Ops 的 Dynamic Attention、precision-aware Router GEMM 与 Fused MoE 接入 SGLang 主线，在 H20/H200 上给出 MoE 服务端到端与算子级验证。",
+  score: "TPOT −15.1–48.8%",
+  tags: ["HPC-Ops", "SGLang", "Attention", "Router GEMM", "Fused MoE", "H20", "H200", "Hy3", "LongCat"],
+  situation: "MoE 在线服务的混合长度 attention、router 精度和小批量专家 GEMM 会共同形成延迟瓶颈；孤立 GEMM 性能不足以解释真实 TPOT/TTFT。",
+  target: "把生产验证的 attention、router GEMM 和 MoE 算子作为 SGLang 后端公开，让开源服务栈在兼容模型上复用低延迟路径。",
+  action: "HPC-Ops Attention 使用动态 KV tile 调度和融合 QK-Norm/RoPE/FP8 KV 写入；Router GEMM 将 FP32 router 权重拆成两个 BF16 分量以保留低阶信息；Fused MoE 跳过 standalone gather 并用 persistent expert GEMM、PDL 和 fused activation/quantization 串联小专家路径。",
+  result: "LMSYS 文章报告：8×H20 上 Hy3-FP8 启用 HPC-Ops Attention+MoE 后 TPOT 降低 15.1–48.8%、TTFT 降低 3.3–6.0%；LongCat-Flash-Lite-FP8 上 Router GEMM 使 input throughput 提高 5.5–6.1%。",
+  mechanism: "workload-aware dynamic attention scheduling + BF16 Tensor Core precision-aware router projection + fused low-latency FP8 MoE pipeline。",
+  bestFor: "NVIDIA Hopper SM90 上的 MoE 推理，尤其是 Hy3、Qwen3、LongCat 等 mixed-length、router-sensitive、small-expert-GEMM 工作负载。",
+  experiment: "官方博客覆盖 H20 operator benchmarks、8×H20 SGLang serving、H200 upstream validation；HPC-Ops README 另给 operator catalog 与 benchmark 摘要。",
+  computeMemory: "收益主要来自减少 HBM 中间物化、kernel launch 间隙、静态 split-KV 尾延迟和 router GEMM 精度/吞吐冲突；不是模型参数压缩或训练显存优化。",
+  parallelism: "服务端后端可与 SGLang tensor/expert parallel、paged KV cache、CUDA graph replay 和 FP8 KV/expert weights 组合；当前最佳硬件口径限定在 Hopper SM90。",
+  limitations: "15.1–48.8% TPOT 是 Hy3-FP8、8×H20、batch 4–64 的端到端口径；H20/H200 算子表不能外推到所有模型、GPU 或并发。HPC-Ops 是推理算子库，不证明 Hy3 或 Qwen3 的模型质量提升。",
+  availability: "HPC-Ops 代码仓公开；LMSYS 文章给出 SGLang main branch 集成、PR 链接、安装方式和启动参数。HPC-Ops README 要求 NVIDIA SM90、CUDA 12.8+。",
+  breakthroughs: [
+    "Dynamic Attention 在混合 KV 长度 decode 中按实时 tile 工作量均衡 CTA。",
+    "Router GEMM 以两个 BF16 Tensor Core GEMM 近似 FP32 router weight 信息，降低 top-k 路由精度损失风险。",
+    "Fused MoE 把 routing/index、Gate-Up、activation/requant、Down 和 weighted reduction 串成低延迟 pipeline，并进入 SGLang 后端。",
+  ],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmsj8rfkl02ruroo5uvyqiqiq；attribution canonical 同 URL；发现日期 2026-08-08。",
+    "性能数字保留模型、硬件、batch 和后端口径；不把 operator benchmark 的最高倍数写成通用端到端收益。",
+    "本条按推理高效算子/服务后端入库，不作为新模型、训练算法或 DeepSpeed 官方变更记录。",
+  ],
+  sources: [
+    todaySource("hpc-ops-sglang-blog", "HPC-Ops × SGLang: High-Performance Attention, Router GEMM, and MoE Kernels from Tencent Hunyuan", "LMSYS / SGLang", "https://www.lmsys.org/blog/2026-08-07-hpc-ops-sglang/", "官方博客"),
+    todaySource("hpc-ops-repo", "Tencent/hpc-ops", "Tencent Hunyuan", "https://github.com/Tencent/hpc-ops", "代码仓"),
+    todaySource("hpc-ops-sglang-attn-pr", "SGLang HPC-Ops Attention integration PR", "SGLang", "https://github.com/sgl-project/sglang/pull/30540", "代码仓"),
+    todaySource("hpc-ops-aihot", "HPC-Ops × SGLang AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmsj8rfkl02ruroo5uvyqiqiq", "讲座整理"),
   ],
 });
 
@@ -1403,17 +1500,17 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-algorithm",
     group: "训练技术 / 02",
     title: "算法流程 / Post-training",
-    description: "QAT、GRPO、Agentic RL、Agent 环境基础设施、视觉生成 RL、DiffusionNFT、On-Policy Distillation 与 SpecForge",
+    description: "QAT、GRPO、Agentic RL、Agent 环境基础设施、视觉生成 RL、DiffusionNFT、On-Policy Distillation、CFM 与 SpecForge",
     color: "violet",
-    events: [quantizationAwareTraining, grpo, tunixAgenticRl, agentEnv, danceGrpo, diffusionNft, opd, specForgeV03],
+    events: [quantizationAwareTraining, grpo, danceGrpo, diffusionNft, opd, categoricalFlowMaps, tunixAgenticRl, agentEnv, specForgeV03],
   },
   {
     id: "training-tech-kernel",
     group: "训练技术 / 03",
     title: "高效算子 / 编译",
-    description: "Triton、Ascend C、Liger、Triton-Ascend 与 MegaKernel",
+    description: "Triton、Ascend C、Liger、Triton-Ascend、HPC-Ops 与 MegaKernel",
     color: "green",
-    events: [triton, ascendC, ligerKernel, tritonAscend, megakernel],
+    events: [triton, ascendC, ligerKernel, tritonAscend, megakernel, hpcOpsSglang],
   },
   {
     id: "training-tech-parallel",
