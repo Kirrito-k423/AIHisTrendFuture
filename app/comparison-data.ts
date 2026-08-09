@@ -210,7 +210,7 @@ const architectureOverrides: Record<string, string> = {
   "deepseek-v4-pro": "MoE + CSA/HCA + mHC",
   "deepseek-v4-flash-0731": "MoE + CSA/HCA + DSpark",
   "inkling-small": "Multimodal MoE + local/global attention",
-  "openai-astra-internal": "Internal reasoning model + mathematical proof workflows",
+  "openai-astra-internal": "Internal reasoning model + mathematical proof workflows + critical cyber controls",
   "kimi-k2": "Sparse MoE + MLA",
   "kimi-k25": "Native Multimodal MoE + MLA · Agent Swarm",
   "kimi-k26": "Multimodal MoE + MLA",

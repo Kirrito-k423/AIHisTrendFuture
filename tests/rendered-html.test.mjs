@@ -71,6 +71,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const deepseekV4Flash0731 = modelEvent/);
   assert.match(source, /const inklingSmall = modelEvent/);
   assert.match(source, /const openaiAstra = modelEvent/);
+  assert.match(source, /Critical cyber capability level/);
   assert.match(source, /const qwen38Max = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
   assert.match(source, /const ling30Flash = modelEvent/);
@@ -184,6 +185,7 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.equal((definitionBlock.match(/label:/g) ?? []).length, 26);
   assert.match(dataSource, /historyEventIdByCatalogId/);
   assert.match(dataSource, /已检查当前主来源，尚未找到可核验披露/);
+  assert.match(dataSource, /critical cyber controls/);
   assert.match(comparisonSource, /StructuredComparison/);
   assert.match(comparisonSource, /数值矩阵/);
   assert.match(comparisonSource, /结构化文字字段/);

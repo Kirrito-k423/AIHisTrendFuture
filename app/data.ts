@@ -15,6 +15,7 @@ const AUGUST_RUN_ACCESSED = "2026-08-01";
 const ASTRA_RUN_ACCESSED = "2026-08-03";
 const CURRENT_DAILY_ACCESSED = "2026-08-05";
 const LATEST_DAILY_ACCESSED = "2026-08-06";
+const TODAY_DAILY_ACCESSED = "2026-08-09";
 
 function source(
   id: string,
@@ -126,6 +127,16 @@ function latestDailySource(
   return { id, title, publisher, url, type, accessedAt: LATEST_DAILY_ACCESSED };
 }
 
+function todayDailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: TODAY_DAILY_ACCESSED };
+}
+
 function latestRunSource(
   id: string,
   title: string,
@@ -184,6 +195,7 @@ interface ModelRecord {
   aaContext: string;
   aaSpeed: string;
   score: string;
+  extraFacts?: Fact[];
   breakthroughs?: string[];
   notes?: string[];
 }
@@ -231,6 +243,7 @@ function modelEvent(record: ModelRecord): TimelineEvent {
       fact("Artificial Analysis 指标", record.aaIndex, aa),
       fact("榜单上下文 / 口径", record.aaContext, aa),
       fact("榜单中位速度", record.aaSpeed, aa),
+      ...(record.extraFacts ?? []),
     ],
     sources: record.sources,
     breakthroughs: record.breakthroughs,
@@ -652,15 +665,18 @@ const openaiAstra = modelEvent({
   organization: "OpenAI",
   eyebrow: "当前前沿 / 内部推理模型 / 数学形式化",
   summary:
-    "OpenAI 披露其下一代主要模型 Astra 的内部版本在十个数学与理论计算机问题上产出新结果，并发布 249 页论文、Lean certificate 与 walkthrough；模型本体、API、权重和训练规格均未公开。",
+    "OpenAI 披露其下一代主要模型 Astra 的内部版本在十个数学与理论计算机问题上产出新结果，并发布 249 页论文、Lean certificate 与 walkthrough；2026-08-07 又披露因无法排除 Critical cyber capability level，Astra 相关内部活动需满足强化安全控制，模型本体、API、权重和训练规格均未公开。",
   confidence: "高",
-  tags: ["LLM", "Reasoning", "Mathematics", "Lean", "Internal Model", "OpenAI"],
+  tags: ["LLM", "Reasoning", "Mathematics", "Lean", "Cybersecurity", "Internal Model", "OpenAI"],
   officialSourceIds: ["openai-astra-math-blog", "openai-astra-math-paper", "openai-astra-lean"],
   sources: [
     astraRunSource("openai-astra-math-blog", "Ten advances in mathematics", "OpenAI", "https://openai.com/index/ten-advances-in-mathematics/", "官方博客"),
     astraRunSource("openai-astra-math-paper", "Ten Mathematical Advances", "OpenAI", "https://cdn.openai.com/pdf/2cde4f31-430f-4794-94f6-5884a9492e86/ten-mathematical-advances.pdf", "技术报告"),
     astraRunSource("openai-astra-lean", "openai/ten-proofs", "OpenAI", "https://github.com/openai/ten-proofs", "代码仓"),
     astraRunSource("openai-astra-aihot", "OpenAI 发布“下一代主要模型”Astra", "AI HOT", "https://aihot.virxact.com/items/cmsa77lmk02tcrox0gfhj3rcq", "讲座整理"),
+    todayDailySource("openai-astra-cyber-blog", "Responding to the next frontier of critical cyber capabilities", "OpenAI", "https://openai.com/index/responding-next-frontier-critical-cyber-capabilities/", "官方博客"),
+    todayDailySource("openai-astra-cyber-aihot", "OpenAI 将 Astra 列为首个“关键”网络安全模型", "AI HOT", "https://aihot.virxact.com/items/cmsjbn0pq058vroo55qpgw1si", "讲座整理"),
+    todayDailySource("openai-astra-delay-aihot", "OpenAI：因网络安全风险，延缓 Astra 模型发布", "AI HOT", "https://aihot.virxact.com/items/cmsjk6eiz0byoroo5cc4bcwg6", "讲座整理"),
   ],
   totalParameters: "未知",
   activeParameters: "未知",
@@ -679,19 +695,29 @@ const openaiAstra = modelEvent({
   totalDuration: "未知",
   algorithms: "未知；官方未披露 Astra 的训练算法、search / verifier 配方或 test-time compute 预算",
   lowPrecision: "未知",
-  infra: "Lean certificate 与 reasoning walkthrough 公开；模型服务、API、权重、代码和复现实验环境未开放",
+  infra: "Lean certificate 与 reasoning walkthrough 公开；模型服务、API、权重、代码和复现实验环境未开放。OpenAI 2026-08-07 披露 Astra 相关开发需进入隔离测试环境、受限网络和工具访问、强化权重保护、额外监控与 sandboxed execution 等安全控制。",
   aaIndex: "不适用；无 Artificial Analysis 或同口径动态榜单观测",
   aaContext: "十个研究问题覆盖组合、图论、理论计算机等数学方向；结果由 OpenAI 论文与 Lean certificate 支撑，但不是通用数学榜单分数",
   aaSpeed: "未知",
   score: "10 problems · Lean certificates",
+  extraFacts: [
+    fact(
+      "发布 / 安全状态",
+      "OpenAI 披露 Astra 是 upcoming model，未参与 Hugging Face exploit；初步评估无法排除 Preparedness Framework 下 Critical cybersecurity capability level，因此暂停不满足强化安全控制的 Astra 内部活动，并为 agentic applications 启用通用风险监控。",
+      ["openai-astra-cyber-blog"],
+    ),
+  ],
   breakthroughs: [
     "OpenAI 首次把 Astra 下一代内部模型的数学研究产出以论文、Lean certificate 和 walkthrough 形式公开，而不是仅发布榜单分数。",
     "事件价值限定在十个具体数学/理论计算机问题的研究结果；不能从中推出 Astra 在所有数学、科学或开放世界任务上 SOTA。",
+    "2026-08-07 的网络安全披露改变的是 Astra 的发布/控制边界：官方不能排除 Critical cyber capability level，但没有发布可比较基准、模型卡、参数或复现实验。",
     "模型仍为内部版本：参数、权重、API、架构、训练数据、test-time compute 和独立社区复核进展均未披露。",
   ],
   notes: [
     "AI HOT discovery: https://aihot.virxact.com/items/cmsa77lmk02tcrox0gfhj3rcq 与 https://aihot.virxact.com/items/cmscc62eo033broeusw72isi0；attribution canonical 同 URL；发现日期 2026-08-03。",
+    "Cyber disclosure discovery: https://aihot.virxact.com/items/cmsjbn0pq058vroo55qpgw1si 与 https://aihot.virxact.com/items/cmsjk6eiz0byoroo5cc4bcwg6；attribution canonical 同 URL；发现日期 2026-08-09。",
     "日期口径采用 OpenAI 发布页日期 2026-08-01；AI HOT selected item 发布时间为 2026-08-02T21:25:27Z。",
+    "网络安全披露日期口径采用 OpenAI 官方发布页 2026-08-07；该披露明确 Astra 未参与 Hugging Face exploit，不把第三方报道中的因果叙事写成模型事实。",
     "本条不把 Gary Marcus 等评论或 AI HOT 摘要当事实来源；只用其作为发现线索。技术事实来自 OpenAI 发布页、论文和 Lean certificate 仓库。",
     "OpenAI 未发布模型卡、API 或权重，因此在模型对比中只保留结构化未知字段，不加入参数、速度、价格或 AA 指标图表。",
   ],
