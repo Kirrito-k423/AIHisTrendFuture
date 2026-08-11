@@ -16,6 +16,7 @@ const ASTRA_RUN_ACCESSED = "2026-08-03";
 const CURRENT_DAILY_ACCESSED = "2026-08-05";
 const LATEST_DAILY_ACCESSED = "2026-08-06";
 const TODAY_DAILY_ACCESSED = "2026-08-09";
+const AUGUST_11_ACCESSED = "2026-08-11";
 
 function source(
   id: string,
@@ -135,6 +136,16 @@ function todayDailySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: TODAY_DAILY_ACCESSED };
+}
+
+function august11Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_11_ACCESSED };
 }
 
 function latestRunSource(
@@ -881,6 +892,220 @@ const ling30Flash = modelEvent({
     "日期口径采用 Hugging Face API createdAt=2026-08-02T16:14:41Z，表示开放权重仓库首次创建；AI HOT 捕获的官方社媒发布时间为 2026-08-04T15:03:43Z，HF lastModified 为 2026-08-05T15:28:07Z。",
     "模型卡 benchmark 主要以图片承载，当前未抽取可核验数值表；因此对性能只记录官方定性声明和可核验结构字段。",
     "SGLang cookbook 的 HiCache + Mooncake 限制说明指出该 hybrid KDA 模型当前不暴露 host-memory L2 eviction，需跟踪 sglang issue #33713。",
+  ],
+});
+
+const claudeZetaResearch = modelEvent({
+  id: "claude-zeta-research",
+  date: "2026-08-10",
+  tier: "frontier",
+  title: "Claude zeta research model",
+  organization: "Anthropic",
+  eyebrow: "内部研究模型 / 数学定理 / Lean",
+  summary:
+    "Anthropic 披露一个未发布的 Claude 研究版本参与黎曼 zeta 零点研究：合作论文把满足黎曼猜想的非平凡零点比例下界从 41.6% 提升到 67.2%，并公开论文、Lean 形式化仓库和研究说明；模型参数、API、权重、训练机制和 test-time compute 均未披露。",
+  confidence: "高",
+  tags: ["LLM", "Reasoning", "Mathematics", "Riemann Zeta", "Lean", "Internal Model", "Anthropic"],
+  officialSourceIds: ["claude-zeta-blog", "claude-zeta-paper", "claude-zeta-lean"],
+  aaSourceId: "claude-zeta-blog",
+  sources: [
+    august11Source("claude-zeta-blog", "Learning more about Claude's mathematical capabilities", "Anthropic", "https://www.anthropic.com/research/riemann-zeta", "官方博客"),
+    august11Source("claude-zeta-paper", "A note on zeta zeros", "Anthropic / research collaborators", "https://www-cdn.anthropic.com/564f962e60643842f5fcb4a17c9dbc8f608f1c37.pdf", "技术报告"),
+    august11Source("claude-zeta-lean", "anthropics/zeta-23-lean", "Anthropic", "https://github.com/anthropics/zeta-23-lean", "代码仓"),
+    august11Source("claude-zeta-aihot", "Claude 未发布研究版将黎曼 zeta 函数零点下界从 41.6% 提升至 67.2%", "AI HOT", "https://aihot.virxact.com/items/cmsnix1by08d3rohfftiex1xp", "讲座整理"),
+  ],
+  totalParameters: "未知",
+  activeParameters: "未知",
+  weightSize: "未知；Anthropic 未发布权重",
+  precision: "未知；Anthropic 未披露训练或推理精度",
+  architecture: "未发布的 Claude research version；具体 Transformer、agent、search、tool-use 或 verifier 架构未知",
+  attention: "未知；未披露上下文长度、attention 变体、KV cache 或长推理实现",
+  moe: "未知",
+  otherArchitecture: "与数学研究 workflow 和 Lean formalization 结合；公开材料不说明模型直接生成 Lean 证明、自然语言证明还是中间候选",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方未披露数学语料、合成数据、Lean 数据或去重口径",
+  stages: "未知；本次只披露研究结果和形式化材料，不披露预训练、后训练、RL 或工具训练阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方未披露 Claude 研究版训练算法、search / verifier 配方或推理预算",
+  lowPrecision: "未知",
+  infra: "论文 PDF 与 Lean 形式化仓库公开；模型服务、API、权重、复现实验脚本和完整提示/采样轨迹未开放",
+  aaIndex: "不适用；无 Artificial Analysis 或同口径动态榜单观测",
+  aaContext: "事件指标是一个具体数学结果：满足黎曼猜想的 zeta 零点比例下界从 41.6% 提升到 67.2%；不能外推为通用数学榜单 SOTA",
+  aaSpeed: "未知",
+  score: "zeta zeros ≥67.2%",
+  breakthroughs: [
+    "Anthropic 把 Claude 研究版参与的数学进展以论文、Lean 代码和研究说明形式公开，证据链强于单纯社媒或榜单分数。",
+    "突破范围限定在 zeta zeros 下界这一具体问题；本条不把它泛化为 Claude 家族整体数学能力或公开产品能力。",
+    "模型仍为未发布研究版本，所有参数、训练、部署和可用性字段保持未知。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsnix1by08d3rohfftiex1xp；发现日期 2026-08-10。本条仅把 AI HOT 作为候选雷达。",
+    "日期口径采用 Anthropic research 页面 2026-08-10 的公开披露日期；数学论文、形式化仓库和模型研究版本的内部生成时间不混写为发布日。",
+    "41.6%→67.2% 是论文问题口径，不是模型 benchmark 分数；外部数学社区后续复核、期刊状态和完整同行评审进展仍需跟踪。",
+  ],
+});
+
+const gpt56Cyber = modelEvent({
+  id: "gpt-5-6-cyber",
+  date: "2026-08-10",
+  tier: "frontier",
+  title: "GPT-5.6-Cyber",
+  organization: "OpenAI",
+  eyebrow: "专业模型 / Cyber Defense / Daybreak Red",
+  summary:
+    "OpenAI 发布面向授权漏洞研究的 GPT-5.6-Cyber，并把它接入 Daybreak Red；官方定位为漏洞发现、验证和安全测试专用模型，但未披露参数、架构、训练数据、独立模型卡、公开权重或可比较 benchmark 分数。",
+  confidence: "中",
+  tags: ["LLM", "Cybersecurity", "Agentic", "Daybreak", "OpenAI", "Specialized Model"],
+  officialSourceIds: ["gpt56-cyber-blog"],
+  aaSourceId: "gpt56-cyber-blog",
+  sources: [
+    august11Source("gpt56-cyber-blog", "Expanding Daybreak as the Cyber Defense Window Narrows", "OpenAI", "https://openai.com/index/expanding-daybreak-as-the-cyber-defense-window-narrows/", "官方博客"),
+    august11Source("gpt56-cyber-aihot", "OpenAI 推出 GPT-5.6-Cyber", "AI HOT", "https://aihot.virxact.com/items/cmsnkpjin0c2nrohfczauf2t2", "讲座整理"),
+  ],
+  totalParameters: "未知",
+  activeParameters: "未知",
+  weightSize: "未知；OpenAI 未发布权重",
+  precision: "未知；OpenAI 未披露训练或推理精度",
+  architecture: "GPT-5.6 系列网络安全专用模型；具体架构、上下文、工具接口和路由方式未知",
+  attention: "未知；未披露 attention、KV cache 或长上下文实现",
+  moe: "未知",
+  otherArchitecture: "接入 Daybreak Red 授权漏洞研究流程；官方未披露是否使用专用 harness、verifier、sandbox 或多代理编排",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方未披露网络安全训练数据、合成靶场、漏洞语料或安全过滤口径",
+  stages: "未知；仅披露面向 Daybreak 的模型发布和使用场景",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；未披露 cyber 专项微调、RL、tool-use training 或 verifier 配方",
+  lowPrecision: "未知",
+  infra: "Daybreak Red 可用；访问条件、API 模型 ID、价格、速率限制和外部部署边界未披露",
+  aaIndex: "不适用；无 Artificial Analysis 或公开 cyber benchmark 快照",
+  aaContext: "OpenAI 官方只披露用途和 Daybreak 防御窗口背景，没有给出可比较基线、样本集、成功率或成本节省数值",
+  aaSpeed: "未知",
+  score: "Daybreak Red",
+  breakthroughs: [
+    "OpenAI 把 GPT-5.6 系列拆出网络安全专用模型并放入授权漏洞研究产品路径，改变的是开放状态和防御工作流可用性。",
+    "证据强度来自官方发布页，但缺少模型卡和 benchmark；本条按专业模型上线记录，不能写成网络安全 SOTA 已证实。",
+    "与 OpenAI Astra 的 Critical cyber 控制披露不同，本条是 Daybreak Red 可用模型，不混合两者的安全边界。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsnkpjin0c2nrohfczauf2t2；发现日期 2026-08-10。",
+    "日期口径采用 OpenAI 官方发布页日期 2026-08-10；不把 AI HOT 发布时间或 RSS 抓取时间当作模型上线日。",
+    "无公开模型卡、参数、评测集或复现实验；入库理由是官方专业模型上线与仓库已有 cyber frontier 线索相匹配，所有未披露字段显式未知。",
+  ],
+});
+
+const museGlimmer = modelEvent({
+  id: "muse-glimmer-30b",
+  date: "2026-08-10",
+  tier: "frontier",
+  title: "Muse Glimmer 30B",
+  organization: "Meta Superintelligence Labs",
+  eyebrow: "Open Weights / Local Agentic / 30B",
+  summary:
+    "Meta 发布 Muse Glimmer：29.6B 稠密开放权重模型，Apache-2.0，支持文本与图像输入到文本输出、131,072 token 上下文，并由 SGLang 提供 day-0 本地推理支持；官方目标是消费级硬件上的本地常驻 agentic workflows。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Open Weights", "Agentic", "Local Inference", "SGLang", "DFlash", "Apache-2.0", "Meta"],
+  officialSourceIds: ["muse-glimmer-card", "muse-glimmer-config", "muse-glimmer-license", "muse-glimmer-sglang"],
+  aaSourceId: "muse-glimmer-card",
+  sources: [
+    august11Source("muse-glimmer-card", "meta-models/Muse-Glimmer-30B", "Meta", "https://huggingface.co/meta-models/Muse-Glimmer-30B", "模型卡"),
+    august11Source("muse-glimmer-config", "Muse-Glimmer-30B config.json", "Meta", "https://huggingface.co/meta-models/Muse-Glimmer-30B/blob/main/config.json", "模型卡"),
+    august11Source("muse-glimmer-license", "Muse Glimmer 30B LICENSE", "Meta", "https://huggingface.co/meta-models/Muse-Glimmer-30B/blob/main/LICENSE", "模型卡"),
+    august11Source("muse-glimmer-sglang", "SGLang Adds Day-0 Support for Muse Glimmer", "LMSYS / SGLang", "https://www.lmsys.org/blog/2026-08-10-meta-muse-glimmer", "官方博客"),
+    august11Source("muse-glimmer-aihot-meta", "Meta 发布开源模型 Muse Glimmer", "AI HOT", "https://aihot.virxact.com/items/cmsn2u3mt067ero8opidmwvz7", "讲座整理"),
+    august11Source("muse-glimmer-aihot-sglang", "SGLang 为 Muse Glimmer 提供 Day-0 支持", "AI HOT", "https://aihot.virxact.com/items/cmsn68brx03q2ron5vwp3pwta", "讲座整理"),
+  ],
+  totalParameters: "29.6B（模型卡 / config 口径）",
+  activeParameters: "29.6B / token（稠密模型，无专家路由）",
+  activeDerived: true,
+  weightSize: "未知；官方公开权重，未在本轮下载并汇总 safetensors 字节；官方同时提供 PTE 与 4-bit quantized 变体",
+  precision: "主模型精度未知；官方另给 4-bit quantized 变体，SGLang 支持 BF16 / FP8 / 4-bit 路径",
+  architecture: "Llama-like dense decoder-only multimodal model；文本与图像输入到文本输出，面向 local agentic workflows",
+  attention: "上下文 131,072 tokens；具体 attention 变体、GQA/KV heads、RoPE 和缓存实现需以 config / runtime 进一步核验",
+  moe: "稠密模型；无公开 MoE 路由",
+  otherArchitecture: "官方释放 ExecuTorch PTE、4-bit quantized 版本和 SGLang day-0 serving；SGLang 博客还给 DFlash draft 配套路径",
+  hardware: "训练硬件未知；推理目标包括 Mac、配备高性能 GPU 的 PC 和 24GB 显存消费级设备口径",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方未披露训练 token、图文数据比例、agentic 数据或许可过滤细节",
+  stages: "未知；发布材料只披露开放权重与推理路径，不披露预训练、SFT、RL 或蒸馏阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；SGLang 路径涉及 DFlash draft / serving optimization，但不是 Muse Glimmer 训练算法披露",
+  lowPrecision: "训练低精度未知；部署侧有 4-bit quantized 变体和 SGLang FP8 / 4-bit serving 路径",
+  infra: "Hugging Face 权重、Apache-2.0 许可证、ExecuTorch PTE、SGLang day-0 支持和本地推理 recipe 公开；托管 API、价格和训练 infra 未披露",
+  aaIndex: "无 Artificial Analysis 快照；HF 页面显示 SkillsBench、WildClawBench 等动态评测入口，本轮只记录观察到的页面存在，不抽取为稳定 AA 指标",
+  aaContext: "官方定位为本地 agentic workflow 模型；SGLang 博客称与同尺寸领先模型相比具竞争力，但本条不把跨榜单动态页面写成通用 SOTA 第一",
+  aaSpeed: "未知；SGLang 博客给推理支持和优化路径，未提供可跨系统比较的稳定 tokens/s",
+  score: "29.6B · 131K · Apache-2.0",
+  breakthroughs: [
+    "Meta 在 30B 级别给出 Apache-2.0 开放权重、131K 上下文和本地 agentic workflow 定位，开放性与部署边界明确。",
+    "SGLang day-0 支持把本地服务、量化和 DFlash draft 路径一并公开，但这些是部署可用性证据，不等同于训练算法突破。",
+    "官方尚未披露训练数据、硬件、完整技术报告和同口径 benchmark，因此性能结论只限定在模型卡和 SGLang 博客可核验范围内。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsn2u3mt067ero8opidmwvz7 和 https://aihot.virxact.com/items/cmsn68brx03q2ron5vwp3pwta；发现日期 2026-08-10。",
+    "日期口径采用 Meta / SGLang 公开发布日 2026-08-10；HF 仓库 lastModified 与社媒发布时间不混作训练完成日。",
+    "Scale AI 的 Muse Spark 1.2 预告与 Muse Glimmer 同时出现，但本条只记录已公开的一手 Muse Glimmer 30B，不把 Spark 预告并入。",
+  ],
+});
+
+const nemotronVoiceChat11b = modelEvent({
+  id: "nemotronlabs-voicechat-11b",
+  date: "2026-08-03",
+  tier: "frontier",
+  title: "NemotronLabs VoiceChat 11B",
+  organization: "NVIDIA",
+  eyebrow: "Open Weights / Full-Duplex Speech / Tool Calling",
+  summary:
+    "NVIDIA 发布 NemotronLabs VoiceChat 11B：端到端实时全双工语音模型，使用 Hybrid Mamba/Transformer 架构和 Nemotron Nano v2 9B LLM backbone，官方模型卡披露约 450 ms 轮换、448 ms Smooth Turn Taking latency、550k 小时音频训练数据，并称其为首个支持 tool calling 的开放全双工模型。",
+  confidence: "高",
+  tags: ["Omni", "Speech", "Full-Duplex", "Tool Calling", "Open Weights", "Hybrid Mamba", "NVIDIA", "vLLM"],
+  officialSourceIds: ["voicechat-card", "voicechat-code", "voicechat-backbone"],
+  aaSourceId: "voicechat-card",
+  sources: [
+    august11Source("voicechat-card", "nvidia/NVIDIA-NemotronLabs-VoiceChat-11B", "NVIDIA", "https://huggingface.co/nvidia/NVIDIA-NemotronLabs-VoiceChat-11B", "模型卡"),
+    august11Source("voicechat-code", "NVIDIA NeMo Speech VoiceChat branch", "NVIDIA", "https://github.com/NVIDIA-NeMo/Speech/tree/nemotron-labs-voicechat", "代码仓"),
+    august11Source("voicechat-backbone", "nvidia/NVIDIA-Nemotron-Nano-9B-v2", "NVIDIA", "https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2", "模型卡"),
+    august11Source("voicechat-aihot", "NVIDIA 发布 NemotronLabs VoiceChat 11B", "AI HOT", "https://aihot.virxact.com/items/cmsmhbu4w0338ronxh92vej2u", "讲座整理"),
+  ],
+  totalParameters: "11B",
+  activeParameters: "11B / token（未披露稀疏路由，按稠密口径记录）",
+  activeDerived: true,
+  weightSize: "未知；NVIDIA 公开权重，但本轮未下载并汇总文件大小",
+  precision: "未知；模型卡未披露权重 dtype 或训练精度",
+  architecture: "Hybrid Mamba/Transformer end-to-end full-duplex speech-to-speech model；audio encoder + Nemotron Nano v2 9B LLM backbone + TTS decoder/codec",
+  attention: "未知；Hybrid Mamba/Transformer 细节、上下文长度和 streaming cache 边界未完整披露",
+  moe: "未知；模型卡未披露 MoE 结构",
+  otherArchitecture: "独立 output channel 预测 tool-calling scripts；支持 natural turn-taking、barge-in/interruption 和 tool execution on-hold speech",
+  hardware: "推理测试硬件为 NVIDIA H100；模型卡列出 A100、H100、H200、B100 支持路径",
+  hardwareCount: "单卡推理示例；训练卡数未知",
+  dataScale: "约 550k 小时音频训练数据",
+  dataDetails: "真实音频与多种 TTS 系统生成的合成语音混合，并配合文本训练语料；具体来源、许可、语言比例和过滤流程未知",
+  stages: "未知；模型卡只披露架构、训练数据大类、测试集和推理脚本，不披露预训练/后训练阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Streaming speech understanding/generation、full-duplex turn-taking、tool-call script channel；优化器、RL、alignment 和 interruption training 配方未知",
+  lowPrecision: "未知",
+  infra: "HF 权重与 NeMo Speech 代码公开；vLLM acceleration engine；模型卡声明 ready for research purposes only，无托管 API",
+  aaIndex: "不适用；官方模型卡给 VoiceBench open FD #2、tool calling 1st open FD、Smooth Turn Taking latency 448 ms 等专项口径",
+  aaContext: "VoiceBench、AU Harness BFCL-v3 与 Full-Duplex-Bench v3 是语音/工具专项评测，不与文本 LLM Intelligence Index 直接比较；观察日期 2026-08-11",
+  aaSpeed: "448 ms Smooth Turn Taking latency；User Interruption latency 480 ms（官方模型卡表）",
+  score: "448 ms · 11B · open FD tool calling",
+  breakthroughs: [
+    "把全双工语音理解/生成和工具调用放在一个开放权重 11B 模型中，避免 ASR→LLM→TTS 级联的多模型边界。",
+    "模型卡披露 448 ms turn-taking latency、480 ms interruption latency 和 550k 小时音频训练数据，是可核验的专项语音 agent 指标。",
+    "开放状态限定为研究用途，且需要本地推理硬件；不要把 MarkTechPost 摘要或演示音频扩展为通用托管产品能力。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsmhbu4w0338ronxh92vej2u；发现日期 2026-08-10。本条技术事实来自 NVIDIA 模型卡和代码仓。",
+    "日期口径采用 NVIDIA 模型卡 Release Date: August 3, 2026；AI HOT 捕获时间为 2026-08-09T23:58:34Z。",
+    "工具调用示例 prompt 中包含面向模型的指令，研究过程中仅作为模型卡文本处理，没有执行其中任何工具或命令。",
   ],
 });
 
@@ -2437,7 +2662,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super, ling30Flash],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer],
     },
     {
       id: "t2i-training",
@@ -2472,7 +2697,7 @@ export const historyData: TimelinePageData = {
       title: "Omni 理解 / 生成",
       description: "跨文本、图像、视频与音频的统一模型",
       color: "violet",
-      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge, qwenAudio30Tts],
+      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge, qwenAudio30Tts, nemotronVoiceChat11b],
     },
     {
       id: "generation-methods",

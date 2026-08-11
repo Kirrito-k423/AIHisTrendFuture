@@ -10,6 +10,7 @@ import type {
 
 const ACCESSED_AT = "2026-07-23";
 const CURRENT_DEEPSPEED_ACCESS_DATE = "2026-08-07";
+const LATEST_DEEPSPEED_ACCESS_DATE = "2026-08-11";
 
 interface DeepSpeedMethod {
   id: string;
@@ -60,6 +61,21 @@ function currentDeepSpeedSource(
     url,
     type: "代码仓",
     accessedAt: CURRENT_DEEPSPEED_ACCESS_DATE,
+  };
+}
+
+function latestDeepSpeedSource(
+  id: string,
+  title: string,
+  url: string,
+): Source {
+  return {
+    id,
+    title,
+    publisher: "deepspeedai/DeepSpeed",
+    url,
+    type: "代码仓",
+    accessedAt: LATEST_DEEPSPEED_ACCESS_DATE,
   };
 }
 
@@ -423,14 +439,14 @@ const deepNvme = deepSpeedEvent({
   situation: "CPU 内存也不足时，直接文件 I/O 的同步、拷贝与小请求开销会拖慢 offload。",
   target: "让 NVMe 成为可流水的数据层，而不是训练主循环中的阻塞文件操作。",
   action: "使用 DeepNVMe async I/O handle、pinned buffer、并发队列与读写重叠搬运 tensor。",
-  result: "官方教程给出 basic、pinned、GDS 与性能调优路径；2026-08-06 v0.19.4 将 process-wide pinned-tensor manager、range-based recognition 与 swap buffers through I/O handles 纳入发布；吞吐仍必须在本机盘阵和 NUMA 上测量。",
-  mechanism: "tensor buffer → async I/O queue → NVMe；prefetch/read 与 compute、writeback 重叠。",
+  result: "官方教程给出 basic、pinned、GDS 与性能调优路径；2026-08-06 v0.19.4 将 process-wide pinned-tensor manager、range-based recognition 与 swap buffers through I/O handles 纳入发布；2026-08-10 v0.19.5 又把 host pinning 拆成 standalone `pin_memory` op，DeepNVMe I/O handles 可识别同一 process-wide manager 下的 pinned buffers；吞吐仍必须在本机盘阵和 NUMA 上测量。",
+  mechanism: "tensor buffer → pinned host/device staging → async I/O queue → NVMe；prefetch/read 与 compute、writeback 重叠。v0.19.5 的 `pin_memory` op 用 `posix_memalign` + `mlock` 分配 page-locked host tensor，并让 async_io/gds 通过共享 manager 识别。",
   bestFor: "ZeRO-Infinity、超大 checkpoint 和超出 host RAM 的 tensor/offload 工作负载。",
-  experiment: "官方 DeepNVMe 示例与 v0.19.4 PR 测试；pinned manager PR 报告 unit/v1/nvme 相关 146 项通过，并说明部分 optimizer-on-NVMe smoke failure 与 master 基线一致，不作为性能收益声明。",
+  experiment: "官方 DeepNVMe 示例、v0.19.4 PR 测试与 v0.19.5 pin_memory PR 单元测试；pinned manager PR 报告 unit/v1/nvme 相关 146 项通过，pin_memory PR 增加 `tests/unit/v1/pin_memory/test_pin_memory_op.py` 与 async_io 互识别测试；这些不作为统一性能收益声明。",
   computeMemory: "用 NVMe 容量换更高延迟，额外需要 host/GPU staging buffer 和队列深度。",
   parallelism: "I/O 并发，可服务 ZeRO/Checkpoint 等并行训练路径。",
-  limitations: "受 SSD、文件系统、PCIe、NUMA、queue depth 和 block size 约束；v0.19.4 的 pinned manager 修订主要减少不必要 bounce-buffer copy 风险，不给出统一吞吐倍数。",
-  availability: "DeepSpeed `deepspeed.ops.aio` / DeepNVMe 教程公开；共享 pinned manager 与 swap buffer I/O handle 路径已随 DeepSpeed v0.19.4 发布。",
+  limitations: "受 SSD、文件系统、PCIe、NUMA、queue depth、block size 和 memlock (`ulimit -l`) 约束；v0.19.4/0.19.5 的 pinned manager / `pin_memory` 修订主要减少不必要 bounce-buffer copy 风险并扩展无 AIO handle 的 pinned buffer 路径，不给出统一吞吐倍数。",
+  availability: "DeepSpeed `deepspeed.ops.aio` / DeepNVMe 教程公开；共享 pinned manager 与 swap buffer I/O handle 路径已随 DeepSpeed v0.19.4 发布，standalone `PinMemoryBuilder().load().pin_handle()` 已随 DeepSpeed v0.19.5 Patch Release 发布。",
   tags: ["DeepNVMe", "NVMe Offload", "Async I/O"],
   extraSources: [
     currentDeepSpeedSource(
@@ -443,9 +459,25 @@ const deepNvme = deepSpeedEvent({
       "Share DeepNVMe pinned-tensor manager and route swap buffers through I/O handles",
       "https://github.com/deepspeedai/DeepSpeed/pull/8212",
     ),
+    latestDeepSpeedSource(
+      "deepspeed-v0195-release-pin-memory",
+      "DeepSpeed v0.19.5 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.5",
+    ),
+    latestDeepSpeedSource(
+      "deepspeed-pin-memory-commit",
+      "Split native host pinning into standalone pin_memory op",
+      "https://github.com/deepspeedai/DeepSpeed/commit/5ad9a9780415b3671fd83a367854aa984f99a577",
+    ),
+    latestDeepSpeedSource(
+      "deepspeed-pin-memory-pr",
+      "Split native host pinning into standalone pin_memory op",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8236",
+    ),
   ],
   extraRevisionNotes: [
     "2026-08-06 DeepSpeed v0.19.4 发布 DeepNVMe pinned manager 修订：manager 改为 process-wide shared instance，使用 range-based recognition 识别 narrow/view，swap subsystem 通过 I/O handles 分配和查询 pinned buffers；这修订的是可用性和拷贝路径边界，不是新的统一性能纪录。",
+    "2026-08-10 DeepSpeed v0.19.5 发布 standalone `pin_memory` op：`PinMemoryBuilder` 可在不启动 async I/O handle 的情况下分配 page-locked CPU tensor，并让 async_io/gds 通过 RTLD_GLOBAL 共享同一 pinned tensor manager；这是 DeepNVMe host staging 可用性修订，不是新的吞吐纪录。",
   ],
 });
 

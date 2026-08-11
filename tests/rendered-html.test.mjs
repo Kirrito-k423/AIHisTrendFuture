@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 35);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 39);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -72,6 +72,10 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const inklingSmall = modelEvent/);
   assert.match(source, /const openaiAstra = modelEvent/);
   assert.match(source, /Critical cyber capability level/);
+  assert.match(source, /const claudeZetaResearch = modelEvent/);
+  assert.match(source, /const gpt56Cyber = modelEvent/);
+  assert.match(source, /const museGlimmer = modelEvent/);
+  assert.match(source, /const nemotronVoiceChat11b = modelEvent/);
   assert.match(source, /const qwen38Max = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
   assert.match(source, /const ling30Flash = modelEvent/);
@@ -88,6 +92,10 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Denoising-stage MoE/);
   assert.match(source, /Qwen3\.8-Max/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
+  assert.match(source, /zeta zeros/);
+  assert.match(source, /GPT-5\.6-Cyber/);
+  assert.match(source, /Muse Glimmer 30B/);
+  assert.match(source, /NemotronLabs VoiceChat 11B/);
   assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
@@ -408,6 +416,8 @@ test("history includes five source-backed DeepSpeed columns and all 21 requested
   assert.match(historySource, /AngelSpec \/ DFly/);
   assert.match(dataSource, /colwise_gather_output/);
   assert.match(dataSource, /ZeRO-3 training checkpoint/);
+  assert.match(dataSource, /standalone `pin_memory` op/);
+  assert.match(dataSource, /DeepSpeed v0\.19\.5 Patch Release/);
 
   const response = await render("/history");
   const html = await response.text();
