@@ -17,6 +17,7 @@ const CURRENT_DAILY_ACCESSED = "2026-08-05";
 const LATEST_DAILY_ACCESSED = "2026-08-06";
 const TODAY_DAILY_ACCESSED = "2026-08-09";
 const AUGUST_11_ACCESSED = "2026-08-11";
+const AUGUST_12_ACCESSED = "2026-08-12";
 
 function source(
   id: string,
@@ -146,6 +147,16 @@ function august11Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_11_ACCESSED };
+}
+
+function august12Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_12_ACCESSED };
 }
 
 function latestRunSource(
@@ -1052,6 +1063,61 @@ const museGlimmer = modelEvent({
     "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsn2u3mt067ero8opidmwvz7 和 https://aihot.virxact.com/items/cmsn68brx03q2ron5vwp3pwta；发现日期 2026-08-10。",
     "日期口径采用 Meta / SGLang 公开发布日 2026-08-10；HF 仓库 lastModified 与社媒发布时间不混作训练完成日。",
     "Scale AI 的 Muse Spark 1.2 预告与 Muse Glimmer 同时出现，但本条只记录已公开的一手 Muse Glimmer 30B，不把 Spark 预告并入。",
+  ],
+});
+
+const nemotron35Lightning = modelEvent({
+  id: "nemotron-3-5-lightning-30b-a3b",
+  date: "2026-08-11",
+  tier: "frontier",
+  title: "NVIDIA Nemotron 3.5 Lightning",
+  organization: "NVIDIA",
+  eyebrow: "Open Weights / 30B A3B / Local Agents",
+  summary:
+    "NVIDIA 发布 Nemotron 3.5 Lightning：30B 总参数、3B 每 token 激活的 hybrid MoE 文本模型，交错使用 Mamba-2、MoE 和少量 Attention 层，支持最高 1M token 上下文；官方同时提供 BF16 参考权重、NVFP4 推理权重、开放预训练数据/配方和 SGLang day-0 serving 路径，面向本地、边缘和数据中心的高频 agentic workflows。",
+  confidence: "高",
+  tags: ["LLM", "Open Weights", "MoE", "Mamba-2", "MTP", "Speculative", "Local Inference", "SGLang", "NVIDIA", "OpenMDW-1.1"],
+  officialSourceIds: ["nemotron35-bf16-card", "nemotron35-nvfp4-card", "nemotron35-base-card", "nemotron35-nvidia-blog", "nemotron35-sglang"],
+  aaSourceId: "nemotron35-bf16-card",
+  sources: [
+    august12Source("nemotron35-bf16-card", "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16", "NVIDIA", "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16", "模型卡"),
+    august12Source("nemotron35-nvfp4-card", "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4", "NVIDIA", "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4", "模型卡"),
+    august12Source("nemotron35-base-card", "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Base-BF16", "NVIDIA", "https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-Base-BF16", "模型卡"),
+    august12Source("nemotron35-nvidia-blog", "NVIDIA Introduces Nemotron 3.5 Lightning for Fast, Specialized Agentic Tasks", "NVIDIA", "https://blogs.nvidia.com/blog/local-ai-open-source-models-agents-nemotron/", "官方博客"),
+    august12Source("nemotron35-sglang", "SGLang Adds Day-0 Support for NVIDIA Nemotron 3.5 Lightning", "LMSYS / SGLang", "https://www.lmsys.org/blog/2026-08-11-nemotron-3-5-lightning", "官方博客"),
+    august12Source("nemotron35-aihot", "NVIDIA 推出 Nemotron 3.5 Lightning，加速本地智能体任务", "AI HOT", "https://aihot.virxact.com/items/cmsoolxde07isrop2eb5rrtvq", "讲座整理"),
+  ],
+  totalParameters: "30B",
+  activeParameters: "3B / token",
+  weightSize: "未知；官方公开 BF16、NVFP4、Base BF16、DFlash/DSpark 等多个 checkpoint，本轮未下载并汇总 safetensors 字节",
+  precision: "BF16 参考权重；NVFP4 推理权重；NVFP4 卡披露 W4A16 experts、Mamba in/out 与 KV cache 的 FP8 动态尺度等 PTQ 配方",
+  architecture: "Text-only hybrid Mixture-of-Experts；Mamba-2、MoE 层和少量 Attention 层交错，Nemotron-3-Lightning + Multi-Token Prediction",
+  attention: "最高 1M token 上下文；具体 Attention 层数、KV heads、RoPE 和 cache 细节需以 config / runtime 进一步核验；SGLang 路径使用 mamba radix cache strategy",
+  moe: "Hybrid MoE；30B 总参数、3B 每 token 激活；专家数量、router loss 和负载均衡细节在本轮公开材料中未完整披露",
+  otherArchitecture: "内置 MTP heads；SGLang 支持 MTP、DFlash 和 DSpark speculative decoding；可按请求关闭 reasoning 或调整 thinking budget",
+  hardware: "部署目标包括 DGX Spark/GB10、H100/H200、A100、RTX 5090、GB200/GB300 等 NVIDIA 平台；训练硬件型号和规模未知",
+  hardwareCount: "单卡部署示例为 1x H100 80GB、1x A100 80GB 或 1x DGX Spark；训练卡数、节点数和集群互联未知",
+  dataScale: "预训练超过 20T tokens",
+  dataDetails: "Nemotron 预训练数据集合包含 web、代码、数学、科学、法律、金融和合成数据；base 卡披露 English、19 种其他自然语言和 43 种编程语言；post-training data cutoff 为 2026-05",
+  stages: "Base pre-training；continued pre-training for MTP；SFT；multi-environment GRPO reinforcement learning；NVFP4 post-training quantization",
+  stageDurations: "模型日期为 2025-12 至 2026-05；各阶段 wall-clock、step 数和资源拆分未知",
+  totalDuration: "未知；官方只披露模型日期区间，不等于连续训练时长",
+  algorithms: "NVFP4 pre-training recipe、MTP continued pre-training、SFT、GRPO multi-environment RL；RL 使用 asynchronous architecture decoupling training from inference，并利用 MTP 加速 rollout generation",
+  lowPrecision: "预训练使用 NVFP4 recipe；NVFP4 版本使用 PTQ，含 Four Over Six NVFP4/W4A16 experts、Mamba FP8 动态尺度和 KV cache FP8 口径",
+  infra: "Hugging Face 权重、OpenMDW-1.1 许可、Nemotron pre-training datasets、Megatron-LM、NeMo RL、NeMo Gym、Nemo Evaluator SDK、vLLM 和 SGLang serving recipe 公开；托管 API 价格和商业服务 SLA 未披露",
+  aaIndex: "无 Artificial Analysis 快照；官方 BF16 卡给 Nemo Evaluator/NeMo Gym 口径的 MMLU Pro 81.94、GPQA Diamond 75.44、SWE-bench Verified 51.56、PinchBench 85.37 等自报结果",
+  aaContext: "NVIDIA 自报 benchmark 使用同一内部 harness 与 Qwen 3.6 35B A3B、Gemma 4 26B A4B、Nemotron 3 Nano/Super 等对比；本条不把厂商自报表格写成独立动态榜单 SOTA",
+  aaSpeed: "SGLang 博客称相近精度下完成 10,000 个 PinchBench agentic tasks 比 Qwen3.6-35B 约快 30%，并称相近开源模型吞吐最高 4x；硬件、并发和图表原始数据未形成跨系统稳定指标",
+  score: "30B / 3B active · 1M · OpenMDW-1.1",
+  breakthroughs: [
+    "30B 总参数、3B active 的 Mamba-2 + MoE + Attention hybrid text model 以开放权重、开放数据集合和 OpenMDW-1.1 许可发布，部署边界比纯 API 小模型更清晰。",
+    "内置 MTP，并在 SGLang/vLLM 路径同时给出 MTP、DFlash、DSpark speculative decoding 选择；这改变的是本地 agent serving 的延迟/吞吐可调空间。",
+    "官方公开 base、BF16、NVFP4 与 DSpark/DFlash 相关 checkpoint，但厂商 benchmark 仍需限定在 NVIDIA/SGLang 自报 harness，不能外推为所有 agent 任务 SOTA。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsoolxde07isrop2eb5rrtvq；发现日期 2026-08-11。技术事实来自 NVIDIA 模型卡、NVIDIA 官方博客和 SGLang 官方博客。",
+    "日期口径采用 NVIDIA Hugging Face 模型卡 Release Date: August 11, 2026；模型日期 2025-12 至 2026-05 不等于发布日。",
+    "SGLang 博客中的命令和 prompt 只作为文档文本处理，本轮未执行服务启动、下载权重或运行推理。",
   ],
 });
 
@@ -2662,7 +2728,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning],
     },
     {
       id: "t2i-training",

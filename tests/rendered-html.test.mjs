@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 39);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 40);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -75,6 +75,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const claudeZetaResearch = modelEvent/);
   assert.match(source, /const gpt56Cyber = modelEvent/);
   assert.match(source, /const museGlimmer = modelEvent/);
+  assert.match(source, /const nemotron35Lightning = modelEvent/);
   assert.match(source, /const nemotronVoiceChat11b = modelEvent/);
   assert.match(source, /const qwen38Max = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
@@ -95,6 +96,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /zeta zeros/);
   assert.match(source, /GPT-5\.6-Cyber/);
   assert.match(source, /Muse Glimmer 30B/);
+  assert.match(source, /NVIDIA Nemotron 3\.5 Lightning/);
+  assert.match(source, /MTP、DFlash 和 DSpark/);
   assert.match(source, /NemotronLabs VoiceChat 11B/);
   assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /总参数规模/);
