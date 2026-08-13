@@ -18,6 +18,7 @@ const LATEST_DAILY_ACCESSED = "2026-08-06";
 const TODAY_DAILY_ACCESSED = "2026-08-09";
 const AUGUST_11_ACCESSED = "2026-08-11";
 const AUGUST_12_ACCESSED = "2026-08-12";
+const AUGUST_13_ACCESSED = "2026-08-13";
 
 function source(
   id: string,
@@ -157,6 +158,16 @@ function august12Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_12_ACCESSED };
+}
+
+function august13Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_13_ACCESSED };
 }
 
 function latestRunSource(
@@ -798,6 +809,60 @@ const qwen38Max = modelEvent({
   ],
 });
 
+const qwen38A95b = modelEvent({
+  id: "qwen3-8-2-4t-a95b",
+  date: "2026-08-08",
+  tier: "frontier",
+  title: "Qwen3.8-2.4T-A95B",
+  organization: "Alibaba / Qwen",
+  eyebrow: "当前前沿 / 开放权重 / 2.446T MoE / 256K",
+  summary:
+    "Qwen 开放 Qwen3.8-2.4T-A95B 权重：模型卡明确它是 Qwen3.8-Max 的基础模型，总参数 2.446T、约 95B 每 token 激活、92 层、512 routed experts、10 routed + 1 shared expert、原生 262,144 token 上下文；与托管 Max 相比，官方同时说明其不含视觉能力、默认 1M 上下文、内置工具、动态 Think 模式和 Web search。",
+  confidence: "高",
+  tags: ["LLM", "MoE", "Open Weights", "Qwen", "BF16", "256K", "Agentic"],
+  officialSourceIds: ["qwen38-a95b-card", "qwen38-a95b-config", "qwen38-a95b-hf-api"],
+  aaSourceId: "qwen38-a95b-aa",
+  sources: [
+    august13Source("qwen38-a95b-card", "Qwen/Qwen3.8-2.4T-A95B", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B", "模型卡"),
+    august13Source("qwen38-a95b-config", "Qwen3.8-2.4T-A95B config.json", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B/blob/main/config.json", "模型卡"),
+    august13Source("qwen38-a95b-hf-api", "Qwen3.8-2.4T-A95B Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/Qwen/Qwen3.8-2.4T-A95B", "模型卡"),
+    august13Source("qwen38-a95b-aa", "Artificial Analysis LLM leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/leaderboards/models", "第三方测量"),
+    august13Source("qwen38-a95b-aihot", "Qwen3.8-2.4T-A95B 开放权重候选", "AI HOT", "https://aihot.virxact.com/items/cmsqagyyz00yuroucf55e5fue", "讲座整理"),
+  ],
+  totalParameters: "2,446,182,725,504 BF16 safetensors entries；约 2.4T 参数",
+  activeParameters: "约 95B / token（模型卡 A95B 命名与说明；config 为 10 routed experts + 1 shared expert）",
+  weightSize: "213 个 safetensors 分片；HF API 披露 BF16 typed parameters 2,446,182,725,504，实际字节体积约 4.9 TB 量级但未在本轮逐文件求和",
+  precision: "BF16 safetensors；训练精度和推理推荐精度未知",
+  architecture: "Qwen3.5 MoE text decoder；92 层、hidden size 8192、64 attention heads、4 KV heads、head dim 256、vocab 248,320、max_position_embeddings 262,144",
+  attention: "GQA：64 Q heads / 4 KV heads；位置编码和长上下文细节未在模型卡完整披露，config 只确认 262,144 上限",
+  moe: "512 routed experts，10 experts per token，并含 1 shared expert；moe_intermediate_size 2048",
+  otherArchitecture: "官方称该开放基础模型去掉了 Qwen3.8-Max 托管版的视觉能力、默认 1M 上下文、内置工具、动态 Think 模式和 Web search；因此不能把 Max API 的多模态/工具能力回填到 A95B 权重。",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；模型卡未披露训练 token 数、数据配比、过滤或许可来源",
+  stages: "未知；模型卡只披露开放权重与相对 Qwen3.8-Max 的能力边界",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；未披露 SFT、RL、工具/agentic 后训练、蒸馏或 verifier 配方",
+  lowPrecision: "未知；当前开放权重为 BF16，未发现官方 FP8/INT4/QAT 权重",
+  infra: "Transformers / safetensors 开放权重；具体 serving 后端、并行配置、KV cache 精度和推理硬件未知",
+  aaIndex: "未知；2026-08-13 访问 Artificial Analysis 未找到独立 Qwen3.8-2.4T-A95B 模型页或可比较指标",
+  aaContext: "官方原生上下文 262,144；不能混用 Qwen3.8-Max 默认 1M 托管上下文",
+  aaSpeed: "未知",
+  score: "2.446T / A95B / open weights",
+  breakthroughs: [
+    "2.4T 级 MoE 基座从闭源 API 规格推进到可下载开放权重，HF metadata 与 config 可核验参数、专家和上下文字段。",
+    "开放权重版本和托管 Max 能力边界被官方明确拆开：A95B 是基础模型，不自动继承 Max 的视觉、工具、默认 1M 和动态 Think 能力。",
+    "缺少技术报告、训练数据、后训练配方、硬件和第三方动态榜单；SOTA 判断限定在开放权重规模/可核验架构突破，而非质量榜单领先。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsqagyyz00yuroucf55e5fue；发现日期 2026-08-13，本条只保留 attribution，不把 AI HOT 或 IT 之家摘要作为技术事实。",
+    "日期口径采用 Hugging Face API createdAt 2026-08-08T01:50:52Z；AI HOT selected item 发布时间为 2026-08-12T16:10:01Z，表示二次发现/传播。",
+    "本条与 Qwen3.8-Max API 保持两条记录：Max 记录托管多模态 API，A95B 记录开放 text 基础权重。",
+  ],
+});
+
 const alpamayo2Super = modelEvent({
   id: "nvidia-alpamayo-2-super",
   date: "2026-08-04",
@@ -1431,6 +1496,59 @@ const minimaxM3 = modelEvent({
     "主仓与 MXFP8 是两个独立官方仓，不能相加为单一权重体积。",
     "Community License 含商业展示、通知及年营收阈值条款，不是标准宽松开源许可。",
     "训练 tokens、GPU 型号/数量与总时长保持未知。",
+  ],
+});
+
+const grok46 = modelEvent({
+  id: "grok-4-6",
+  date: "2026-08-12",
+  tier: "frontier",
+  title: "Grok 4.6",
+  organization: "xAI",
+  eyebrow: "当前前沿 / API / 长时运行 Agent",
+  summary:
+    "xAI 发布 Grok 4.6，并由 Cursor day-0 集成到编码工作流：官方材料强调更强的长时运行 agent 能力、上下文利用和 coding performance；当前未披露参数、架构、训练数据、开放权重、价格或同口径完整 benchmark，第三方动态榜单仍需等待稳定记录。",
+  confidence: "中",
+  tags: ["LLM", "Agentic", "Coding", "API", "Cursor", "Closed Weights"],
+  officialSourceIds: ["grok46-xai-news", "grok46-cursor"],
+  aaSourceId: "grok46-aa",
+  sources: [
+    august13Source("grok46-xai-news", "Grok 4.6", "xAI", "https://x.ai/news/grok-4-6", "官方博客"),
+    august13Source("grok46-cursor", "Grok 4.6 in Cursor", "Cursor", "https://cursor.com/blog/grok-4-6", "官方博客"),
+    august13Source("grok46-aa", "Artificial Analysis LLM leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/leaderboards/models", "第三方测量"),
+    august13Source("grok46-aihot-xai", "xAI 发布 Grok 4.6", "AI HOT", "https://aihot.virxact.com/items/cmsqabu0f001krouc6sfhic2d", "讲座整理"),
+    august13Source("grok46-aihot-cursor", "Cursor 与 SpaceXAI 联合发布 Grok 4.6", "AI HOT", "https://aihot.virxact.com/items/cmsqf39o0015groxvnc7oiwop", "讲座整理"),
+  ],
+  totalParameters: "未知；官方未披露参数规模",
+  activeParameters: "未知；官方未披露是否 MoE 或 active-parameter 口径",
+  weightSize: "未知；闭源 API，未开放权重",
+  precision: "未知；官方未披露训练或推理精度",
+  architecture: "闭源 API 模型；官方强调 long-running agents、coding 和上下文利用，未披露层数、专家、tokenizer、视觉/音频能力或上下文精确上限",
+  attention: "未知；官方未披露 attention、KV cache 或长上下文机制",
+  moe: "未知；官方未披露稠密/MoE 结构",
+  otherArchitecture: "Cursor 官方把 Grok 4.6 接入编辑器模型选择与 agent workflow；该路径证明产品可用性，不等同于模型机制披露。",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知",
+  stages: "未知；官方未披露预训练、SFT、RL 或 coding/agentic 后训练阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；未披露 agentic training、tool-use RL、代码数据或 verifier 配方",
+  lowPrecision: "未知",
+  infra: "xAI 托管 API 与 Cursor 集成可用；服务并行、推理硬件、限流和定价细节本轮未核验到稳定官方口径",
+  aaIndex: "未知；2026-08-13 未发现可稳定引用的 Artificial Analysis Grok 4.6 独立页",
+  aaContext: "未知；官方没有在本轮材料中披露精确上下文、输出上限或测评口径",
+  aaSpeed: "未知",
+  score: "API live · agentic update",
+  breakthroughs: [
+    "xAI 官方把 Grok 4.6 定位为长时运行 agent 与 coding 能力更新，Cursor 同日提供一手集成路径。",
+    "当前证据强度来自官方发布和产品集成，缺少可复核模型卡、benchmark 表、参数、价格和第三方动态榜单。",
+    "因此本条按闭源前沿 API 更新入库，所有结构化技术字段保持未知，不记录 AI HOT 题名中的参数或体验比较。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsqabu0f001krouc6sfhic2d 与 https://aihot.virxact.com/items/cmsqf39o0015groxvnc7oiwop；发现日期 2026-08-13。",
+    "日期口径采用 xAI 与 Cursor 官方发布页日期 2026-08-12；AI HOT 的 1.5T/逼近 Claude Fable 5 等摘要未找到一手技术表支撑，未入事实字段。",
   ],
 });
 
@@ -2244,6 +2362,65 @@ const ltx23 = modelEvent({
   ],
 });
 
+const ltx25 = modelEvent({
+  id: "ltx-2-5",
+  date: "2026-08-11",
+  tier: "frontier",
+  title: "LTX-2.5",
+  organization: "Lightricks / LTX",
+  eyebrow: "当前前沿 / 开放权重 / 多镜头音视频 / 22B",
+  summary:
+    "Lightricks 发布 LTX-2.5：开放 22B dev/distilled transformer、Diffusers 与 ComfyUI 制品，覆盖文本/图像/视频/音频到音视频生成，并新增 multi-shot continuity、video extension、promptable camera control、beats-to-video、去模糊插帧和 video/audio restoration；LTX API 另宣传 6.8s 生成 10s 720p、最高 4K、GB200 并行推理，但这些托管指标的硬件、排队和采样口径未完全公开。",
+  confidence: "中",
+  tags: ["T2V", "Audio", "DiT", "22B", "Open Weights", "ComfyUI", "Diffusers", "Multi-shot", "4K"],
+  officialSourceIds: ["ltx25-page", "ltx25-open", "ltx25-card", "ltx25-diffusers", "ltx25-api-docs", "ltx25-paper", "ltx25-repo"],
+  aaSourceId: "ltx25-aa",
+  sources: [
+    august13Source("ltx25-page", "LTX-2.5 Video Engine", "LTX", "https://ltx.io/model/ltx-2-5", "官方博客"),
+    august13Source("ltx25-open", "LTX-2.5 Open Source", "LTX", "https://ltx.io/model/open-source", "官方博客"),
+    august13Source("ltx25-card", "Lightricks/LTX-2.5", "Lightricks", "https://huggingface.co/Lightricks/LTX-2.5", "模型卡"),
+    august13Source("ltx25-diffusers", "Lightricks/LTX-2.5-Diffusers", "Lightricks", "https://huggingface.co/Lightricks/LTX-2.5-Diffusers", "模型卡"),
+    august13Source("ltx25-api-docs", "LTX API documentation", "LTX", "https://docs.ltx.io/", "官方博客"),
+    august13Source("ltx25-paper", "LTX-2: Efficient Joint Audio-Visual Foundation Model", "Lightricks", "https://arxiv.org/abs/2601.03233", "论文"),
+    august13Source("ltx25-repo", "Lightricks/LTX-2", "Lightricks", "https://github.com/Lightricks/LTX-2", "代码仓"),
+    august13Source("ltx25-aa", "Artificial Analysis Text to Video Leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/video/leaderboard/text-to-video", "第三方测量"),
+    august13Source("ltx25-aihot", "LTX-2.5 AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmspr6h6s01hero4hjcdf95mw", "讲座整理"),
+  ],
+  totalParameters: "22B transformer（官方制品名）；Diffusers 仓 HF API 统计约 18.99B BF16 typed parameters，不含所有组件口径",
+  activeParameters: "约 22B（公开 dense 非 MoE 架构推导）",
+  activeDerived: true,
+  weightSize: "HF 主仓提供 22B dev/distilled BF16、INT8/ConvRot、NVFP4、LoRA、duration head、Gemma4-12B text encoder、audio/video VAE 与 latent upscalers；Diffusers 仓约 18.99B BF16 typed parameters",
+  precision: "BF16、INT8/ConvRot、NVFP4 制品并存；基础训练精度未知",
+  architecture: "原生音视频世界模型；公开仓包含 22B transformer、duration head、音频/视频 VAE、latent spatial/temporal upscalers 与 Gemma4-12B text encoder；完整层数和连接器细节未完全披露",
+  attention: "沿用 LTX-2 论文的跨模态 audio/video/text attention 设计谱系；2.5 具体 attention head、RoPE、KV/cache 与新 decoder 细节未完整披露",
+  moe: "Dense；未披露 MoE",
+  otherArchitecture: "multi-shot continuity、shot extension、promptable camera control、beats-to-video、video-to-audio、audio restoration、video deblurring / interpolation / detail enhancement；新增 video decoder 宣称 sharp text、fluid motion 与 better continuity。",
+  hardware: "训练硬件未知；托管 API 宣称在 NVIDIA GB200 上 parallel inference，未披露卡数和服务拓扑",
+  hardwareCount: "训练未知；GB200 是 API 推理路径口径",
+  dataScale: "未知",
+  dataDetails: "未知；官方只描述长视频、多镜头和音频一致性能力，不披露训练数据规模、版权或模态配比",
+  stages: "未知；公开制品包含 dev、distilled、LoRA、量化和 upscaler；未披露基础训练/蒸馏步骤数",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "joint audio-video diffusion / DiT 谱系、multi-shot conditioning、latent upscaling、distillation、quantized serving；具体训练损失和后训练配方未知",
+  lowPrecision: "公开 INT8/ConvRot 与 NVFP4 制品；训练低精度未知",
+  infra: "ComfyUI、Diffusers、LTX API 与 ltx-video 生态；API 支持 10s 720p 约 6.8s、最高 4K 与 multi-shot workflow，但端到端服务口径不等于本地裸推理",
+  aaIndex: "未知；2026-08-13 未找到 LTX-2.5 在 Artificial Analysis 的稳定独立榜单值",
+  aaContext: "生成能力覆盖 T2V/I2V/V2V、audio-video 与 multi-shot；不同任务和分辨率不能互比",
+  aaSpeed: "官方 API 宣称 10s 720p generation in 6.8s；未披露完整硬件、采样、排队和统计口径",
+  score: "22B · 10s 720p in 6.8s API",
+  breakthroughs: [
+    "从 LTX-2.3 的单段音视频生成推进到多镜头连续性、镜头延展、相机控制、音频驱动视频和音视频 restoration 的统一公开制品。",
+    "开放 ComfyUI/Diffusers 权重和多个量化/蒸馏制品，使官方路径不只停留在托管 API。",
+    "6.8s/10s/720p、4K 与 GB200 属官方 API 性能主张；缺少公开可复现实验条件，因此只作为带边界的服务指标。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmspr6h6s01hero4hjcdf95mw；发现日期 2026-08-13。",
+    "日期口径采用 LTX-2.5-Diffusers 仓 lastModified 2026-08-11 与官方发布窗口；HF 主仓 createdAt 2026-07-23 不能单独解释为公开发布日。",
+    "本条不把 LTX-2 论文的 19B 旧主干拆分、LTX-2.3 的 AA Elo 或 API Fast/Pro 指标直接迁移到 LTX-2.5。",
+  ],
+});
+
 const cosmos3Super = modelEvent({
   id: "cosmos3-super-family",
   date: "2026-05-31",
@@ -2728,7 +2905,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46],
     },
     {
       id: "t2i-training",
@@ -2754,6 +2931,7 @@ export const historyData: TimelinePageData = {
         wan21,
         wan22,
         ltx23,
+        ltx25,
         ...generativeResearchEvents.filter((event) => !event.tags.includes("方法") && event.tags.includes("T2V")),
       ],
     },

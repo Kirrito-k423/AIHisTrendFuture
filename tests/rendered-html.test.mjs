@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 40);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 43);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -78,13 +78,16 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const nemotron35Lightning = modelEvent/);
   assert.match(source, /const nemotronVoiceChat11b = modelEvent/);
   assert.match(source, /const qwen38Max = modelEvent/);
+  assert.match(source, /const qwen38A95b = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
   assert.match(source, /const ling30Flash = modelEvent/);
+  assert.match(source, /const grok46 = modelEvent/);
   assert.match(source, /Agent Swarm/);
   assert.match(source, /Muon Split/);
   assert.match(source, /Prefix Tree Merging/);
   assert.match(source, /Gated DeltaNet/);
   assert.match(source, /const wan22 = modelEvent/);
+  assert.match(source, /const ltx25 = modelEvent/);
   assert.match(source, /const qwenImage = modelEvent/);
   assert.match(source, /const zImageTurbo = modelEvent/);
   assert.match(source, /const cosmos3Edge = modelEvent/);
@@ -92,6 +95,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /MSRoPE/);
   assert.match(source, /Denoising-stage MoE/);
   assert.match(source, /Qwen3\.8-Max/);
+  assert.match(source, /Qwen3\.8-2\.4T-A95B/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
   assert.match(source, /zeta zeros/);
   assert.match(source, /GPT-5\.6-Cyber/);
@@ -100,6 +104,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /MTP、DFlash 和 DSpark/);
   assert.match(source, /NemotronLabs VoiceChat 11B/);
   assert.match(source, /Ling-3\.0-flash/);
+  assert.match(source, /Grok 4\.6/);
+  assert.match(source, /LTX-2\.5/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
   assert.match(source, /注意力创新/);
@@ -277,7 +283,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 39);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 40);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -306,6 +312,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "Ascend C",
     "Liger Kernel",
     "HPC-Ops × SGLang",
+    "Unified Radix Cache",
     "LLM MegaKernel",
     "DeepSpeed ZeRO",
     "PyTorch FSDP1",
@@ -326,6 +333,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(dataSource, /Mooncake tensor transport/);
   assert.match(dataSource, /4 inference steps/);
   assert.match(dataSource, /TPOT 降低 15\.1–48\.8%/);
+  assert.match(dataSource, /single radix tree/);
   assert.match(timelineSource, /STAR 技术档案/);
   assert.match(timelineSource, /Situation \/ 动机/);
   assert.match(timelineSource, /Action \/ 实验流程/);
@@ -343,6 +351,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(html, /Categorical Flow Maps/);
   assert.match(html, /SpecForge v0\.3/);
   assert.match(html, /HPC-Ops × SGLang/);
+  assert.match(html, /Unified Radix Cache/);
   assert.match(html, /UltraEP/);
   assert.match(html, /veScale-FSDP/);
 });
@@ -377,8 +386,8 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 39);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 39);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 40);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 40);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
@@ -387,6 +396,7 @@ test("every training technology has attributable ownership and model relations",
   assert.match(dataSource, /SpecForge Team/);
   assert.match(dataSource, /Oscar Davis/);
   assert.match(dataSource, /Tencent Hunyuan AI Infra and the SGLang Team/);
+  assert.match(dataSource, /SGLang Team/);
   assert.match(dataSource, /Huawei Ascend C 团队/);
   assert.match(dataSource, /PyTorch Distributed 团队/);
   assert.match(dataSource, /DeepSeek-AI 开源基础设施团队/);

@@ -17,6 +17,7 @@ const LATEST_ACCESSED_AT = "2026-07-23";
 const RUN_ACCESSED_AT = "2026-07-28";
 const CURRENT_DAILY_ACCESSED_AT = "2026-08-05";
 const TODAY_ACCESSED_AT = "2026-08-08";
+const LATEST_DAILY_ACCESSED_AT = "2026-08-13";
 
 function source(
   id: string,
@@ -86,6 +87,16 @@ function todaySource(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: TODAY_ACCESSED_AT };
+}
+
+function latestDailySource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: LATEST_DAILY_ACCESSED_AT };
 }
 
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
@@ -158,6 +169,7 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-liger-kernel": { name: "Pin-Lun Hsu", role: "first-author", organization: "LinkedIn", sourceUrl: "https://arxiv.org/abs/2410.10989", profileLabel: "GitHub", profileUrl: "https://github.com/linkedin/Liger-Kernel" },
   "tech-triton-ascend": { name: "Triton-Ascend 维护团队", role: "project-team", organization: "Huawei Ascend / Triton 社区", sourceUrl: "https://github.com/Ascend/triton-ascend", profileLabel: "官方项目", profileUrl: "https://github.com/Ascend/triton-ascend", note: "开源仓未声明论文式个人一作。" },
   "tech-hpc-ops-sglang": { name: "Tencent Hunyuan AI Infra and the SGLang Team", role: "project-team", organization: "Tencent Hunyuan / SGLang", sourceUrl: "https://www.lmsys.org/blog/2026-08-07-hpc-ops-sglang/", profileLabel: "官方项目", profileUrl: "https://github.com/Tencent/hpc-ops", note: "LMSYS 文章署名为 Tencent Hunyuan AI Infra and the SGLang Team；按工程系统发布处理。" },
+  "tech-unified-radix-cache": { name: "SGLang Team", role: "project-team", organization: "LMSYS / SGLang", sourceUrl: "https://www.lmsys.org/blog/2026-08-11-unified-radix-cache/", profileLabel: "官方项目", profileUrl: "https://github.com/sgl-project/sglang", note: "SGLang 文章按工程系统发布处理，未指定论文式个人一作。" },
   "tech-megakernel": { name: "Benjamin Spector", role: "first-author", organization: "Stanford Hazy Research", sourceUrl: "https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles", profileLabel: "论文作者页", profileUrl: "https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles" },
   "tech-megatron-lm": { name: "Mohammad Shoeybi", role: "first-author", organization: "NVIDIA", sourceUrl: "https://arxiv.org/abs/1909.08053", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/1909.08053" },
   "tech-deepspeed-zero": { name: "Samyam Rajbhandari", role: "first-author", organization: "Microsoft Research", sourceUrl: "https://arxiv.org/abs/1910.02054", profileLabel: "GitHub", profileUrl: "https://github.com/samyam" },
@@ -198,15 +210,19 @@ const modelLinksByTechnology: Record<string, ModelTechnologyLink[]> = {
   "tech-diffusionnft": [{ modelId: "flux-1-dev", relation: "实验验证", note: "链接表示扩散模型实验语境，不声称 FLUX 产品采用。" }],
   "tech-opd": [{ modelId: "qwen3-235b-a22b", relation: "技术谱系" }],
   "tech-specforge-v03": [
-    { modelId: "qwen3-5-397b-a17b", relation: "推理支撑", note: "SpecBundle 发布 Qwen3.5-397B-A17B DFlash draft；速度收益以模型卡/博客口径为准。" },
-    { modelId: "qwen3-6-35b-a3b", relation: "推理支撑", note: "SpecBundle 发布 Qwen3.6-27B Domino draft；不是 35B-A3B 主模型本身的训练收益。" },
-    { modelId: "kimi-k2-5", relation: "推理支撑" },
-    { modelId: "kimi-k2-6", relation: "推理支撑" },
-    { modelId: "kimi-k3", relation: "推理支撑" },
-    { modelId: "inkling-small", relation: "推理支撑" },
+    { modelId: "qwen3-5-397b-a17b", relation: "训练 / 推理支撑", note: "SpecBundle 发布 Qwen3.5-397B-A17B DFlash draft；速度收益以模型卡/博客口径为准。" },
+    { modelId: "qwen3-6-35b-a3b", relation: "训练 / 推理支撑", note: "SpecBundle 发布 Qwen3.6-27B Domino draft；不是 35B-A3B 主模型本身的训练收益。" },
+    { modelId: "kimi-k2-5", relation: "训练 / 推理支撑" },
+    { modelId: "kimi-k2-6", relation: "训练 / 推理支撑" },
+    { modelId: "kimi-k3", relation: "训练 / 推理支撑" },
+    { modelId: "inkling-small", relation: "训练 / 推理支撑" },
   ],
   "tech-hpc-ops-sglang": [
     { modelId: "qwen3-235b-a22b", relation: "实验验证", note: "LMSYS/HPC-Ops 文章报告 Qwen3 H200 MoE kernel benchmark；不表示 Qwen3 官方训练或服务默认采用该后端。" },
+  ],
+  "tech-unified-radix-cache": [
+    { modelId: "muse-glimmer-30b", relation: "训练 / 推理支撑", note: "SGLang 文章明确以 Muse Glimmer 30B 这类混合模型作为统一 radix cache 的目标场景之一；不表示 Meta 官方训练采用。" },
+    { modelId: "nemotron-3-5-lightning-30b-a3b", relation: "训练 / 推理支撑", note: "Nemotron 3.5 Lightning 的 SGLang day-0 路径包含 Mamba / attention 混合 cache 场景；收益需按具体请求模式验证。" },
   ],
   "tech-triton": [{ modelId: "deepseek-v3-2024-12", relation: "训练 / 推理支撑" }, { modelId: "gpt-oss-120b", relation: "训练 / 推理支撑" }],
   "tech-ascend-c": [{ modelId: "qwen3-235b-a22b", relation: "训练 / 推理支撑", note: "昇腾部署能力关联，不主张其官方训练硬件。" }],
@@ -1260,6 +1276,46 @@ const hpcOpsSglang = technology({
   ],
 });
 
+const unifiedRadixCache = technology({
+  id: "tech-unified-radix-cache",
+  date: "2026-08-11",
+  title: "Unified Radix Cache",
+  organization: "LMSYS / SGLang",
+  category: "高效算子",
+  family: "高效算子",
+  eyebrow: "官方博客 + 代码仓 / Hybrid Model Prefix Cache",
+  summary: "SGLang 为 attention、Mamba/state-space 与 hybrid 模型构建统一 radix tree 前缀缓存，把 KV cache 与 non-attention state 统一纳入可复用前缀树，目标是减少 agentic / multi-turn serving 的重复 prefill。",
+  score: "hybrid prefix reuse",
+  tags: ["SGLang", "Radix Cache", "Prefix Cache", "Mamba", "Hybrid Model", "KV Cache", "Serving"],
+  situation: "传统 prefix cache 主要围绕 Transformer KV cache 设计；Muse Glimmer、Nemotron 3.5 Lightning 等混合 attention/state-space 模型同时携带 KV 与 recurrent/state cache，多轮 agent 请求容易重复计算共享前缀。",
+  target: "为纯 attention、纯 state-space 和 hybrid 模型提供统一的前缀树缓存接口，让 serving runtime 能跨请求复用匹配前缀而不为每类模型维护割裂路径。",
+  action: "SGLang 在 radix tree 中统一管理 token prefix 与对应 cache/state metadata，并把匹配、插入、驱逐和调度路径接入 serving runtime；官方文章以混合模型和 agentic 多轮请求作为主要动机场景。",
+  result: "官方材料证明统一 cache 设计与 SGLang 路径存在，但本轮未找到固定模型、硬件、上下文长度和并发下的端到端吞吐/延迟量化表。",
+  mechanism: "single radix tree for reusable prompt prefixes + unified metadata handles for attention KV cache and non-attention recurrent/state-space cache。",
+  bestFor: "混合 attention/state-space 模型、多轮 agent、代码助手、RAG 与 prompt 前缀高度重叠的在线 serving。",
+  experiment: "LMSYS 2026-08-11 官方博客和 SGLang 代码路径；未披露可复核 benchmark 表，因此不记录速度倍数。",
+  computeMemory: "收益目标是减少重复 prefill 计算和 cache/state 重建；内存占用取决于前缀复用率、驱逐策略、state 大小和请求分布。",
+  parallelism: "位于 SGLang serving scheduler/cache 层，可与 tensor parallel、paged KV cache、CUDA graph 和模型专用 runner 组合；跨节点一致性与大规模分布式 cache 细节未完整披露。",
+  limitations: "没有公开同口径性能数字；prefix 命中率高度依赖 workload，且混合模型的 state 正确性必须由模型 runner 保证。该技术不改变模型训练质量，也不证明相关模型本身 SOTA。",
+  availability: "SGLang 官方博客与开源仓可访问；具体可用版本、模型白名单和配置需按 SGLang release/commit 核验。",
+  breakthroughs: [
+    "把 attention KV 与 Mamba/state-space state 放进统一 prefix tree 管理。",
+    "面向 hybrid 模型与 agentic 多轮 workload 的 serving cache 抽象。",
+    "从模型专用 cache 分支收敛到 SGLang runtime 统一路径。",
+  ],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmsopyoum028vrohd4dgeksz9；attribution canonical 同 URL；发现日期 2026-08-13。",
+    "本条只记录官方机制和可用路径；由于缺少固定 benchmark，不写入 x 倍加速或显存节省。",
+    "关键词与 DeepSpeed 无关；按 SGLang 推理技术事件入库，不作为 DeepSpeed 官方变更。",
+  ],
+  sources: [
+    latestDailySource("unified-radix-blog", "Unified Radix Cache for Hybrid Models", "LMSYS / SGLang", "https://www.lmsys.org/blog/2026-08-11-unified-radix-cache/", "官方博客"),
+    latestDailySource("unified-radix-repo", "sgl-project/sglang", "SGLang", "https://github.com/sgl-project/sglang", "代码仓"),
+    latestDailySource("unified-radix-aihot", "Unified Radix Cache AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmsopyoum028vrohd4dgeksz9", "讲座整理"),
+  ],
+});
+
 const megakernel = technology({
   id: "tech-megakernel",
   date: "2025-05-27",
@@ -1508,9 +1564,9 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-kernel",
     group: "训练技术 / 03",
     title: "高效算子 / 编译",
-    description: "Triton、Ascend C、Liger、Triton-Ascend、HPC-Ops 与 MegaKernel",
+    description: "Triton、Ascend C、Liger、Triton-Ascend、HPC-Ops、Unified Radix Cache 与 MegaKernel",
     color: "green",
-    events: [triton, ascendC, ligerKernel, tritonAscend, megakernel, hpcOpsSglang],
+    events: [triton, ascendC, ligerKernel, tritonAscend, megakernel, hpcOpsSglang, unifiedRadixCache],
   },
   {
     id: "training-tech-parallel",
