@@ -19,6 +19,7 @@ const TODAY_DAILY_ACCESSED = "2026-08-09";
 const AUGUST_11_ACCESSED = "2026-08-11";
 const AUGUST_12_ACCESSED = "2026-08-12";
 const AUGUST_13_ACCESSED = "2026-08-13";
+const AUGUST_14_ACCESSED = "2026-08-14";
 
 function source(
   id: string,
@@ -168,6 +169,16 @@ function august13Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_13_ACCESSED };
+}
+
+function august14Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_14_ACCESSED };
 }
 
 function latestRunSource(
@@ -1347,21 +1358,24 @@ const deepseekV4Pro = modelEvent({
   tier: "frontier",
   title: "DeepSeek‑V4‑Pro",
   organization: "DeepSeek",
-  eyebrow: "当前前沿 / Preview / 1.6T MoE / 1M Context",
+  eyebrow: "当前前沿 / 正式版 / 1.6T MoE / Agentic",
   summary:
-    "1.6T 总参数、49B 激活、33T token 预训练的开放权重旗舰；CSA/HCA 混合压缩注意力把 1M 上下文的单 token 计算压到 V3.2 的 27%，并以领域专家 + GRPO + 多教师 OPD 合并后训练能力。",
+    "1.6T 总参数、49B 激活、33T token 预训练的开放权重旗舰；2026-08-13 DeepSeek 将 V4-Pro 正式版同步到 App、网页端和 API，公开 HLE、Terminal Bench、NL2Repo、DeepSWE、Toolathlon、DSBench 等 Agent 指标，并原生支持 Responses API、low/high/max 思考强度与 Codex 适配。",
   confidence: "高",
-  tags: ["LLM", "MoE", "CSA", "HCA", "mHC", "MTP", "Muon", "GRPO", "OPD", "1M", "FP4", "MIT"],
-  officialSourceIds: ["dsv4-release", "dsv4-report", "dsv4-card", "dsv4-config", "dsv4-inference", "deepgemm"],
+  tags: ["LLM", "MoE", "CSA", "HCA", "mHC", "MTP", "Muon", "GRPO", "OPD", "1M", "FP4", "MIT", "Agentic"],
+  officialSourceIds: ["dsv4-release", "dsv4-formal-update", "dsv4-report", "dsv4-card", "dsv4-config", "dsv4-inference", "deepgemm", "dsv4-harness"],
   aaSourceId: "dsv4-aa",
   sources: [
     source("dsv4-release", "DeepSeek V4 Preview Release", "DeepSeek", "https://api-docs.deepseek.com/news/news260424/", "官方博客"),
+    august14Source("dsv4-formal-update", "DeepSeek-V4-Pro 更新", "DeepSeek", "https://api-docs.deepseek.com/zh-cn/updates#%E6%97%B6%E9%97%B4-2026-08-13", "官方博客"),
     source("dsv4-report", "DeepSeek‑V4: Towards Highly Efficient Million-Token Context Intelligence", "DeepSeek‑AI", "https://arxiv.org/abs/2606.19348", "技术报告"),
     source("dsv4-card", "deepseek-ai/DeepSeek-V4-Pro", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro", "模型卡"),
     source("dsv4-config", "DeepSeek‑V4‑Pro config.json", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/blob/main/config.json", "模型卡"),
     source("dsv4-inference", "DeepSeek‑V4‑Pro Official Inference", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/tree/main/inference", "代码仓"),
     source("deepgemm", "DeepGEMM", "DeepSeek", "https://github.com/deepseek-ai/DeepGEMM", "代码仓"),
+    august14Source("dsv4-harness", "deepseek-ai/deepseek-harness", "DeepSeek", "https://github.com/deepseek-ai/deepseek-harness", "代码仓"),
     source("dsv4-aa", "DeepSeek V4 Pro (Reasoning, Max Effort) 模型评测页", "Artificial Analysis", "https://artificialanalysis.ai/models/deepseek-v4-pro", "第三方测量"),
+    august14Source("dsv4-aihot-formal", "DeepSeek-V4-Pro 正式版上线候选", "AI HOT", "https://aihot.virxact.com/items/cmsrfaw5c0xo2roz2s8b4p2sv", "讲座整理"),
   ],
   totalParameters: "1.6T",
   activeParameters: "49B / token",
@@ -1370,7 +1384,7 @@ const deepseekV4Pro = modelEvent({
   architecture: "61 层 decoder-only Transformer，hidden 7,168，最大上下文 1,048,576；全层 MoE；4× mHC 与深度 1 MTP",
   attention: "前 2 层 HCA，之后 CSA/HCA 交错；CSA：4× KV 压缩 + DSA top‑1024，HCA：128× KV 压缩 + dense attention；shared-KV MQA、128 Q heads、局部窗分支",
   moe: "每层 384 routed + 1 shared expert，top‑6；前三 MoE 层 Hash routing，其余学习路由；aux-loss-free + sequence-wise balance",
-  otherArchitecture: "mHC 双随机残差映射；Non-think / Think High / Think Max；interleaved thinking、DSML/XML 工具调用与 Quick Instruction",
+  otherArchitecture: "mHC 双随机残差映射；Non-think / Think low/high/max；interleaved thinking、DSML/XML 工具调用、Quick Instruction、Responses API 与 Codex 适配",
   hardware: "未知；报告只披露 mega-kernel 在 NVIDIA GPU 与 Huawei Ascend NPU 验证，不能当作实际训练集群",
   hardwareCount: "未知",
   dataScale: "33T pre-training tokens",
@@ -1380,16 +1394,25 @@ const deepseekV4Pro = modelEvent({
   totalDuration: "未知",
   algorithms: "Muon + AdamW、MTP、aux-loss-free balancing、短回滚 + Anticipatory Routing、GRPO、rubric-guided RL、Generative Reward Model、reverse-KL OPD",
   lowPrecision: "MXFP4 QAT：expert 权重与 CSA indexer QK path FP4；FP32 master weights、FP8 E4M3 计算、STE；KV cache 为 BF16 RoPE + FP8 其余维度",
-  infra: "wave-based Expert Parallel mega-kernel + DeepGEMM、TileLang、Z3、hybrid ZeRO、DualPipe、两阶段 CP；OPD 分片教师；RL token-WAL；3FS/DSec 可运行数十万并发 sandbox",
-  aaIndex: "Intelligence Index v4.1：44（Max Effort，开放权重同规模 #3/97，2026-07-18）",
+  infra: "wave-based Expert Parallel mega-kernel + DeepGEMM、TileLang、Z3、hybrid ZeRO、DualPipe、两阶段 CP；OPD 分片教师；RL token-WAL；3FS/DSec 可运行数十万并发 sandbox；API 正式版原生支持 OpenAI Responses API 格式，DeepSeek Harness developer preview 用于公开 code-agent benchmark 口径",
+  aaIndex: "Intelligence Index v4.1：44（Max Effort，开放权重同规模 #3/97，2026-07-18）；官方 2026-08-13 正式版 Agent 指标：HLE 42.7/60.0，Terminal Bench 2.1 87.9，NL2Repo 61.5，Cybergym 83.3，DeepSWE 62.7，Toolathlon-Verified 74.1，Agents' Last Exam 25.7，AutomationBench Public 31.8，DSBench-FullStack 71.1，DSBench-Hard 67.2",
   aaContext: "1.0M tokens",
   aaSpeed: "61.8 output tok/s；TTFT 1.65s；第一方 API；混合价格约 $0.18 / MTok",
-  score: "AA 44",
+  score: "TB 87.9 · DeepSWE 62.7",
+  breakthroughs: [
+    "DeepSeek 将 V4-Pro 从 Preview 推进到 App、网页端和 API 正式版，并保持模型名 deepseek-v4-pro 的调用方式。",
+    "正式版一手披露了 Agent 评测表：Terminal Bench 2.1 87.9、NL2Repo 61.5、DeepSWE 62.7、Toolathlon-Verified 74.1、AutomationBench Public 31.8 等；HLE 同时给出无工具/有工具 42.7/60.0。",
+    "原生 Responses API、Codex 适配、low/high/max 思考强度和 DeepSeek Harness developer preview 改变的是可用性与评测复现路径；未披露新的参数、训练数据、训练硬件或结构变更。",
+  ],
   notes: [
     "严格对应 V4‑Pro，不混入 284B/13B 的 V4‑Flash、V3.2 或社区版本。",
     "HF 自动显示的 862B 来自混合低精度张量统计；参数采用技术报告明确的 1.6T/49B。",
     "正式 Instruct 和 FP8 Base 是不同仓与用途；不能把 Base 下载体积写成最终模型体积。",
     "实际训练硬件、卡数与总训练时长均未知。",
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsrfaw5c0xo2roz2s8b4p2sv；发现日期 2026-08-14，本条仅用其保留发现 attribution。",
+    "日期口径：主模型首次记录仍采用 2026-04-24 V4 Preview/API 与开放权重发布；2026-08-13 是正式版 API/App/Web 与 Agent 指标修订日期，不创建竞争主记录。",
+    "DeepSeek 官方说明新 API 价格将于北京时间 2026-08-17 00:00 生效；本条不把价格调整写成已生效历史价格。",
+    "DeepSeek Harness 仓库创建于 2026-08-13T11:56:32Z，README 标注 developer preview 与 breaking changes；它只证明官方评测/插件框架路径存在，不单独证明模型收益。",
   ],
 });
 
@@ -1549,6 +1572,107 @@ const grok46 = modelEvent({
   notes: [
     "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsqabu0f001krouc6sfhic2d 与 https://aihot.virxact.com/items/cmsqf39o0015groxvnc7oiwop；发现日期 2026-08-13。",
     "日期口径采用 xAI 与 Cursor 官方发布页日期 2026-08-12；AI HOT 的 1.5T/逼近 Claude Fable 5 等摘要未找到一手技术表支撑，未入事实字段。",
+  ],
+});
+
+const gemini37Flash = modelEvent({
+  id: "gemini-3-7-flash",
+  date: "2026-08-13",
+  tier: "frontier",
+  title: "Gemini 3.7 Flash",
+  organization: "Google DeepMind",
+  eyebrow: "当前前沿 / API / Coding & Agents",
+  summary:
+    "Google DeepMind 发布 Gemini 3.7 Flash：定位为最强 workhorse Flash 模型，面向 coding、agent 和知识工作流，相对 Gemini 3.6 Flash 在 FrontierCode 1.1 Main、DeepSWE v1.1、WebDev Arena、GDP.pdf 与 AutomationBench 上给出官方同口径提升，并以 introductory pricing 降到 3.6 Flash 原价的一半。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Gemini", "Coding", "Agentic", "API", "1M", "Safety"],
+  officialSourceIds: ["gemini37-blog", "gemini37-card"],
+  sources: [
+    august14Source("gemini37-blog", "Introducing Gemini 3.7 Flash", "Google", "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/", "官方博客"),
+    august14Source("gemini37-card", "Gemini 3.7 Flash Model Card", "Google DeepMind", "https://deepmind.google/models/model-cards/gemini-3-7-flash", "模型卡"),
+    august14Source("gemini37-aihot", "Google DeepMind 推出 Gemini 3.7 Flash 候选", "AI HOT", "https://aihot.virxact.com/items/cmsrscwfn03f7ro0n7qijclds", "讲座整理"),
+  ],
+  totalParameters: "未知；官方未披露参数规模",
+  activeParameters: "未知；官方未披露是否 MoE 或 active-parameter 口径",
+  weightSize: "未知；闭源 API，未开放权重",
+  precision: "未知；官方未披露训练或推理精度",
+  architecture: "Gemini 系列闭源多模态 API 模型；官方定位为 Flash workhorse，面向 coding、agents、knowledge work 和 web development；具体层数、专家、tokenizer、模态编码器和精确上下文配置未在本轮材料中披露",
+  attention: "未知；官方未披露 attention、KV cache、long-context 或 tool-use 内部机制",
+  moe: "未知；官方未披露稠密/MoE 结构",
+  otherArchitecture: "Gemini Spark 自 2026-08-13 起使用 3.7 Flash；开发者可在 Google Antigravity、Gemini API、AI Studio、Android Studio 与 Gemini Enterprise Agent Platform 使用。官方披露 CBRN 与 cyber offense safeguard 更新。",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方未披露训练数据规模、模态比例、代码/代理数据来源或过滤口径",
+  stages: "未知；Google 只说明来自开发者反馈和算法创新，未披露预训练、SFT、RL、tool-use 或 safety training 阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；未披露 coding/agentic training、tool-use RL、verifier、distillation 或 safety recipe",
+  lowPrecision: "未知",
+  infra: "Gemini API / AI Studio / Google Antigravity / Android Studio / Gemini Enterprise Agent Platform / Gemini Spark 可用；introductory price 为 $0.75/1M input tokens 与 $3.75/1M output tokens，到 2026-12-31 截止，2027-01-01 起为 $1.50/$7.50",
+  aaIndex: "未知；本轮未发现可稳定引用的 Artificial Analysis 独立页",
+  aaContext: "官方同页 benchmark 对比 Gemini 3.6 Flash：FrontierCode 1.1 Main 43.6% vs 34.4%，DeepSWE v1.1 65.3% vs 49.0%，WebDev Arena Elo 1588 vs 1538，GDP.pdf 34.0% vs 22.0%，AutomationBench 30.4% vs 17.0%",
+  aaSpeed: "未知",
+  score: "DeepSWE 65.3 · FrontierCode 43.6",
+  breakthroughs: [
+    "在 Flash workhorse 价格带上，Google 官方披露 coding、agent 与知识工作流评测相对 3.6 Flash 的同口径提升，尤其 DeepSWE v1.1 从 49.0% 到 65.3%。",
+    "Gemini Spark、Google Antigravity、Gemini API 与企业 Agent Platform 同日可用，证明发布不只是研究预告。",
+    "当前没有参数、训练数据、模型卡结构表或第三方动态榜单；SOTA 判断限定在 Google 官方同系列 Flash 对比和生产可用性。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsrscwfn03f7ro0n7qijclds；发现日期 2026-08-14，本条仅保留 attribution。",
+    "日期口径采用 Google Blog schema.org datePublished 2026-08-13T17:00:00Z；Google 页面同时显示 Aug 13, 2026。",
+    "Detailed benchmarks 在官方页面以图片表格呈现；本轮只记录正文明确给出的数值，不 OCR 图片补表。",
+  ],
+});
+
+const minimaxMusic30 = modelEvent({
+  id: "minimax-music-3-0",
+  date: "2026-08-13",
+  tier: "frontier",
+  title: "MiniMax Music 3.0",
+  organization: "MiniMax",
+  eyebrow: "Music Generation / Open Weights / Hybrid-LM",
+  summary:
+    "MiniMax 发布 Music 3.0，定位为开放权重、生产级音乐生成模型；官方技术架构披露 8 层 RVQ tokenizer、8B Global LLM、0.6B Local LLM、2.4B flow-matching module 与 123M Flow-VAE，可根据创意概念和可选歌词一次生成最长约 5 分钟完整歌曲。",
+  confidence: "高",
+  tags: ["Omni", "Music", "Audio", "Open Weights", "RVQ", "Hybrid-LM", "Flow Matching", "Flow-VAE"],
+  officialSourceIds: ["minimax-music30-blog"],
+  sources: [
+    august14Source("minimax-music30-blog", "MiniMax Music 3.0: Next-Generation Open-Weights, Production-Ready & Versatile Music Model", "MiniMax", "https://www.minimax.io/blog/minimax-music-3-0-next-generation-open-weights-production-ready-versatile-music-model", "官方博客"),
+    august14Source("minimax-music30-aihot", "MiniMax Music 3.0 发布候选", "AI HOT", "https://aihot.virxact.com/items/cmsrramim02jero0nte55cfgi", "讲座整理"),
+  ],
+  totalParameters: "官方未披露统一总参数；可披露组件为 8B Global LLM、0.6B Local LLM、2.4B flow matching module 与 123M Flow-VAE，tokenizer 和其它模块参数未知",
+  activeParameters: "未知；官方未披露每 frame/token 激活参数或是否存在 MoE 路由",
+  weightSize: "未知；官方博客称 open weights，但本轮未找到稳定 Hugging Face/API 模型仓或文件清单",
+  precision: "未知；官方未披露权重 dtype、训练精度或推理量化路径",
+  architecture: "三组件音乐生成栈：tokenizer、Hybrid-LM、synthesis stack；支持 creative concept + optional lyrics 到完整歌曲生成，最长约 5 分钟",
+  attention: "未知；Global LLM 初始化自 Qwen3.5-8B，Local LLM 随机初始化；未披露注意力层数、上下文长度、音频帧率或 KV cache",
+  moe: "未披露 MoE；当前公开结构按 Global/Local 双 LLM 与声学生成栈记录",
+  otherArchitecture: "8 层 RVQ 将第一层用于核心语义和结构，其余 7 层编码 acoustic residuals；Global LLM frame-by-frame 预测 semantic tokens，Local LLM 沿 depth 轴预测 within-frame acoustic tokens；hidden-state fusion 条件化 flow matching，再由 Flow-VAE 解码音频",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；官方未披露训练歌曲/音频小时数、歌词数据、授权结构、多语种比例或过滤口径",
+  stages: "RVQ staged training：第一层先学习稳定信息骨架，之后所有 codebooks 联合训练；Hybrid-LM 两阶段训练：global alignment 后 full-parameter joint training；flow/VAE 训练细节未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Multi-layer RVQ、global-local Hybrid-LM、hidden-state fusion、flow matching、Flow-VAE；优化器、采样策略、偏好训练和安全过滤未知",
+  lowPrecision: "未知",
+  infra: "官方博客称生产级与开放权重，但本轮只核验到博客页面；API、模型仓、许可、下载体积、推理硬件和延迟口径未知",
+  aaIndex: "不适用；本轮未找到 Artificial Analysis 音乐生成榜单条目",
+  aaContext: "专项音乐生成；官方给出 demo 和架构说明，未给可复核 benchmark、人工评测表或基线对照数值",
+  aaSpeed: "未知",
+  score: "8B + 0.6B + 2.4B + 123M",
+  breakthroughs: [
+    "官方首次以 Music 3.0 名义公开完整音乐生成架构：多层 RVQ、global-local Hybrid-LM、hidden-state fusion、flow matching 与 Flow-VAE。",
+    "8B Global LLM 初始化自 Qwen3.5-8B，0.6B Local LLM 与 2.4B flow matching 将长程歌曲结构和局部声学细节分层建模。",
+    "证据强度来自官方技术博客；但开放权重仓库、许可、权重文件、训练数据和定量 benchmark 未稳定披露，因此不补齐权重体积或 SOTA 排名。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsrramim02jero0nte55cfgi；发现日期 2026-08-14，本条仅保留 attribution。",
+    "日期口径采用 MiniMax 官方博客页面日期 2026-08-13。",
+    "四个已披露组件可复算为 8B + 0.6B + 2.4B + 0.123B = 11.123B；因 tokenizer 和其它模块未知，本条不把 11.123B 写成官方总参数。",
   ],
 });
 
@@ -2905,7 +3029,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash],
     },
     {
       id: "t2i-training",
@@ -2941,7 +3065,7 @@ export const historyData: TimelinePageData = {
       title: "Omni 理解 / 生成",
       description: "跨文本、图像、视频与音频的统一模型",
       color: "violet",
-      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge, qwenAudio30Tts, nemotronVoiceChat11b],
+      events: [qwenOmni, bagel, cosmos3Super, cosmos3Edge, qwenAudio30Tts, nemotronVoiceChat11b, minimaxMusic30],
     },
     {
       id: "generation-methods",

@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 43);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 45);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -105,6 +105,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /NemotronLabs VoiceChat 11B/);
   assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /Grok 4\.6/);
+  assert.match(source, /Gemini 3\.7 Flash/);
+  assert.match(source, /MiniMax Music 3\.0/);
   assert.match(source, /LTX-2\.5/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
