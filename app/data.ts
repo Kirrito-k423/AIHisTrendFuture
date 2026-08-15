@@ -20,6 +20,7 @@ const AUGUST_11_ACCESSED = "2026-08-11";
 const AUGUST_12_ACCESSED = "2026-08-12";
 const AUGUST_13_ACCESSED = "2026-08-13";
 const AUGUST_14_ACCESSED = "2026-08-14";
+const AUGUST_15_ACCESSED = "2026-08-15";
 
 function source(
   id: string,
@@ -179,6 +180,16 @@ function august14Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_14_ACCESSED };
+}
+
+function august15Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_15_ACCESSED };
 }
 
 function latestRunSource(
@@ -1676,6 +1687,111 @@ const minimaxMusic30 = modelEvent({
   ],
 });
 
+const glm53 = modelEvent({
+  id: "glm-5-3",
+  date: "2026-08-14",
+  tier: "frontier",
+  title: "GLM-5.3",
+  organization: "Z.ai",
+  eyebrow: "当前前沿 / Coding & Agents / Post-training",
+  summary:
+    "Z.ai 发布 GLM-5.3：官方文档称它与 GLM-5.2 使用同一 base model，提升来自 post-training；面向复杂软件工程和 Agent 任务，支持 1M 上下文、128K 最大输出，并在 Terminal-Bench 3.0、DeepSWE v1.1、Agents' Last Exam、GDPval-AA v2 与 CyberGym 等官方口径中给出相对 GLM-5.2 的提升。",
+  confidence: "中",
+  tags: ["LLM", "MoE", "Coding", "Agentic", "Cybersecurity", "Post-training", "1M", "Z.ai"],
+  officialSourceIds: ["glm53-docs", "glm53-blog", "glm52-blog"],
+  sources: [
+    august15Source("glm53-docs", "GLM-5.3", "Z.ai", "https://docs.z.ai/guides/llm/glm-5.3", "官方博客"),
+    august15Source("glm53-blog", "GLM-5.3", "Z.ai", "https://z.ai/blog/glm-5.3", "官方博客"),
+    august15Source("glm52-blog", "GLM-5.2", "Z.ai", "https://z.ai/blog/glm-5.2", "官方博客"),
+    august15Source("glm53-aihot", "GLM-5.3 发布候选", "AI HOT", "https://aihot.virxact.com/items/cmssir12d047oroffnpn5pcx1", "讲座整理"),
+  ],
+  totalParameters: "与 GLM-5.2 使用同一 base model；GLM-5.2 官方披露为 753B 总参数。本轮未找到 GLM-5.3 独立权重或模型卡重新确认参数。",
+  activeParameters: "与 GLM-5.2 使用同一 base model；GLM-5.2 官方披露为 40B / token。本轮未找到 GLM-5.3 独立模型卡重新确认 active-parameter 口径。",
+  weightSize: "未知；官方文档称 GLM-5.3 API coming soon、已向 GLM Coding Plan 用户开放，本轮未找到可匿名访问的 GLM-5.3 权重仓或文件清单",
+  precision: "未知；官方未披露 GLM-5.3 post-training 或推理精度",
+  architecture: "沿用 GLM-5.2 base model 的闭源/未独立发布版本；官方把本轮提升归因于 post-training，而不是 base 架构改变",
+  attention: "未知；若沿用 GLM-5.2 base 则应继承其 DSA/IndexShare 等机制，但 GLM-5.3 文档没有逐项重新披露 attention、KV cache 或长上下文实现",
+  moe: "与 GLM-5.2 同 base model 的 MoE 口径；GLM-5.3 未独立披露专家数量、top-k 或 shared expert 细节",
+  otherArchitecture: "官方披露输入/输出均为 text，context length 1M，maximum output tokens 128K，支持 thinking mode、streaming、function calling、context caching、structured output 与 MCP",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；官方没有披露新增 post-training 数据规模或 token 数",
+  dataDetails: "未知；官方只说明 post-training 扩展到真实专家工作流、复杂工程任务、内部文档/代码库和安全任务，未披露数据来源、过滤口径或授权结构",
+  stages: "同 GLM-5.2 base model → GLM-5.3 post-training；新增训练任务覆盖问题识别、方案分析、实现、验证和交付等真实工程流程",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Post-training scaling through real-world expert workflows；具体 SFT/RL、verifier、agentic tool-use 或安全训练配方未知",
+  lowPrecision: "未知",
+  infra: "已向 GLM Coding Plan 用户开放；API coming soon。官方未披露服务并行、推理硬件、限流、价格或开放权重发布时间",
+  aaIndex: "未知；本轮未发现可稳定引用的 Artificial Analysis GLM-5.3 独立页",
+  aaContext: "官方 benchmark 口径：Terminal-Bench 3.0 从 4.6 到 28.3，DeepSWE v1.1 从 46.2 到 66.9，Agents' Last Exam 从 23.8 到 28.5，GDPval-AA v2 为 1769；这些是 Z.ai 文档给出的同系列/官方口径，非第三方动态榜单快照",
+  aaSpeed: "未知",
+  score: "DeepSWE 66.9 · T-Bench 28.3",
+  breakthroughs: [
+    "GLM-5.3 明确把能力跃迁归因于 post-training，而非重新训练 base model，这为同一大模型基座上的工程/agent/cyber 后训练扩展提供了可追踪事件。",
+    "官方披露 DeepSWE v1.1、Terminal-Bench 3.0、Agents' Last Exam、GDPval-AA v2 与 CyberGym 等任务指标相对 GLM-5.2 大幅提升，尤其 DeepSWE v1.1 达 66.9。",
+    "当前证据限制：未找到独立模型卡、开放权重、第三方动态榜单、训练数据或 post-training recipe；因此参数字段只标注同 GLM-5.2 base 的继承口径，不能写成 GLM-5.3 独立公开权重事实。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmssir12d047oroffnpn5pcx1；发现日期 2026-08-14，本条仅保留 attribution。",
+    "日期口径采用 Z.ai GLM-5.3 docs dateModified 2026-08-14T09:54:45.404Z 和 AI HOT selected item 2026-08-14T05:31:04Z；博客壳页面可访问但正文事实以 docs MDX 为准。",
+    "官方文档称 #1 open-source model，但本轮未找到稳定 GLM-5.3 权重仓；开放状态在比较目录中记为 pending，避免把可用性写过头。",
+  ],
+});
+
+const dots3Note = modelEvent({
+  id: "dots3-note-prev",
+  date: "2026-08-09",
+  tier: "frontier",
+  title: "dots3-note Preview",
+  organization: "Dots Studio",
+  eyebrow: "当前前沿 / 开放权重 / 多模态 MoE / 512K",
+  summary:
+    "Dots Studio 发布 dots3-note Preview：首个 dots3 家族开放权重模型，Apache-2.0，多模态 MoE，280B 总参数、16B 激活参数、512K 上下文，支持文本、图像、视频、音频输入到文本输出，并提供 BF16 与 FP8 检查点及 vLLM/SGLang/Transformers 路径。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Audio", "Video", "MoE", "Open Weights", "Apache-2.0", "512K", "DSA", "SWA"],
+  officialSourceIds: ["dots3-card", "dots3-config", "dots3-hf-api", "dots3-github"],
+  sources: [
+    august15Source("dots3-card", "dots-studio/dots3-note-prev", "Dots Studio", "https://huggingface.co/dots-studio/dots3-note-prev", "模型卡"),
+    august15Source("dots3-config", "dots3-note-prev config.json", "Dots Studio", "https://huggingface.co/dots-studio/dots3-note-prev/blob/main/config.json", "模型卡"),
+    august15Source("dots3-hf-api", "dots3-note-prev Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/dots-studio/dots3-note-prev", "模型卡"),
+    august15Source("dots3-github", "studio-dots-ai/dots3-note-prev", "Dots Studio", "https://github.com/studio-dots-ai/dots3-note-prev", "代码仓"),
+    august15Source("dots3-aihot", "dots3-note Preview 开源候选", "AI HOT", "https://aihot.virxact.com/items/cmssv94cg0h4mroffsb9e7a88", "讲座整理"),
+  ],
+  totalParameters: "280B；模型卡披露主模型总参数，另有 7B total / 1.2B activated vision encoder 与 800M dense audio encoder",
+  activeParameters: "16B / token；模型卡披露 activated parameters",
+  weightSize: "约 576.9 GB；model.safetensors.index.json metadata total_size = 576,886,825,984 bytes，另有 model-vision.safetensors 与 model-audio.safetensors 文件",
+  precision: "BF16 与 FP8；主 BF16 config torch_dtype 为 bfloat16，另有 dots3-note-prev-fp8 检查点",
+  architecture: "Multimodal MoE；主干 46 层（1 dense + 45 MoE），hidden size 5120，128 heads，text/image/video/audio 输入到 text 输出",
+  attention: "13 DSA + 33 SWA（约 1:3）；DSA Top-2048；config max_position_embeddings 524,288",
+  moe: "256 routed experts + 1 shared expert，top-8；MTP 1 shared layer 1.13B；vision encoder 为 MoE ViT",
+  otherArchitecture: "vocab 152K；FFN hidden size 13,824（dense）/1,536（per expert）；vision encoder 7B total / 1.2B active；audio encoder dense 800M；视频输入可包含音轨",
+  hardware: "推理示例使用单 8-GPU node；vLLM 示例明确为 8 张 NVIDIA H100，训练硬件未知",
+  hardwareCount: "训练机器规模未知；官方部署推荐 FP8 在一个 8-GPU 节点运行，BF16 需要更多显存",
+  dataScale: "未知",
+  dataDetails: "未知；模型卡未披露训练 token、图像/视频/音频样本量、数据来源或过滤口径",
+  stages: "未知；模型卡只披露开放权重、结构、精度、部署路径和评测图，未披露预训练/后训练/RL 阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "DSA、SWA、MoE routing、MTP/NEXTN speculative decoding；训练优化器、RL、蒸馏或偏好训练配方未知",
+  lowPrecision: "官方提供 FP8 量化 checkpoint；SGLang/vLLM 示例使用 FP8 服务。训练低精度未知",
+  infra: "Hugging Face 与 ModelScope 权重可用；vLLM main 已有原生支持，Transformers #47844 与 SGLang #33829 仍在 review；SGLang cookbook 标注 MTP/NEXTN 可降低 TPOT 超过 50%，prefill CUDA graph 暂不支持",
+  aaIndex: "未知；本轮未发现可稳定引用的 Artificial Analysis dots3-note 独立页",
+  aaContext: "模型卡包含 General Reasoning/Agent 与 Multimodal Understanding 评测图片，但文字未给完整可复核数值表；本条不 OCR 图片补 benchmark",
+  aaSpeed: "未知",
+  score: "280B-A16B · 512K · Apache-2.0",
+  breakthroughs: [
+    "dots3-note Preview 以 Apache-2.0 开放 280B-A16B 多模态 MoE 权重，覆盖文本、图像、视频、音频输入到文本输出，512K 上下文在开放多模态模型中具备前沿观察价值。",
+    "模型卡给出 DSA+SWA 混合注意力、256 routed experts + shared expert、MTP、7B MoE ViT 与 800M audio encoder 等结构化规格，可直接映射到本仓库固定字段。",
+    "限制条件明确：Full Report 仍为 coming soon，训练数据、训练硬件、定量评测表和第三方动态榜单缺失；部署支持中 Transformers/SGLang 仍依赖 PR revision。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmssv94cg0h4mroffsb9e7a88；发现日期 2026-08-14，本条仅保留 attribution。",
+    "日期口径采用 Hugging Face API createdAt 2026-08-09T07:33:17Z；GitHub 仓库创建于 2026-08-12T07:55:11Z，AI HOT selected item 发布时间为 2026-08-14T11:25:29Z。",
+    "模型卡评测图未在正文给出完整数字表；本轮只记录结构、开放状态、部署条件和可复算权重体积，不把图片榜单 OCR 为事实字段。",
+  ],
+});
+
 const inklingSmall = modelEvent({
   id: "inkling-small",
   date: "2026-07-30",
@@ -3029,7 +3145,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, glm53, dots3Note],
     },
     {
       id: "t2i-training",

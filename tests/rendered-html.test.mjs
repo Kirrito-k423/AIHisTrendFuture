@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 45);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 47);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -82,6 +82,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const alpamayo2Super = modelEvent/);
   assert.match(source, /const ling30Flash = modelEvent/);
   assert.match(source, /const grok46 = modelEvent/);
+  assert.match(source, /const glm53 = modelEvent/);
+  assert.match(source, /const dots3Note = modelEvent/);
   assert.match(source, /Agent Swarm/);
   assert.match(source, /Muon Split/);
   assert.match(source, /Prefix Tree Merging/);
@@ -107,6 +109,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Grok 4\.6/);
   assert.match(source, /Gemini 3\.7 Flash/);
   assert.match(source, /MiniMax Music 3\.0/);
+  assert.match(source, /GLM-5\.3/);
+  assert.match(source, /dots3-note Preview/);
   assert.match(source, /LTX-2\.5/);
   assert.match(source, /总参数规模/);
   assert.match(source, /公开权重大小/);
@@ -143,6 +147,8 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /2022-11-30/);
   assert.match(source, /Qwen3\.7/);
   assert.match(source, /Qwen3\.8/);
+  assert.match(source, /GLM‑5\.3/);
+  assert.match(source, /dots3-note Preview/);
   assert.match(source, /OpenAI Astra \(internal\)/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
   assert.match(source, /Ling-3\.0-flash/);
@@ -230,6 +236,8 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /DeepSeek V4 Flash 0731/);
   assert.match(html, /OpenAI Astra \(internal\)/);
   assert.match(html, /Inkling Small/);
+  assert.match(html, /GLM‑5\.3/);
+  assert.match(html, /dots3-note Preview/);
   assert.match(html, /Ling-3\.0-flash/);
   assert.match(html, /Z-Image-Turbo/);
   assert.match(html, /拖动排序/);
