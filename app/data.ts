@@ -21,6 +21,7 @@ const AUGUST_12_ACCESSED = "2026-08-12";
 const AUGUST_13_ACCESSED = "2026-08-13";
 const AUGUST_14_ACCESSED = "2026-08-14";
 const AUGUST_15_ACCESSED = "2026-08-15";
+const AUGUST_16_ACCESSED = "2026-08-16";
 
 function source(
   id: string,
@@ -190,6 +191,16 @@ function august15Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_15_ACCESSED };
+}
+
+function august16Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_16_ACCESSED };
 }
 
 function latestRunSource(
@@ -828,6 +839,61 @@ const qwen38Max = modelEvent({
     "AI HOT discovery/canonical: https://aihot.virxact.com/topics/cmsddp1e11bqcro2ei8qv2xqf；本轮仅把 AI HOT 作为候选雷达，不用其摘要替代官方事实。",
     "日期口径采用 AI HOT 主题中 Qwen Blog Retrieval 候选最新时间 2026-08-04，并以 2026-08-05 QwenCloud 官方页面可访问作为核验；QwenCloud 静态 meta date 不是发布日。",
     "Qwen.ai 博客页面在本轮静态抓取中只暴露 /blog?id=qwen3.8 路由和首屏壳，未稳定暴露正文；技术事实来自 QwenCloud 模型页。",
+  ],
+});
+
+const qwen3827b = modelEvent({
+  id: "qwen3-8-27b",
+  date: "2026-08-05",
+  tier: "frontier",
+  title: "Qwen3.8-27B",
+  organization: "Alibaba / Qwen",
+  eyebrow: "当前前沿 / 开放权重 / 27B Dense VLM / 256K",
+  summary:
+    "Qwen 开放 Qwen3.8-27B：官方模型卡披露它是 27B 级稠密原生视觉语言模型，Apache-2.0，支持图像和视频理解、thinking control、262,144 token 原生上下文并可扩展到 1,000,000 token；HF API 可核验 27,781,427,952 个 BF16 safetensors 参数和约 55.6 GB 权重文件。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Open Weights", "Apache-2.0", "Qwen", "Dense", "BF16", "256K", "Agentic"],
+  officialSourceIds: ["qwen38-27b-card", "qwen38-27b-config", "qwen38-27b-hf-api", "qwen38-27b-license"],
+  aaSourceId: "qwen38-27b-aa",
+  sources: [
+    august16Source("qwen38-27b-card", "Qwen/Qwen3.8-27B", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-27B", "模型卡"),
+    august16Source("qwen38-27b-config", "Qwen3.8-27B config.json", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-27B/blob/main/config.json", "模型卡"),
+    august16Source("qwen38-27b-hf-api", "Qwen3.8-27B Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/Qwen/Qwen3.8-27B", "模型卡"),
+    august16Source("qwen38-27b-license", "Qwen3.8-27B LICENSE", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-27B/blob/main/LICENSE", "模型卡"),
+    august16Source("qwen38-27b-aa", "Artificial Analysis LLM leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/leaderboards/models", "第三方测量"),
+    august16Source("qwen38-27b-aihot", "Qwen3.8 系列开放候选", "AI HOT", "https://aihot.virxact.com/items/cmst3j53e03ncro068tgsr4xn", "讲座整理"),
+  ],
+  totalParameters: "27,781,427,952 BF16 safetensors parameters；模型卡称 Number of Parameters 为 27B",
+  activeParameters: "27,781,427,952 / token；稠密模型，官方未披露稀疏激活结构",
+  weightSize: "18 个 safetensors 分片合计 55,563,006,776 bytes，约 55.6 GB；与 BF16 参数量 ×2 字节一致",
+  precision: "BF16 safetensors；训练精度和量化权重未知",
+  architecture: "Causal Language Model with Vision Encoder；Qwen3.5 architectural foundation；text_config 为 64 层、hidden size 5120、vocab 248,320、max_position_embeddings 262,144，vision_config depth 27",
+  attention: "Gated DeltaNet / Gated Attention 混合布局：16 × (3 × (Gated DeltaNet → FFN) → 1 × (Gated Attention → FFN))；Gated Attention 为 24 Q heads / 4 KV heads，head dim 256",
+  moe: "稠密；模型卡未披露 MoE 专家结构",
+  otherArchitecture: "原生图像与视频理解；thinking mode 默认开启，可通过 reasoning_effort 调整，可用 preserve_thinking 保留历史 reasoning context；MTP trained with multiple steps",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知",
+  dataDetails: "未知；模型卡未披露训练 token 数、图像/视频样本量、数据来源、过滤或许可结构",
+  stages: "Pre-training & Post-training；具体 SFT、RL、vision-language 后训练和 agentic training 配方未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Gated DeltaNet / Gated Attention hybrid layout、MTP、thinking control；优化器、RL、verifier、蒸馏和工具使用训练配方未知",
+  lowPrecision: "未知；当前核验到 BF16 权重，未找到同仓 FP8/INT4/QAT 权重",
+  infra: "Hugging Face Transformers 格式开放权重；模型卡称兼容 Transformers、vLLM、SGLang、TokenSpeed，并给出 SGLang/vLLM/TokenSpeed cookbook 路径。模型卡提到 QwenCloud hosted version coming soon，但 2026-08-16 访问 qwencloud 27B 页面返回 404，因此不记录 API 可用性。",
+  aaIndex: "未知；2026-08-16 访问 Artificial Analysis 未找到 Qwen3.8-27B 独立可引用榜单页",
+  aaContext: "模型卡给出 Qwen 官方 benchmark 表：Terminal Bench 2.1 73.0、SWE-bench Pro 61.7、DeepSWE 1.1 42.2、CoWorkBench 70.7、MathVision with CI 94.6 等；这是官方自报模型卡口径，非第三方动态榜单。",
+  aaSpeed: "未知",
+  score: "27.8B dense · 256K · Apache-2.0",
+  breakthroughs: [
+    "Qwen3.8-27B 把 Qwen3.8 的 coding、agentic 与视觉语言更新下放到 27B 级开放稠密模型，并采用 Apache-2.0 许可。",
+    "一手 config 可核验 Gated DeltaNet / Gated Attention 混合层布局、262,144 原生上下文、BF16 权重和 55.6 GB 文件体积；适合与 Qwen3.8-Max API 与 Qwen3.8-2.4T-A95B MoE 基座分开记录。",
+    "限制条件明确：训练数据、训练硬件、后训练配方、第三方动态榜单和 hosted API 可用性缺失；官方 benchmark 不与 Artificial Analysis 或其它外部榜单混排。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmst3j53e03ncro068tgsr4xn；发现日期 2026-08-16，本条只保留 attribution，不把 AI HOT 摘要作为技术事实。",
+    "日期口径采用 Hugging Face API createdAt 2026-08-05T08:22:59Z；AI HOT selected item 发布时间为 2026-08-14T15:02:48Z，HF API lastModified 为 2026-08-14T15:00:01Z。",
+    "本条与 Qwen3.8-Max API、Qwen3.8-2.4T-A95B 保持三条记录：Max 记录闭源托管旗舰，A95B 记录 2.4T text MoE 基础权重，27B 记录 Apache-2.0 稠密原生 VLM 开放权重。",
   ],
 });
 
@@ -3145,7 +3211,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, glm53, dots3Note],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, glm53, dots3Note],
     },
     {
       id: "t2i-training",

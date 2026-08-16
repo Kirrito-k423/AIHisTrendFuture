@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 47);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 48);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -78,6 +78,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const nemotron35Lightning = modelEvent/);
   assert.match(source, /const nemotronVoiceChat11b = modelEvent/);
   assert.match(source, /const qwen38Max = modelEvent/);
+  assert.match(source, /const qwen3827b = modelEvent/);
   assert.match(source, /const qwen38A95b = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
   assert.match(source, /const ling30Flash = modelEvent/);
@@ -97,6 +98,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /MSRoPE/);
   assert.match(source, /Denoising-stage MoE/);
   assert.match(source, /Qwen3\.8-Max/);
+  assert.match(source, /Qwen3\.8-27B/);
   assert.match(source, /Qwen3\.8-2\.4T-A95B/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
   assert.match(source, /zeta zeros/);
@@ -237,6 +239,7 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /OpenAI Astra \(internal\)/);
   assert.match(html, /Inkling Small/);
   assert.match(html, /GLM‑5\.3/);
+  assert.match(html, /Qwen3\.8-27B/);
   assert.match(html, /dots3-note Preview/);
   assert.match(html, /Ling-3\.0-flash/);
   assert.match(html, /Z-Image-Turbo/);
