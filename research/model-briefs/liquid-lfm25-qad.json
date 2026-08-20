@@ -1,0 +1,134 @@
+{
+  "slug": "liquid-lfm25-qad",
+  "name": "LFM2.5 QAD Q4_0",
+  "family": "Liquid LFM2.5",
+  "entry_kind": "method",
+  "modality": "Omni",
+  "organization": "Liquid AI",
+  "release_date": "2026-08-19",
+  "release_date_basis": "Liquid AI 官方 Hugging Face 博客于 2026-08-19 发布 QAD Q4_0 检查点；时间线采用官方博客发布日期，不把模型仓库对象创建时间当作方法首次公开时间。",
+  "access": "四个公开 GGUF 检查点：LFM2.5-230M、350M、1.2B-Instruct、2.6B；方法本身是公开部署检查点与技术说明，不等于完整训练代码或 teacher 权重公开。",
+  "license": "各 LFM2.5 模型仓的许可证应按对应模型卡核验；本轮只记录 QAD GGUF 发布，不把博客默认归入统一许可证，未知。",
+  "official_model_ids": [
+    "LiquidAI/LFM2.5-230M-GGUF",
+    "LiquidAI/LFM2.5-350M-GGUF",
+    "LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+    "LiquidAI/LFM2.5-2.6B-GGUF"
+  ],
+  "parameter_total": "覆盖 230M、350M、1.2B-Instruct、2.6B 四个 LFM2.5 检查点",
+  "parameter_active": "不适用；本条记录量化蒸馏方法，不是单一模型",
+  "weight_size": "Q4_0 GGUF 的具体文件大小随模型和仓库版本变化；博客确认目标是保持 Q4_0 的内存与速度，未在正文给出统一总下载体积",
+  "precision": "目标部署格式为 GGUF Q4_0；比较包含 BF16 GGUF ceiling、原始 PTQ Q4_0 与 QAD Q4_0",
+  "architecture": "Quantization-Aware Distillation：高精度 teacher 在训练时模拟目标 Q4_0 量化路径，student 以低比特权重学习恢复量化误差；不改变 LFM2.5 基础架构。",
+  "attention_or_sequence_design": "未知；QAD 不改变 LFM2.5 的 attention/state layout，博客未披露相关结构修订。",
+  "vae_or_tokenizer": "不适用；本条是语言/工具/Agent 能力上的低比特检查点方法。",
+  "text_encoder_or_conditioner": "不适用",
+  "training_hardware": "未知；Liquid AI 未披露 QAD 训练所用 GPU/加速器。",
+  "training_hardware_scale": "未知",
+  "training_data_scale": "未知；博客披露 benchmark 与五次重复平均，但未披露 QAD 蒸馏数据规模",
+  "training_data_composition": "未知；未披露 teacher 轨迹、蒸馏样本选择、数据许可或任务混合比例",
+  "training_stages": [
+    {
+      "stage": "QAD",
+      "name": "Quantization-Aware Distillation",
+      "description": "以高精度 teacher 指导低比特 student，并在训练中模拟目标 Q4_0 路径；完整损失权重、训练步数和 teacher/student 初始化未披露。"
+    }
+  ],
+  "training_stage_times": [
+    {
+      "stage": "QAD 训练",
+      "wall_clock_time": "未知",
+      "optimization_steps": "未知"
+    }
+  ],
+  "training_algorithms": "Quantization-Aware Distillation；目标是直接适应 Q4_0 的舍入与量化误差，而不是先训练 BF16 再做普通 PTQ。",
+  "training_infra": "公开交付为 GGUF 推理检查点；官方用 MacBook Pro、NucBox EVO-X2、Samsung Galaxy S26 Ultra、Raspberry Pi 5 做边缘设备测量，未披露训练系统。",
+  "inference_hardware": "博客覆盖 MacBook Pro、NucBox EVO-X2、Samsung Galaxy S26 Ultra、Raspberry Pi 5；具体 CPU/GPU/NPU、内存和软件版本需按正文/图表逐项读取。",
+  "inference_performance": "官方称 230M/350M QAD Q4_0 在质量接近 Q5_K_M 的同时，decode throughput 高 4–33%；1.2B/2.6B QAD Q4_0 在质量上接近 Q4_K_M。四个模型在 GPQA Diamond、MMLU-Pro、IFEval、IFBench、Multi-IF、BFCLv4 以及规模匹配的 GSM8K/AIME25 上做五次重复平均。",
+  "max_output_resolution": "不适用",
+  "max_output_duration_seconds": null,
+  "native_fps": null,
+  "benchmark_scores": [
+    {
+      "benchmark": "BF16 retention across benchmark suite",
+      "metrics": {
+        "LFM2.5-230M": "97.1%",
+        "LFM2.5-350M": "96.5%",
+        "LFM2.5-1.2B-Instruct": "97.4%",
+        "LFM2.5-2.6B": "96.6%"
+      },
+      "source_scope": "相对各自 BF16 baseline 的平均性能保留率；原始博客图表覆盖 GPQA Diamond、MMLU-Pro、IFEval、IFBench、Multi-IF、BFCLv4 与规模匹配数学任务。"
+    },
+    {
+      "benchmark": "Edge decode throughput",
+      "metrics": {
+        "230M/350M": "相对 Q5_K_M 高 4–33%",
+        "1.2B/2.6B": "Q4_K_M 质量匹配；统一吞吐倍数未披露"
+      },
+      "source_scope": "不同设备、模型和 backend 的实机测量；不是跨设备单一平均值。"
+    }
+  ],
+  "novelty_claims": [
+    {
+      "claim": "把量化目标直接纳入蒸馏训练，使 Q4_0 GGUF 检查点在低比特内存/速度下恢复大部分 BF16 平均能力损失。",
+      "scope_boundary": "这是 Liquid AI 本次 LFM2.5 QAD Q4_0 发布的公开方法和结果，不主张 QAD 或量化感知训练在本领域首次出现。",
+      "evidence": "官方博客明确区分 PTQ、QAD Q4_0 与 BF16 ceiling，并给出四个模型的五次重复平均和 96.5–97.4% 性能保留率。",
+      "confidence": "高"
+    },
+    {
+      "claim": "在边缘设备上，230M/350M QAD Q4_0 的质量可接近 Q5_K_M，同时 decode throughput 提升 4–33%。",
+      "scope_boundary": "速度与质量绑定设备、backend、模型、上下文和测试任务；不能外推到所有 GGUF runtime 或更大模型。",
+      "evidence": "Liquid AI 官方博客报告四类真实边缘设备对比，并把 QAD 与 Q5_K_M/Q4_K_M 作为对应规模基线。",
+      "confidence": "高"
+    }
+  ],
+  "comparison_eligible": false,
+  "history_eligible": true,
+  "unknown_fields": [
+    "QAD 的 teacher/student 具体模型、损失函数、训练步数、学习率、数据规模与硬件",
+    "四个模型的绝对 benchmark 分数、方差、置信区间与逐任务细表",
+    "各边缘设备的 CPU/GPU/NPU、内存容量、runtime 版本、线程数和上下文长度",
+    "QAD GGUF 的精确文件大小、加载内存与多并发吞吐",
+    "QAD 对长上下文、工具调用失败率、生成长度和能耗的影响",
+    "QAD 是否能迁移到 LFM2.5 之外模型或其它 GGUF 量化格式"
+  ],
+  "sources": [
+    {
+      "title": "LFM2.5 Q4_0 Checkpoints from Quantization-Aware Distillation",
+      "url": "https://huggingface.co/blog/LiquidAI/qad",
+      "source_type": "official_project_blog",
+      "accessed_at": "2026-08-20"
+    },
+    {
+      "title": "LiquidAI/LFM2.5-230M-GGUF",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF",
+      "source_type": "official_model_card_and_weights",
+      "accessed_at": "2026-08-20"
+    },
+    {
+      "title": "LiquidAI/LFM2.5-350M-GGUF",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF",
+      "source_type": "official_model_card_and_weights",
+      "accessed_at": "2026-08-20"
+    },
+    {
+      "title": "LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+      "source_type": "official_model_card_and_weights",
+      "accessed_at": "2026-08-20"
+    },
+    {
+      "title": "LiquidAI/LFM2.5-2.6B-GGUF",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF",
+      "source_type": "official_model_card_and_weights",
+      "accessed_at": "2026-08-20"
+    },
+    {
+      "title": "Liquid QAD candidate discovery",
+      "url": "https://aihot.virxact.com/items/cmt05zhyg139trodp6bxsy9e2",
+      "source_type": "aihot_discovery_with_canonical_attribution",
+      "accessed_at": "2026-08-20"
+    }
+  ],
+  "notes": "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmt05zhyg139trodp6bxsy9e2；发现日期 2026-08-20。QAD 只证明官方低比特检查点与实机对比，不能把博客中的平均保留率写成每项 benchmark 的恢复率。"
+}

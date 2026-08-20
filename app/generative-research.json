@@ -6838,5 +6838,286 @@
     ],
     "research_file": "research/model-briefs/sensenova-u1-5-preview.json",
     "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
+  },
+  {
+    "slug": "fastmetal-qad",
+    "name": "FastMetal-QAD",
+    "family": "FastMetal / Wan video generation on Apple Silicon",
+    "entry_kind": "model",
+    "modality": "T2V",
+    "organization": "FastVideo / Hao AI Lab",
+    "release_date": "2026-08-19",
+    "release_date_basis": "AI HOT 在 2026-08-19 发现 FastMetal；FastMetal 官方博客将其作为 August 2026 发布的开源系列。时间线采用官方系列公开发布日 2026-08-19，而不是模型仓库预先创建时间。",
+    "access": "FastMetal-QAD 的 1.3B、5B、14B 检查点和 FastVideo MLX 推理代码公开；1.3B/14B 基于 Wan2.1，5B 基于 Wan2.2 TI2V。公开的是推理路径和检查点，不是原始 Wan 训练数据或完整训练状态。",
+    "license": "FastVideo MLX runtime 与随附 TAEHV/rife-mlx 路径的许可证需按各仓库分别遵守；本轮未把模型检查点统一归入某一个宽松许可证，未知。",
+    "official_model_ids": [
+      "FastVideo/FastMetal-1.3B-QAD",
+      "FastVideo/FastMetal-5B-QAD",
+      "FastVideo/FastMetal-14B-QAD"
+    ],
+    "parameter_total": "1.3B、5B、14B 三个变体；不是单一模型参数量",
+    "parameter_active": "未知；视频 DiT 变体均按完整去噪网络记录，官方未给统一 active-parameter 口径",
+    "weight_size": "MLX DiT checkpoint 约 1.4 GB、4.9 GB、14 GB；另有约 22 MB TAEHV 解码器，具体下载体积随仓库文件与 EMA 变体变化",
+    "precision": "DiT 矩阵权重 affine INT8、group size 64；norm 与 modulation table 保持 FP16；umT5 文本编码器使用 BF16。官方称 QAD 检查点在目标 INT8 配置上训练/蒸馏，不能把它写成普通 PTQ。",
+    "architecture": "Apple Silicon 原生 MLX 视频生成运行时，覆盖 Wan2.1 1.3B/14B 与 Wan2.2 TI2V 5B；三步 DMD 采样、MLX compiled graph 与统一内存调度。",
+    "attention_or_sequence_design": "DiT 使用 MLX dense scaled-dot-product attention；本轮未发现稀疏 attention 或局部窗口机制的官方披露。",
+    "vae_or_tokenizer": "默认使用小型 TAEHV 解码器降低 VAE 阶段内存；1.3B/14B 与 5B 使用不同的官方 MLX 入口和视频 latent 几何。",
+    "text_encoder_or_conditioner": "umT5 文本编码器以 BF16 编码一次，随后释放；内容寻址 prompt cache 可复用相同 prompt embedding，减少后续生成冷启动开销。",
+    "training_hardware": "未知；FastMetal 博客披露 QAD/INT8 训练目标与推理结果，但未披露检查点训练 GPU、节点、训练时长或成本。",
+    "training_hardware_scale": "未知",
+    "training_data_scale": "未知；沿用 Wan 系列的公开基座信息不能填充 FastMetal-QAD 专属数据量",
+    "training_data_composition": "未知；未披露 FastMetal-QAD 的数据来源、视频时长、过滤、授权或合成数据比例",
+    "training_stages": [
+      {
+        "stage": "未知",
+        "name": "FastMetal-QAD 训练/蒸馏",
+        "description": "官方说明以目标低比特配置进行 QAD，并发布预量化 MLX 检查点；没有公开完整 teacher/student 训练阶段、损失、步数和优化器。"
+      }
+    ],
+    "training_stage_times": [
+      {
+        "stage": "全部训练阶段",
+        "wall_clock_time": "未知",
+        "optimization_steps": "未知"
+      }
+    ],
+    "training_algorithms": "Quantization-aware distillation / QAD、三步 DMD 采样；QAD 的完整蒸馏损失、teacher 配置与训练超参数未知。",
+    "training_infra": "FastVideo 统一 CUDA/MLX pipeline；本轮只确认 MLX runtime、compiled graph、Metal attention、INT8 matmul 与 unified-memory staging，未确认原始训练集群。",
+    "inference_hardware": "官方 Apple M4 Max、36 GB unified memory；另在 13-inch MacBook Air 的 Apple M5、24 GB、10-core GPU 上复测 1.3B 与 5B。",
+    "inference_performance": "M4 Max、三步 DMD、INT8 DiT、TAEHV：1.3B 480×832×81 端到端 110.14s、denoise 89.77s、峰值 3.87 GiB；5B 704×1280×81 端到端 151.42s、denoise 98.50s、峰值 9.34 GiB；14B 480×832×81 端到端 601.82s、denoise 554.22s、峰值 21.68 GiB。端到端时间包含 prompt encoding、加载、去噪和导出；复用 prompt cache 的 fast mode 更低，但不能与冷启动混比。",
+    "max_output_resolution": "704×1280（5B 720P 近似口径）；1.3B/14B 主要报告 480P；官方未把所有变体的最大分辨率归一成单一上限",
+    "max_output_duration_seconds": 5,
+    "native_fps": "未知；报告使用 81 帧，未在同一表格中声明统一输出 fps",
+    "benchmark_scores": [
+      {
+        "benchmark": "FastMetal-QAD 1.3B motion7 paired quality",
+        "metrics": {
+          "MS-SSIM": "QAD 0.933；对应 FP16 control 0.933；PTQ 0.907"
+        },
+        "source_scope": "官方博客的配对质量实验；仅覆盖 1.3B、motion7 prompt set，不代表所有视频内容或所有变体。"
+      },
+      {
+        "benchmark": "Apple Silicon local inference",
+        "metrics": {
+          "M4 Max": "见 inference_performance；5B 720P 端到端 151.42s、峰值 9.34 GiB",
+          "M5 MacBook Air": "1.3B fast 58.2s/2.71 GiB；5B fast 90.7s/8.11 GiB"
+        },
+        "source_scope": "不同模式、分辨率和 prompt cache 状态分别报告；不是跨模型单一速度榜单。"
+      }
+    ],
+    "novelty_claims": [
+      {
+        "claim": "把 Wan 系列视频 DiT、QAD 检查点和 MLX/Metal unified-memory runtime 组合成可在 Apple Silicon 本地运行的开源 T2V 路径。",
+        "scope_boundary": "这是 FastMetal-QAD 的公开系统组合，不主张 MLX、INT8、QAD 或 Wan 视频生成各自首次出现。",
+        "evidence": "官方博客公开 1.3B/5B/14B 检查点、FastVideo MLX 入口、M4 Max/M5 Air 测试以及可复现命令。",
+        "confidence": "高"
+      },
+      {
+        "claim": "按 group size 64 的 INT8 DiT 权重和阶段化内存释放，使 5B 720P 视频在 M4 Max 上峰值约 9.34 GiB，并在 24 GB M5 MacBook Air 上运行。",
+        "scope_boundary": "内存和耗时绑定 Apple 型号、分辨率、帧数、三步 DMD、TAEHV 与缓存模式；不能外推到 CUDA、其它视频长度或无缓存冷启动。",
+        "evidence": "官方博客 Table 2/3 给出硬件、输入输出规格、端到端与 denoise 时间、峰值内存和运行命令。",
+        "confidence": "高"
+      },
+      {
+        "claim": "QAD 检查点在 1.3B 的配对质量实验中优于 post-training quantization。",
+        "scope_boundary": "MS-SSIM 0.933 对 0.907 只覆盖 motion7 prompt set 和该 1.3B 变体；不能写成所有视频质量指标全面恢复。",
+        "evidence": "FastMetal 官方博客报告 QAD、FP16 control 和 PTQ 的配对结果，并说明 INT8 是发布时的目标精度。",
+        "confidence": "中"
+      }
+    ],
+    "comparison_eligible": true,
+    "history_eligible": true,
+    "unknown_fields": [
+      "FastMetal-QAD 三个变体的精确模型参数计数规则、训练硬件与训练规模",
+      "QAD teacher/student 架构、训练损失、数据量、优化器、步数与训练成本",
+      "统一输出 fps、不同分辨率/帧数下的完整速度矩阵和显存曲线",
+      "FastMetal 检查点的统一许可证、商用限制与模型卡完整文件清单",
+      "Apple Silicon 功耗、温度、长时间稳定性和多请求并发吞吐",
+      "14B 在 24 GB MacBook Air 上的完整 81 帧配置；官方说明该配置不适配",
+      "与 CUDA Wan2.1/Wan2.2 原生 FP16/BF16 路径的同硬件质量和速度对照"
+    ],
+    "sources": [
+      {
+        "title": "FastMetal-QAD: Native Apple Silicon Video Generation with MLX",
+        "url": "https://haoailab.com/blogs/fastmetal",
+        "source_type": "official_project_blog",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "hao-ai-lab/FastVideo",
+        "url": "https://github.com/hao-ai-lab/FastVideo",
+        "source_type": "official_github_repository",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "FastVideo/FastMetal-1.3B-QAD",
+        "url": "https://huggingface.co/FastVideo/FastMetal-1.3B-QAD",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "FastVideo/FastMetal-5B-QAD",
+        "url": "https://huggingface.co/FastVideo/FastMetal-5B-QAD",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "FastVideo/FastMetal-14B-QAD",
+        "url": "https://huggingface.co/FastVideo/FastMetal-14B-QAD",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "MLX",
+        "url": "https://github.com/ml-explore/mlx",
+        "source_type": "upstream_open_source_runtime",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "FastMetal candidate discovery",
+        "url": "https://aihot.virxact.com/items/cmt0kxcuu07f2ro2owuqpbjc8",
+        "source_type": "aihot_discovery_with_canonical_attribution",
+        "accessed_at": "2026-08-20"
+      }
+    ],
+    "notes": "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmt0kxcuu07f2ro2owuqpbjc8；发现日期 2026-08-20。FastMetal-QAD 作为 T2V edge inference 系列记录，不把 Wan2.1/Wan2.2 的基座质量、训练数据或许可证自动迁移到本条。",
+    "research_file": "research/model-briefs/fastmetal-qad.json",
+    "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
+  },
+  {
+    "slug": "liquid-lfm25-qad",
+    "name": "LFM2.5 QAD Q4_0",
+    "family": "Liquid LFM2.5",
+    "entry_kind": "method",
+    "modality": "Omni",
+    "organization": "Liquid AI",
+    "release_date": "2026-08-19",
+    "release_date_basis": "Liquid AI 官方 Hugging Face 博客于 2026-08-19 发布 QAD Q4_0 检查点；时间线采用官方博客发布日期，不把模型仓库对象创建时间当作方法首次公开时间。",
+    "access": "四个公开 GGUF 检查点：LFM2.5-230M、350M、1.2B-Instruct、2.6B；方法本身是公开部署检查点与技术说明，不等于完整训练代码或 teacher 权重公开。",
+    "license": "各 LFM2.5 模型仓的许可证应按对应模型卡核验；本轮只记录 QAD GGUF 发布，不把博客默认归入统一许可证，未知。",
+    "official_model_ids": [
+      "LiquidAI/LFM2.5-230M-GGUF",
+      "LiquidAI/LFM2.5-350M-GGUF",
+      "LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+      "LiquidAI/LFM2.5-2.6B-GGUF"
+    ],
+    "parameter_total": "覆盖 230M、350M、1.2B-Instruct、2.6B 四个 LFM2.5 检查点",
+    "parameter_active": "不适用；本条记录量化蒸馏方法，不是单一模型",
+    "weight_size": "Q4_0 GGUF 的具体文件大小随模型和仓库版本变化；博客确认目标是保持 Q4_0 的内存与速度，未在正文给出统一总下载体积",
+    "precision": "目标部署格式为 GGUF Q4_0；比较包含 BF16 GGUF ceiling、原始 PTQ Q4_0 与 QAD Q4_0",
+    "architecture": "Quantization-Aware Distillation：高精度 teacher 在训练时模拟目标 Q4_0 量化路径，student 以低比特权重学习恢复量化误差；不改变 LFM2.5 基础架构。",
+    "attention_or_sequence_design": "未知；QAD 不改变 LFM2.5 的 attention/state layout，博客未披露相关结构修订。",
+    "vae_or_tokenizer": "不适用；本条是语言/工具/Agent 能力上的低比特检查点方法。",
+    "text_encoder_or_conditioner": "不适用",
+    "training_hardware": "未知；Liquid AI 未披露 QAD 训练所用 GPU/加速器。",
+    "training_hardware_scale": "未知",
+    "training_data_scale": "未知；博客披露 benchmark 与五次重复平均，但未披露 QAD 蒸馏数据规模",
+    "training_data_composition": "未知；未披露 teacher 轨迹、蒸馏样本选择、数据许可或任务混合比例",
+    "training_stages": [
+      {
+        "stage": "QAD",
+        "name": "Quantization-Aware Distillation",
+        "description": "以高精度 teacher 指导低比特 student，并在训练中模拟目标 Q4_0 路径；完整损失权重、训练步数和 teacher/student 初始化未披露。"
+      }
+    ],
+    "training_stage_times": [
+      {
+        "stage": "QAD 训练",
+        "wall_clock_time": "未知",
+        "optimization_steps": "未知"
+      }
+    ],
+    "training_algorithms": "Quantization-Aware Distillation；目标是直接适应 Q4_0 的舍入与量化误差，而不是先训练 BF16 再做普通 PTQ。",
+    "training_infra": "公开交付为 GGUF 推理检查点；官方用 MacBook Pro、NucBox EVO-X2、Samsung Galaxy S26 Ultra、Raspberry Pi 5 做边缘设备测量，未披露训练系统。",
+    "inference_hardware": "博客覆盖 MacBook Pro、NucBox EVO-X2、Samsung Galaxy S26 Ultra、Raspberry Pi 5；具体 CPU/GPU/NPU、内存和软件版本需按正文/图表逐项读取。",
+    "inference_performance": "官方称 230M/350M QAD Q4_0 在质量接近 Q5_K_M 的同时，decode throughput 高 4–33%；1.2B/2.6B QAD Q4_0 在质量上接近 Q4_K_M。四个模型在 GPQA Diamond、MMLU-Pro、IFEval、IFBench、Multi-IF、BFCLv4 以及规模匹配的 GSM8K/AIME25 上做五次重复平均。",
+    "max_output_resolution": "不适用",
+    "max_output_duration_seconds": null,
+    "native_fps": null,
+    "benchmark_scores": [
+      {
+        "benchmark": "BF16 retention across benchmark suite",
+        "metrics": {
+          "LFM2.5-230M": "97.1%",
+          "LFM2.5-350M": "96.5%",
+          "LFM2.5-1.2B-Instruct": "97.4%",
+          "LFM2.5-2.6B": "96.6%"
+        },
+        "source_scope": "相对各自 BF16 baseline 的平均性能保留率；原始博客图表覆盖 GPQA Diamond、MMLU-Pro、IFEval、IFBench、Multi-IF、BFCLv4 与规模匹配数学任务。"
+      },
+      {
+        "benchmark": "Edge decode throughput",
+        "metrics": {
+          "230M/350M": "相对 Q5_K_M 高 4–33%",
+          "1.2B/2.6B": "Q4_K_M 质量匹配；统一吞吐倍数未披露"
+        },
+        "source_scope": "不同设备、模型和 backend 的实机测量；不是跨设备单一平均值。"
+      }
+    ],
+    "novelty_claims": [
+      {
+        "claim": "把量化目标直接纳入蒸馏训练，使 Q4_0 GGUF 检查点在低比特内存/速度下恢复大部分 BF16 平均能力损失。",
+        "scope_boundary": "这是 Liquid AI 本次 LFM2.5 QAD Q4_0 发布的公开方法和结果，不主张 QAD 或量化感知训练在本领域首次出现。",
+        "evidence": "官方博客明确区分 PTQ、QAD Q4_0 与 BF16 ceiling，并给出四个模型的五次重复平均和 96.5–97.4% 性能保留率。",
+        "confidence": "高"
+      },
+      {
+        "claim": "在边缘设备上，230M/350M QAD Q4_0 的质量可接近 Q5_K_M，同时 decode throughput 提升 4–33%。",
+        "scope_boundary": "速度与质量绑定设备、backend、模型、上下文和测试任务；不能外推到所有 GGUF runtime 或更大模型。",
+        "evidence": "Liquid AI 官方博客报告四类真实边缘设备对比，并把 QAD 与 Q5_K_M/Q4_K_M 作为对应规模基线。",
+        "confidence": "高"
+      }
+    ],
+    "comparison_eligible": false,
+    "history_eligible": true,
+    "unknown_fields": [
+      "QAD 的 teacher/student 具体模型、损失函数、训练步数、学习率、数据规模与硬件",
+      "四个模型的绝对 benchmark 分数、方差、置信区间与逐任务细表",
+      "各边缘设备的 CPU/GPU/NPU、内存容量、runtime 版本、线程数和上下文长度",
+      "QAD GGUF 的精确文件大小、加载内存与多并发吞吐",
+      "QAD 对长上下文、工具调用失败率、生成长度和能耗的影响",
+      "QAD 是否能迁移到 LFM2.5 之外模型或其它 GGUF 量化格式"
+    ],
+    "sources": [
+      {
+        "title": "LFM2.5 Q4_0 Checkpoints from Quantization-Aware Distillation",
+        "url": "https://huggingface.co/blog/LiquidAI/qad",
+        "source_type": "official_project_blog",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "LiquidAI/LFM2.5-230M-GGUF",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-230M-GGUF",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "LiquidAI/LFM2.5-350M-GGUF",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "LiquidAI/LFM2.5-2.6B-GGUF",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF",
+        "source_type": "official_model_card_and_weights",
+        "accessed_at": "2026-08-20"
+      },
+      {
+        "title": "Liquid QAD candidate discovery",
+        "url": "https://aihot.virxact.com/items/cmt05zhyg139trodp6bxsy9e2",
+        "source_type": "aihot_discovery_with_canonical_attribution",
+        "accessed_at": "2026-08-20"
+      }
+    ],
+    "notes": "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmt05zhyg139trodp6bxsy9e2；发现日期 2026-08-20。QAD 只证明官方低比特检查点与实机对比，不能把博客中的平均保留率写成每项 benchmark 的恢复率。",
+    "research_file": "research/model-briefs/liquid-lfm25-qad.json",
+    "source_article": "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"
   }
 ]

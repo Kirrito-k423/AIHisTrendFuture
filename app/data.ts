@@ -3192,6 +3192,82 @@ const angelSpec: TimelineEvent = {
   ],
 };
 
+const deepseekV4H20Serving: TimelineEvent = {
+  id: "inference-deepseek-v4-h20-serving",
+  date: "2026-08-19",
+  tier: "frontier",
+  title: "DeepSeek-V4-Pro H20 Serving Optimization",
+  organization: "LMSYS / SGLang",
+  eyebrow: "官方系统实测 / H20 / 1M Context",
+  summary: "LMSYS/SGLang 针对 DeepSeek-V4-Pro 在 H20 上按 prefill/decode、上下文长度、并行拓扑与 batch 场景做联合调优；单节点 H20-141GB 的 batch=1 参考达到 271 output tokens/s，与 B300 外部参考 383.7 tokens/s 的差距约 1.42×。",
+  confidence: "高",
+  score: "271 tok/s · 1.42× to B300*",
+  tags: ["DeepSeek-V4-Pro", "H20", "SGLang", "MoE Serving", "1M Context", "PP", "TP", "EP"],
+  eventKind: "research",
+  facts: [
+    fact("目标模型", "DeepSeek-V4-Pro，约 1.6T 参数 MoE，FP4/FP8 权重；本条记录的是服务系统，不新增模型节点", ["dsv4-h20-blog", "dsv4-h20-model"]),
+    fact("硬件", "H20-141GB 与 H20-96GB；每节点 8 GPU，节点内 NVLink 900 GB/s，并使用 RDMA 跨节点", ["dsv4-h20-blog"]),
+    fact("低延迟参考", "单节点 H20-141GB、TP8、batch=1：183–271 output tokens/s；最高 271 tokens/s 对应平均 TPOT 约 27.4 ms", ["dsv4-h20-blog"]),
+    fact("外部对照", "B300 参考为 383.7 tokens/s per node；该数字来自 LMSYS 2026-07-06 文章的独立配置，FP4/B300 与 FP8/H20 不是同一硬件精度", ["dsv4-h20-blog", "dsv4-h20-b300"]),
+    fact("相对差距", "271 / 383.7 = 0.7068；按 B300/H20 方向计算约 1.42× 差距。该值为同一文章引用两组公开参考的派生比值", ["dsv4-h20-blog", "dsv4-h20-b300"], "推导", "383.7 ÷ 271 ≈ 1.416；仅用于描述两组参考结果的相对距离，不是同一实验的 speedup。"),
+    fact("长上下文", "系统可处理 1M-token context；文章给出单节点配置下 1M prompt 约 43.7 秒的 prefill 参考，以及按场景切换 PP2/PP4、decode 与 DP/EP 的部署路径", ["dsv4-h20-blog"]),
+    fact("系统机制", "H20-96GB 主要承担 prefill，H20-141GB 主要承担 KV-capacity-bound decode；按上下文长度切换 PP2/PP4，decode 采用 PP2-TP8 或 DP32-EP32，结合 SGLang integration、MoE-TP 与 single-batch overlap", ["dsv4-h20-blog", "dsv4-h20-sglang"]),
+    fact("容量 / 吞吐边界", "单节点 batch=1 的低延迟参考不能接收更大 batch 或更多并发；多节点 DP/EP 曲线与 PP2-TP8 面向不同 SLO，不能把 271 tok/s 当作通用在线吞吐", ["dsv4-h20-blog"]),
+    fact("发现来源", "AI HOT selected item cmt0e7sxo01eiro2o4l4y9jmh；canonical 为 https://aihot.virxact.com/items/cmt0e7sxo01eiro2o4l4y9jmh", ["dsv4-h20-aihot"]),
+  ],
+  sources: [
+    {
+      id: "dsv4-h20-blog",
+      title: "Pushing the Limits of Serving DeepSeek-V4-Pro",
+      publisher: "LMSYS / SGLang",
+      url: "https://www.lmsys.org/blog/2026-08-19-deepseek-v4-pro-engine-optimization-h20",
+      type: "官方博客",
+      accessedAt: "2026-08-20",
+    },
+    {
+      id: "dsv4-h20-model",
+      title: "DeepSeek-V4-Pro official model card",
+      publisher: "DeepSeek",
+      url: "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+      type: "模型卡",
+      accessedAt: "2026-08-20",
+    },
+    {
+      id: "dsv4-h20-sglang",
+      title: "SGLang DeepSeek-V4 H20 integration",
+      publisher: "SGLang",
+      url: "https://github.com/sgl-project/sglang/pull/23754",
+      type: "代码仓",
+      accessedAt: "2026-08-20",
+    },
+    {
+      id: "dsv4-h20-b300",
+      title: "DSpark SGLang B300 serving reference",
+      publisher: "LMSYS / SGLang",
+      url: "https://www.lmsys.org/blog/2026-07-06-dspark-sglang/",
+      type: "官方博客",
+      accessedAt: "2026-08-20",
+    },
+    {
+      id: "dsv4-h20-aihot",
+      title: "DeepSeek-V4-Pro H20 serving optimization candidate",
+      publisher: "AI HOT",
+      url: "https://aihot.virxact.com/items/cmt0e7sxo01eiro2o4l4y9jmh",
+      type: "讲座整理",
+      accessedAt: "2026-08-20",
+    },
+  ],
+  breakthroughs: [
+    "通过按 H20 显存容量、prefill/decode 角色、上下文长度和并行拓扑做场景化编排，系统级 serving performance 比单看 H20/B300 峰值算力差距更接近。",
+    "H20-141GB 单节点 TP8 的 batch=1 参考达到 271 output tokens/s；该数字必须与 1M context、FP8、SGLang、TP8 和无更大并发条件一起阅读。",
+  ],
+  revisionNotes: [
+    "事件日期采用 LMSYS 官方博客日期 2026-08-19；AI HOT 只作为发现来源。",
+    "271 / 383.7 的 1.42× 是由两篇 LMSYS 官方文章中的不同硬件参考派生，不是同一 benchmark 的 speedup，也不代表 H20 已在所有负载追平 B300。",
+    "本条按极致推理性能/系统服务节点入库，不修改 DeepSeek-V4-Pro 模型结构、参数或官方模型发布日期。",
+  ],
+};
+
 export const historyData: TimelinePageData = {
   page: "history",
   kicker: "Observed / Verified",
@@ -3263,7 +3339,7 @@ export const historyData: TimelinePageData = {
       title: "极致性能",
       description: "严格区分单用户速度、在线 SLA 与批量吞吐",
       color: "amber",
-      events: [b200Mlperf, cerebras405, gptOssFast, cerebrasK26, openAiPriority, kimiK27Fast],
+      events: [b200Mlperf, cerebras405, gptOssFast, cerebrasK26, openAiPriority, kimiK27Fast, deepseekV4H20Serving],
     },
     {
       id: "inference-papers",

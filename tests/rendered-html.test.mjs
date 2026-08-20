@@ -128,9 +128,9 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /https:\/\//);
 
   const research = JSON.parse(await readFile(new URL("../app/generative-research.json", import.meta.url), "utf8"));
-  assert.equal(research.length, 32);
-  assert.equal(research.filter((item) => item.entry_kind === "model").length, 29);
-  assert.equal(research.filter((item) => item.entry_kind === "method").length, 3);
+  assert.equal(research.length, 34);
+  assert.equal(research.filter((item) => item.entry_kind === "model").length, 30);
+  assert.equal(research.filter((item) => item.entry_kind === "method").length, 4);
   assert.ok(research.every((item) => item.unknown_fields && item.sources?.length && item.novelty_claims?.length));
   assert.ok(research.every((item) => item.source_article === "https://shaojiemike.top/artificial-intelligence/2023/12/20/Idea2StableDiffusion/"));
   assert.ok(research.some((item) => item.slug === "nextstep-1-1" && item.modality === "T2I"));
@@ -140,6 +140,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.ok(research.some((item) => item.slug === "seedance-2-5" && item.modality === "T2V"));
   assert.ok(research.some((item) => item.slug === "sensenova-u1-5-preview" && item.modality === "T2I"));
   assert.ok(research.some((item) => item.slug === "self-forcing" && item.entry_kind === "method"));
+  assert.ok(research.some((item) => item.slug === "fastmetal-qad" && item.modality === "T2V"));
+  assert.ok(research.some((item) => item.slug === "liquid-lfm25-qad" && item.entry_kind === "method"));
 });
 
 test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async () => {
@@ -296,7 +298,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 40);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 41);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -312,6 +314,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "DeepSeek-V4 CSA/HCA",
     "Sigmoid Tanh Unit",
     "Quantization-Aware Training",
+    "Quantization-Aware Distillation for Edge Deployment",
     "Auxiliary-Loss-Free",
     "Muon Optimizer",
     "DanceGRPO",
@@ -360,6 +363,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(html, /Stable LatentMoE/);
   assert.match(html, /Sigmoid Tanh Unit/);
   assert.match(html, /Quantization-Aware Training/);
+  assert.match(html, /Quantization-Aware Distillation for Edge Deployment/);
   assert.match(html, /AgentENV/);
   assert.match(html, /Categorical Flow Maps/);
   assert.match(html, /SpecForge v0\.3/);
@@ -399,8 +403,8 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 40);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 40);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 41);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 41);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
@@ -410,6 +414,7 @@ test("every training technology has attributable ownership and model relations",
   assert.match(dataSource, /Oscar Davis/);
   assert.match(dataSource, /Tencent Hunyuan AI Infra and the SGLang Team/);
   assert.match(dataSource, /SGLang Team/);
+  assert.match(dataSource, /Liquid AI \/ FastVideo Teams/);
   assert.match(dataSource, /Huawei Ascend C 团队/);
   assert.match(dataSource, /PyTorch Distributed 团队/);
   assert.match(dataSource, /DeepSeek-AI 开源基础设施团队/);

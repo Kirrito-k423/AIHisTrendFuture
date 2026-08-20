@@ -19,7 +19,7 @@ export interface GenerativeResearchBrief extends UnknownRecord {
   license: unknown;
   comparison_eligible: boolean;
   history_eligible: boolean;
-  sources: Array<{ title: string; url: string; source_type: string }>;
+  sources: Array<{ title: string; url: string; source_type: string; accessed_at?: string }>;
   novelty_claims: Array<{ claim: string; scope_boundary: string; evidence: string; confidence: string }>;
 }
 
@@ -86,7 +86,7 @@ function sourcesFor(brief: GenerativeResearchBrief): Source[] {
     publisher: new URL(item.url).hostname,
     url: item.url,
     type: item.url === SOURCE_ARTICLE ? "讲座整理" : sourceType(item.source_type, item.url),
-    accessedAt: ACCESSED,
+    accessedAt: item.accessed_at ?? ACCESSED,
   }));
 }
 
