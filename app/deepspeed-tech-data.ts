@@ -11,6 +11,7 @@ import type {
 const ACCESSED_AT = "2026-07-23";
 const CURRENT_DEEPSPEED_ACCESS_DATE = "2026-08-07";
 const LATEST_DEEPSPEED_ACCESS_DATE = "2026-08-11";
+const TODAY_DEEPSPEED_ACCESS_DATE = "2026-08-24";
 
 interface DeepSpeedMethod {
   id: string;
@@ -37,6 +38,7 @@ interface DeepSpeedMethod {
   paper?: { id: string; title: string; url: string; publisher: string };
   extraSources?: Source[];
   extraRevisionNotes?: string[];
+  dateBasisNote?: string;
 }
 
 function source(
@@ -76,6 +78,21 @@ function latestDeepSpeedSource(
     url,
     type: "代码仓",
     accessedAt: LATEST_DEEPSPEED_ACCESS_DATE,
+  };
+}
+
+function todayDeepSpeedSource(
+  id: string,
+  title: string,
+  url: string,
+): Source {
+  return {
+    id,
+    title,
+    publisher: "deepspeedai/DeepSpeed",
+    url,
+    type: "代码仓",
+    accessedAt: TODAY_DEEPSPEED_ACCESS_DATE,
   };
 }
 
@@ -138,7 +155,8 @@ function deepSpeedEvent(input: DeepSpeedMethod): TimelineEvent {
     },
     comparison,
     revisionNotes: [
-      `事件日期采用官方教程文件 ${input.tutorialFile} 在 DeepSpeed 仓库首次出现的提交日期；网页底部 Updated 是站点构建时间，不作为发布日期。`,
+      input.dateBasisNote ??
+        `事件日期采用官方教程文件 ${input.tutorialFile} 在 DeepSpeed 仓库首次出现的提交日期；网页底部 Updated 是站点构建时间，不作为发布日期。`,
       ...(input.extraRevisionNotes ?? []),
     ],
     facts: [
@@ -185,6 +203,47 @@ const zeroOffload = deepSpeedEvent({
     publisher: "USENIX ATC",
     url: "https://arxiv.org/abs/2101.06840",
   },
+});
+
+const mpsZeroSupport = deepSpeedEvent({
+  id: "tech-deepspeed-mps-zero",
+  date: "2026-08-23",
+  title: "DeepSpeed Apple Silicon MPS ZeRO Support",
+  tutorialSlug: "accelerator-setup-guide",
+  tutorialFile: "accelerator-setup-guide.md",
+  category: "并行方案",
+  family: "并行系统",
+  summary: "为 Apple Silicon 的 PyTorch MPS backend 增加 DeepSpeed 训练路径，官方教程标注单设备训练、ZeRO stage 0-3、fp32/fp16/bf16 与 MPS FusedAdam 可用。",
+  situation: "DeepSpeed 原有 MPS accelerator 路径不完整，gloo 无法直接对 MPS tensor 做 collective，ZeRO 梯度范数默认 fp64 也不适用于不支持 fp64 的 MPS。",
+  target: "让 Apple Silicon Mac 可以作为 DeepSpeed 训练设备运行 ZeRO 0-3，并明确 macOS、dtype、collective、offload 和多设备边界。",
+  action: "把 MPS communication backend 设为 gloo，并在 collective 前后通过 CPU staging 处理 MPS tensor；新增 MPS op builder 与纯 PyTorch foreach FusedAdam；ZeRO norm 根据 accelerator fp64 支持在 fp64/fp32 间选择；教程补充安装、启动和限制。",
+  result: "官方 commit 与测试把 MPS 识别、ZeRO stages 0-3、fp16/bf16、MPS FusedAdam 和 spawn 测试路径纳入仓库；教程说明已在 Apple M5 Max / macOS 26 上验证。没有披露端到端吞吐、显存上限或跨机器稳定性。",
+  mechanism: "MPS accelerator adapter + gloo CPU-staged collectives + MPS foreach FusedAdam + ZeRO fp32 norm fallback。",
+  bestFor: "Apple Silicon 单机单设备上的 DeepSpeed 开发、功能验证和小规模本地训练。",
+  experiment: "官方 commit 64fcec6 与 PR #8293 的代码、教程和新增测试；硬件验证口径为 Apple M5 Max / macOS 26，性能需按具体 Mac、PyTorch 和模型重新测量。",
+  computeMemory: "利用 Apple unified memory 和 MPS recommended working set；collective 需要 CPU staging copy。MPS 没有 fp64，ZeRO gradient norm 在该 backend 改用 fp32。",
+  parallelism: "单 MPS device；ZeRO stage 0-3 可用。PyTorch MPS 每机暴露一个 device，单 Mac 多设备 data parallel 不可用，跨机器 gloo 未测试。",
+  limitations: "ZeRO-Offload / DeepSpeedCPUAdam 尚不支持 MPS；无原生 MPS collective backend；无用户可见 stream，不能重叠通信与计算；bf16 需要 macOS 14 或更新版本；吞吐和大模型规模未披露。",
+  availability: "DeepSpeed `DS_ACCELERATOR=mps` 安装和 `deepspeed --num_gpus 1` 启动路径已写入 accelerator setup guide；本轮仅确认官方主分支 commit，尚未看到对应 release。",
+  tags: ["Apple Silicon", "MPS", "ZeRO", "FusedAdam", "gloo"],
+  dateBasisNote: "事件日期采用 Apple Silicon (MPS) 小节进入官方 accelerator setup guide 的 commit 日期；该教程文件更早已存在，网页底部 Updated 不作为发布日期。",
+  extraSources: [
+    todayDeepSpeedSource(
+      "deepspeed-mps-zero-commit",
+      "Enable DeepSpeed support on Apple Silicon (MPS) with ZeRO Stage 1-3",
+      "https://github.com/deepspeedai/DeepSpeed/commit/64fcec6ba78b372716e9123c24112c149ad6f5a9",
+    ),
+    todayDeepSpeedSource(
+      "deepspeed-mps-zero-pr",
+      "Enable DeepSpeed support on Apple Silicon (MPS) with ZeRO Stage 1-3",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8293",
+    ),
+  ],
+  extraRevisionNotes: [
+    "2026-08-23 官方 commit 64fcec6 修改 `accelerator/mps_accelerator.py`、`deepspeed/comm/torch.py`、ZeRO norm dtype、MPS op builder、accelerator setup guide 和测试；这是 Apple Silicon 可用性边界扩展，不是新的性能纪录。",
+    "教程明确 ZeRO-Offload (`DeepSpeedCPUAdam`) 尚不可用于 MPS；因此本条不把 ZeRO-Offload 论文收益外推到 Apple Silicon。",
+    "AI HOT 本轮没有提供该 DeepSpeed 变更；发现来源为 DeepSpeed 官方 GitHub 监控脚本。",
+  ],
 });
 
 const zeroPlusPlus = deepSpeedEvent({
@@ -834,9 +893,9 @@ export const deepSpeedTechnologyLanes: TimelineLane[] = [
     id: "training-tech-deepspeed-memory",
     group: "DeepSpeed 专栏 / 01",
     title: "内存与并行编排",
-    description: "ZeRO-Offload、ZeRO++、MixZ++ 与 AutoTP",
+    description: "ZeRO-Offload、MPS ZeRO、ZeRO++、MixZ++ 与 AutoTP",
     color: "amber",
-    events: [zeroOffload, zeroPlusPlus, mixZeroPlusPlus, autoTp],
+    events: [zeroOffload, mpsZeroSupport, zeroPlusPlus, mixZeroPlusPlus, autoTp],
   },
   {
     id: "training-tech-deepspeed-communication",

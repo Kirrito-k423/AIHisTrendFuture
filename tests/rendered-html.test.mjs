@@ -426,15 +426,15 @@ test("every training technology has attributable ownership and model relations",
   assert.match(timelineSource, /关联模型/);
 });
 
-test("history includes five source-backed DeepSpeed columns and all 21 requested methods", async () => {
+test("history includes five source-backed DeepSpeed columns and all 22 requested methods", async () => {
   const dataSource = await readFile(new URL("../app/deepspeed-tech-data.ts", import.meta.url), "utf8");
   const historySource = await readFile(new URL("../app/data.ts", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/= deepSpeedEvent\(\{/g) ?? []).length, 21);
+  assert.equal((dataSource.match(/= deepSpeedEvent\(\{/g) ?? []).length, 22);
   assert.equal((dataSource.match(/group: "DeepSpeed 专栏 \/ 0[1-5]"/g) ?? []).length, 5);
   assert.match(dataSource, /网页底部 Updated 是站点构建时间，不作为发布日期/);
   for (const expected of [
-    "ZeRO-Offload", "ZeRO++", "Mixed Precision ZeRO++", "Automatic Tensor Parallelism",
+    "ZeRO-Offload", "DeepSpeed Apple Silicon MPS ZeRO Support", "ZeRO++", "Mixed Precision ZeRO++", "Automatic Tensor Parallelism",
     "1-bit Adam", "1-bit LAMB", "0/1 Adam", "Domino",
     "DeepNVMe", "Ulysses-Offload", "ZenFlow", "DataStates-LLM Async Checkpoint",
     "DeepSpeed-MoE", "DeepSpeed-MoE Inference", "DeepSpeed Model Compression", "Mixture-of-Quantization",
@@ -449,6 +449,8 @@ test("history includes five source-backed DeepSpeed columns and all 21 requested
   assert.match(dataSource, /ZeRO-3 training checkpoint/);
   assert.match(dataSource, /standalone `pin_memory` op/);
   assert.match(dataSource, /DeepSpeed v0\.19\.5 Patch Release/);
+  assert.match(dataSource, /ZeRO stage 0-3/);
+  assert.match(dataSource, /DeepSpeedCPUAdam.*尚不支持 MPS/);
 
   const response = await render("/history");
   const html = await response.text();
@@ -456,6 +458,7 @@ test("history includes five source-backed DeepSpeed columns and all 21 requested
   assert.match(html, /DeepSpeed 专栏 \/ 01/);
   assert.match(html, /DeepSpeed 专栏 \/ 05/);
   assert.match(html, /ZeRO-Offload/);
+  assert.match(html, /DeepSpeed Apple Silicon MPS ZeRO Support/);
   assert.match(html, /DataStates-LLM Async Checkpoint/);
   assert.match(html, /DeepSpeed Monitor/);
 });
