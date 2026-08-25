@@ -12,6 +12,7 @@ const ACCESSED_AT = "2026-07-23";
 const CURRENT_DEEPSPEED_ACCESS_DATE = "2026-08-07";
 const LATEST_DEEPSPEED_ACCESS_DATE = "2026-08-11";
 const TODAY_DEEPSPEED_ACCESS_DATE = "2026-08-24";
+const CURRENT_FRONTIER_DEEPSPEED_ACCESS_DATE = "2026-08-25";
 
 interface DeepSpeedMethod {
   id: string;
@@ -93,6 +94,21 @@ function todayDeepSpeedSource(
     url,
     type: "代码仓",
     accessedAt: TODAY_DEEPSPEED_ACCESS_DATE,
+  };
+}
+
+function currentFrontierDeepSpeedSource(
+  id: string,
+  title: string,
+  url: string,
+): Source {
+  return {
+    id,
+    title,
+    publisher: "deepspeedai/DeepSpeedExamples",
+    url,
+    type: "代码仓",
+    accessedAt: CURRENT_FRONTIER_DEEPSPEED_ACCESS_DATE,
   };
 }
 
@@ -311,14 +327,14 @@ const autoTp = deepSpeedEvent({
   situation: "Tensor Parallel 通常要求按模型结构维护切分规则，模型版本变化会带来适配成本。",
   target: "自动识别可切分层并生成行/列并行规则，同时保留自定义覆盖能力。",
   action: "推理路径通过 AutoTP 注入替换层；训练路径可结合 DP、ZeRO 0/1/2/3、preset、正则规则与 Hugging Face `tp_plan`；ZeRO-3 checkpoint save/load 与 universal checkpoint conversion 会同时 gather ZeRO-DP 和 TP 维度。",
-  result: "官方实现支持多类 Hugging Face 模型；2026-07-29 起 Hugging Face `colwise_gather_output` / `colwise_rep` 可用于 untied `lm_head`，2026-08-02 起 AutoTP + ZeRO-3 training 取消 optimizer block 并补齐 checkpoint consolidation 测试，2026-08-04 DeepSpeedExamples OPSD 增加 AutoTP=2 / AutoTP+ZeRO-3 smoke 路径；2026-08-06 v0.19.4 将这些 AutoTP 修订打包进官方 patch release。",
+  result: "官方实现支持多类 Hugging Face 模型；2026-07-29 起 Hugging Face `colwise_gather_output` / `colwise_rep` 可用于 untied `lm_head`，2026-08-02 起 AutoTP + ZeRO-3 training 取消 optimizer block 并补齐 checkpoint consolidation 测试，2026-08-04 DeepSpeedExamples OPSD 增加 AutoTP=2 / AutoTP+ZeRO-3 smoke 路径；2026-08-06 v0.19.4 将这些 AutoTP 修订打包进官方 patch release；2026-08-24 Examples 新增 Qwen3-0.6B AutoTP=3 uneven heads 与 AutoTP=4 control 的 loss-curve 等价性检查。",
   mechanism: "模型解析 → layer policy/spec → 权重分片 → TP collective → 输出合并。",
   bestFor: "结构符合 Transformer 常见模式、希望降低 TP 接入成本的训练或推理。",
-  experiment: "官方教程、配置文档、commit diff 与新增单元/分布式测试；新模型仍需检查融合层、GQA、整除约束和 checkpoint 拓扑。",
+  experiment: "官方教程、配置文档、commit diff、新增单元/分布式测试与 Examples loss-curve 检查；最新示例固定 Qwen3-0.6B、fp32、500 steps，在 NCCL/GPU 与 gloo/CPU 上比较 AutoTP=1/3/4。",
   computeMemory: "参数和大矩阵按 TP 度分片；gathered column output 额外产生 AllGather 输出通信。tied `lm_head` fallback 不减少 embedding/output-layer 内存。",
   parallelism: "Tensor Parallel，可在训练中组合 DP 与 ZeRO 0/1/2/3；AutoTP + ZeRO-3 的 16-bit consolidated export 与 universal checkpoint 转换会跨 DP/TP 合并。",
-  limitations: "gathered column output 当前只支持 untied output layers；tied `lm_head` 保持复制，`local_colwise` / `local_rowwise` 仍未处理；runtime TP math 仍要求 attention head count 和 hidden dimensions 可被 TP size 整除，跨不同 TP degree restore 需谨慎。",
-  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 inference 支持、AutoTP + ZeRO-3 training checkpoint、Hugging Face `colwise_gather_output`/`colwise_rep` 支持和限制说明均有官方 commit、教程和测试文本，并已随 DeepSpeed v0.19.4 发布；OPSD 示例仓已有 AutoTP=2 与 AutoTP+ZeRO-3 smoke 配置。",
+  limitations: "gathered column output 当前只支持 untied output layers；tied `lm_head` 保持复制，`local_colwise` / `local_rowwise` 仍未处理；runtime TP math 仍要求 attention head count 和 hidden dimensions 可被 TP size 整除，跨不同 TP degree restore 需谨慎。AutoTP equivalence example 证明 Qwen3-0.6B 的 16 attention / 8 KV heads 可做 3-way uneven split 的正确性检查，不自动证明所有模型、dtype 或大规模训练收益。",
+  availability: "DeepSpeed inference AutoTP 与 training AutoTP 已有官方教程；AutoTP + ZeRO-3 inference 支持、AutoTP + ZeRO-3 training checkpoint、Hugging Face `colwise_gather_output`/`colwise_rep` 支持和限制说明均有官方 commit、教程和测试文本，并已随 DeepSpeed v0.19.4 发布；OPSD 示例仓已有 AutoTP=2、AutoTP+ZeRO-3 smoke 配置和 AutoTP loss-curve equivalence check。",
   tags: ["AutoTP", "Tensor Parallel", "Hugging Face"],
   extraSources: [
     {
@@ -353,6 +369,11 @@ const autoTp = deepSpeedEvent({
       type: "代码仓",
       accessedAt: "2026-08-04",
     },
+    currentFrontierDeepSpeedSource(
+      "deepspeed-examples-autotp-equivalence-commit",
+      "Add an AutoTP equivalence check",
+      "https://github.com/deepspeedai/DeepSpeedExamples/commit/d1e663863cc4bcb9183a89ccf3a5efe0e754d3ea",
+    ),
     currentDeepSpeedSource(
       "deepspeed-v0194-release-autotp",
       "DeepSpeed v0.19.4 Patch Release",
@@ -365,6 +386,7 @@ const autoTp = deepSpeedEvent({
     "2026-08-02 官方 commit eec237e 修复 AutoTP + ZeRO-3 checkpoint consolidation：保存与 universal checkpoint 转换会跨 ZeRO data-parallel 和 tensor-parallel 维度 gather；新增端到端 universal conversion 测试后取消 training optimizer block。本次仍视为既有 AutoTP 可用性/限制修订，不新增单独技术节点。",
     "2026-08-04 DeepSpeedExamples commit c230e2d 为 OPSD 增加 AutoTP=2、AutoTP+ZeRO-3 offload smoke 配置和纯 TP / TP+DP sampler 修正；它证明官方示例路径存在，但不自动证明论文级收益或任意模型可复现。",
     "2026-08-06 DeepSpeed v0.19.4 patch release 将 AutoTP ZeRO-3 inference、HF `colwise_gather_output`、universal checkpoint metadata 与 checkpoint consolidation 修订打包发布；release 证明版本可获得，不改变各 PR 的适用限制。",
+    "2026-08-24 DeepSpeedExamples commit d1e6638 新增 AutoTP equivalence check：以 Qwen3-0.6B、fp32、500 steps 比较 AutoTP=1 baseline、AutoTP=3 uneven 6/6/4 split 和 AutoTP=4 even control 的 loss curves；GPU/NCCL 与 CPU/gloo 结果显示 uneven split 与 even control 的相对误差同量级。本次修订为正确性验证路径，不新增独立技术节点。",
   ],
 });
 

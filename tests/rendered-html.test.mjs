@@ -298,7 +298,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 41);
+  assert.equal((dataSource.match(/^const .* = technology\(/gm) ?? []).length, 42);
   for (const expected of [
     "Full Attention",
     "Multi-Query Attention",
@@ -334,6 +334,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
     "PyTorch FSDP1",
     "PyTorch FSDP2",
     "DeepEP",
+    "MetaRoCE",
     "UltraEP",
     "veScale-FSDP",
   ]) assert.match(dataSource, new RegExp(expected));
@@ -350,6 +351,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(dataSource, /4 inference steps/);
   assert.match(dataSource, /TPOT 降低 15\.1–48\.8%/);
   assert.match(dataSource, /single radix tree/);
+  assert.match(dataSource, /86% throughput @ 1% packet loss/);
   assert.match(timelineSource, /STAR 技术档案/);
   assert.match(timelineSource, /Situation \/ 动机/);
   assert.match(timelineSource, /Action \/ 实验流程/);
@@ -369,6 +371,7 @@ test("training technology history covers four evidence-backed STAR lanes", async
   assert.match(html, /SpecForge v0\.3/);
   assert.match(html, /HPC-Ops × SGLang/);
   assert.match(html, /Unified Radix Cache/);
+  assert.match(html, /MetaRoCE/);
   assert.match(html, /UltraEP/);
   assert.match(html, /veScale-FSDP/);
 });
@@ -403,8 +406,8 @@ test("every training technology has attributable ownership and model relations",
   const dataSource = await readFile(new URL("../app/training-tech-data.ts", import.meta.url), "utf8");
   const timelineSource = await readFile(new URL("../app/components/TimelineExplorer.tsx", import.meta.url), "utf8");
 
-  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 41);
-  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 41);
+  assert.equal((dataSource.match(/role: "(?:first-author|project-team)"/g) ?? []).length, 42);
+  assert.equal((dataSource.match(/sourceUrl: "https:\/\//g) ?? []).length, 42);
   assert.match(dataSource, /Ashish Vaswani/);
   assert.match(dataSource, /Woosuk Kwon/);
   assert.match(dataSource, /Zhihong Shao/);
@@ -418,6 +421,7 @@ test("every training technology has attributable ownership and model relations",
   assert.match(dataSource, /Huawei Ascend C 团队/);
   assert.match(dataSource, /PyTorch Distributed 团队/);
   assert.match(dataSource, /DeepSeek-AI 开源基础设施团队/);
+  assert.match(dataSource, /Meta networking team/);
   assert.match(dataSource, /modelLinksByTechnology/);
   assert.match(dataSource, /modelId: "deepseek-v3-2024-12", relation: "采用"/);
   assert.match(dataSource, /modelId: "kimi-k2", relation: "采用"/);
@@ -451,6 +455,8 @@ test("history includes five source-backed DeepSpeed columns and all 22 requested
   assert.match(dataSource, /DeepSpeed v0\.19\.5 Patch Release/);
   assert.match(dataSource, /ZeRO stage 0-3/);
   assert.match(dataSource, /DeepSpeedCPUAdam.*尚不支持 MPS/);
+  assert.match(dataSource, /AutoTP equivalence check/);
+  assert.match(dataSource, /Qwen3-0\.6B、fp32、500 steps/);
 
   const response = await render("/history");
   const html = await response.text();

@@ -18,6 +18,7 @@ const RUN_ACCESSED_AT = "2026-07-28";
 const CURRENT_DAILY_ACCESSED_AT = "2026-08-05";
 const TODAY_ACCESSED_AT = "2026-08-08";
 const LATEST_DAILY_ACCESSED_AT = "2026-08-13";
+const CURRENT_FRONTIER_ACCESSED_AT = "2026-08-25";
 
 function source(
   id: string,
@@ -99,6 +100,16 @@ function latestDailySource(
   return { id, title, publisher, url, type, accessedAt: LATEST_DAILY_ACCESSED_AT };
 }
 
+function currentFrontierSource(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: CURRENT_FRONTIER_ACCESSED_AT };
+}
+
 function fact(label: string, value: string, sourceIds: string[], method?: string): Fact {
   return { label, value, sourceIds, status: "已披露", method };
 }
@@ -177,6 +188,7 @@ const contributorByTechnology: Record<string, PrimaryContributor> = {
   "tech-fsdp1": { name: "Yanli Zhao", role: "first-author", organization: "Meta AI", sourceUrl: "https://arxiv.org/abs/2304.11277", profileLabel: "GitHub", profileUrl: "https://github.com/zhaojuanmao" },
   "tech-fsdp2": { name: "PyTorch Distributed 团队", role: "project-team", organization: "Meta / PyTorch", sourceUrl: "https://pytorch.org/blog/introducing-pytorch-fully-sharded-data-parallel-api/", profileLabel: "官方项目", profileUrl: "https://github.com/pytorch/pytorch", note: "FSDP2 是 API / 实现迭代，官方发布未声明独立论文一作。" },
   "tech-deepep": { name: "DeepSeek-AI 开源基础设施团队", role: "project-team", organization: "DeepSeek-AI", sourceUrl: "https://github.com/deepseek-ai/DeepEP", profileLabel: "官方项目", profileUrl: "https://github.com/deepseek-ai/DeepEP", note: "仓库未声明论文式个人一作。" },
+  "tech-metaroce": { name: "Meta networking team", role: "project-team", organization: "Meta", sourceUrl: "https://engineering.fb.com/2026/08/24/networking-traffic/metaroce-rdma-transport-ai-ethernet/", profileLabel: "官方项目", profileUrl: "https://engineering.fb.com/2026/08/24/networking-traffic/metaroce-rdma-transport-ai-ethernet/", note: "Meta 官方工程博客署名多人；按网络协议项目团队标注，不强行指定单一论文一作。" },
   "tech-ultraep": { name: "Dots-Infra / 小红书技术 / 北京大学团队", role: "project-team", organization: "Dots-Infra / Xiaohongshu / Peking University", sourceUrl: "https://github.com/Dots-Infra/UltraEP", profileLabel: "官方项目", profileUrl: "https://github.com/Dots-Infra/UltraEP", note: "论文列出个人作者；工程发布与生产部署按项目团队归属。" },
   "tech-vescale-fsdp": { name: "Zezhou Wang", role: "first-author", organization: "ByteDance Seed", sourceUrl: "https://arxiv.org/abs/2602.22437", profileLabel: "论文作者页", profileUrl: "https://arxiv.org/abs/2602.22437" },
 };
@@ -1567,6 +1579,45 @@ const deepEp = technology({
   sources: [source("deepep-repo", "DeepEP", "DeepSeek-AI", "https://github.com/deepseek-ai/DeepEP", "代码仓")],
 });
 
+const metaRoce = technology({
+  id: "tech-metaroce",
+  date: "2026-08-24",
+  title: "MetaRoCE",
+  organization: "Meta",
+  category: "并行方案",
+  family: "并行系统",
+  eyebrow: "官方博客 / AI-Scale Ethernet RDMA",
+  summary: "Meta 为通用以太网设计的 RDMA transport，把路径选择、乱序容忍、丢包恢复和拥塞反馈更多放到端点/NIC，目标是在 AI 训练与推理集群中减少 PFC 与顺序交付约束。",
+  score: "~86% throughput @ 1% packet loss",
+  tags: ["MetaRoCE", "RDMA", "Ethernet", "ECMP", "ECN", "PFC", "NIC", "Collectives"],
+  situation: "大规模训练 all-reduce/all-to-all 与分片推理依赖低尾延迟网络；传统 RoCE 偏好有序、近无损 fabric，PFC 与弱 packet spraying 会限制多平面和大规模以太网的可操作性。",
+  target: "在 commodity Ethernet 上提供面向 AI workload 的 RDMA transport，让端点/NIC 根据路径遥测处理乱序、丢包、拥塞和故障，并尽量保持应用层 RDMA Verbs 栈不变。",
+  action: "MetaRoCE 为每个连接维护多个 first-class paths，每条路径有独立 RTT、ECN、利用率和窗口；packet-by-packet spraying 使用 UDP source port 作为 ECMP entropy，选择性 ACK 触发缺包重传，并组合 sender-driven AIMD 与 receiver fair-share rate hints。",
+  result: "Meta 官方在 64-node AMD GPU cluster、RCCL collectives 上对比 RoCEv2，报告 MetaRoCE 具备更高吞吐和更低 flow completion time；在 1% packet loss 下维持约 86% throughput，10% extreme loss 下仍能提供可用带宽。",
+  mechanism: "endpoint-driven multi-path RDMA transport + per-path telemetry/windows + lossy-fabric selective retransmission + bidirectional congestion control。",
+  bestFor: "AI 训练 collective、MoE all-to-all、分片推理和多平面以太网 fabric；尤其是希望降低 PFC、pause frames 和 switch-side proprietary feature 依赖的集群网络。",
+  experiment: "Meta 官方博客披露：AMD Pensando programmable NIC 实现；64-node AMD GPU cluster；RCCL all-reduce/all-to-all；与 RoCEv2 对比 throughput、flow completion time 和 packet-loss degradation。原始测试脚本、完整拓扑、链路速率和消息尺寸矩阵未公开。",
+  computeMemory: "这是网络 transport 层机制，不改变模型参数或显存；目标收益是减少慢流/丢包导致的 collective 尾延迟和 compute stranding。",
+  parallelism: "服务于数据并行、张量并行、专家并行和推理分片所需的跨节点 RDMA 通信；与上层 NCCL/RCCL/collective library 组合。",
+  limitations: "完整 OCP protocol spec、DPDK-optimized software reference implementation 和 production compliance framework 官方称将在 2026 OCP Global Summit 发布；当前公开材料未给完整规范、原始 benchmark、百万 GPU 实测或商用 NIC 固件可用时间。不能把 64-node AMD 集群结果外推为所有以太网拓扑的通用收益。",
+  availability: "Meta 宣布通过 OCP 贡献规范、参考软件实现和合规测试套件；官方同时说明 2026 年 10 月才发布 MetaRoCE specification、DPDK 优化软件参考实现和 production compliance framework。",
+  breakthroughs: [
+    "把 RDMA loss/order/congestion 处理从无损 fabric 假设转向端点/NIC 路径级控制。",
+    "每连接多 ordered streams、多 paths，在连接内做 packet spraying 和 per-path selective retransmission。",
+    "以 OCP 规范、libsoftmetaroce 行为模型和 compliance suite 推动多厂商实现。",
+  ],
+  tier: "frontier",
+  revisionNotes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmt7nq1d02bs1ro7373u88po4；attribution canonical 同 URL；发现日期 2026-08-25。",
+    "日期口径采用 Meta 官方工程博客发布日期 2026-08-24；OCP 规范/DPDK 参考实现计划在 2026 年 10 月发布，不能写成 2026-08-24 已完整开放。",
+    "本条按 AI scale 网络/并行系统技术入库；不是新芯片，也不把官方 64-node 实验外推到百万 GPU 实测。",
+  ],
+  sources: [
+    currentFrontierSource("metaroce-meta-blog", "MetaRoCE: A New RDMA Transport Built for AI-Scale Ethernet", "Meta Engineering", "https://engineering.fb.com/2026/08/24/networking-traffic/metaroce-rdma-transport-ai-ethernet/", "官方博客"),
+    currentFrontierSource("metaroce-aihot", "MetaRoCE AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmt7nq1d02bs1ro7373u88po4", "讲座整理"),
+  ],
+});
+
 const ultraEp = technology({
   id: "tech-ultraep",
   date: "2026-07-15",
@@ -1658,9 +1709,9 @@ export const trainingTechnologyLanes: TimelineLane[] = [
     id: "training-tech-parallel",
     group: "训练技术 / 04",
     title: "高效并行 / 通信",
-    description: "Megatron、DeepSpeed、FSDP1/2、DeepEP、UltraEP 与 veScale-FSDP",
+    description: "Megatron、DeepSpeed、FSDP1/2、DeepEP、MetaRoCE、UltraEP 与 veScale-FSDP",
     color: "amber",
-    events: [megatron, zeroDeepSpeed, fsdp1, fsdp2, deepEp, ultraEp, veScaleFsdp],
+    events: [megatron, zeroDeepSpeed, fsdp1, fsdp2, deepEp, metaRoce, ultraEp, veScaleFsdp],
   },
 ];
 
