@@ -22,6 +22,7 @@ const AUGUST_13_ACCESSED = "2026-08-13";
 const AUGUST_14_ACCESSED = "2026-08-14";
 const AUGUST_15_ACCESSED = "2026-08-15";
 const AUGUST_16_ACCESSED = "2026-08-16";
+const AUGUST_26_ACCESSED = "2026-08-26";
 
 function source(
   id: string,
@@ -201,6 +202,16 @@ function august16Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_16_ACCESSED };
+}
+
+function august26Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_26_ACCESSED };
 }
 
 function latestRunSource(
@@ -3268,6 +3279,46 @@ const deepseekV4H20Serving: TimelineEvent = {
   ],
 };
 
+const veraRubinNvl72AgentX: TimelineEvent = {
+  id: "inference-vera-rubin-nvl72-agentx",
+  date: "2026-08-24",
+  tier: "frontier",
+  title: "Vera Rubin NVL72 AgentX",
+  organization: "NVIDIA",
+  eyebrow: "官方系统实测 / NVL72 / AgentX",
+  summary: "NVIDIA 披露 Vera Rubin NVL72 在 SemiAnalysis AgentX 代理编码轨迹上，相对 GB300 NVL72 最高达到 30x AI-factory throughput per megawatt；这是面向长上下文、工具调用和动态并发的每兆瓦吞吐口径，结果仍处于 SemiAnalysis review pending。",
+  confidence: "中",
+  score: "up to 30x throughput/MW",
+  tags: ["Vera Rubin", "NVL72", "AgentX", "DeepSeek-V4-Pro", "NVFP4", "NVLink 6", "Dynamo"],
+  eventKind: "research",
+  facts: [
+    fact("目标工作负载", "SemiAnalysis AgentX；重放真实 agentic coding sessions，包含长上下文 prefill、KV-cache reuse、tool-call gaps 与动态并发", ["vera-rubin-agentx-dev"]),
+    fact("硬件", "NVIDIA Vera Rubin NVL72；72-GPU scale-up domain，配合 Rubin GPU、Vera CPU、NVLink 6、BlueField-4、Spectrum-X、ConnectX-9 与 Dynamo serving stack", ["vera-rubin-agentx-blog", "vera-rubin-agentx-dev"]),
+    fact("目标模型", "DeepSeek V4-Pro AgentX workload；NVIDIA Developer 博客另讨论 Kimi K3 2.8T 与 DeepSeek-R1-0528 的 GB300/H200 对照", ["vera-rubin-agentx-dev"]),
+    fact("核心指标", "在 160 tokens/s per user 交互目标下，Vera Rubin NVL72 相对 GB300 NVL72 最高 30x AI-factory throughput per megawatt", ["vera-rubin-agentx-dev"]),
+    fact("成本指标", "NVIDIA Blog 宣称相对 GB300 NVL72 最高 35x lower cost per million tokens；原始成本模型、采购价和电价假设未在正文完整披露", ["vera-rubin-agentx-blog"]),
+    fact("基线", "GB300 NVL72；Developer 博客还称 GB300 NVL72 在 AgentX large MoE 场景相对 H200 NVL8 最高 80x throughput per megawatt", ["vera-rubin-agentx-dev", "vera-rubin-gb300-agentx"]),
+    fact("系统机制", "MoE serving runtimes、DeepGEMM-based kernels、MXFP4/MXFP8、NVIDIA Dynamo、Wide Expert Parallelism、NVLink scale-up fabric 与上下文/KV reuse 共同影响结果", ["vera-rubin-agentx-dev"]),
+    fact("限制", "Vera Rubin NVL72 数字由 NVIDIA 使用 AgentX workload 测得，仍 pending SemiAnalysis review；博客明确未反映 Vera CPU tool-calling performance，且没有公开完整原始曲线、功耗拆分或采购成本模型", ["vera-rubin-agentx-blog", "vera-rubin-agentx-dev"]),
+    fact("发现来源", "AI HOT selected item cmt7e0g7y232wro738qg82x67；canonical 为 https://aihot.virxact.com/items/cmt7e0g7y232wro738qg82x67", ["vera-rubin-agentx-aihot"]),
+  ],
+  sources: [
+    august26Source("vera-rubin-agentx-blog", "Up to 30x More Work Per Watt: NVIDIA Vera Rubin NVL72 Sets a New Efficiency Standard for AI Agents", "NVIDIA Blog", "https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/", "官方博客"),
+    august26Source("vera-rubin-agentx-dev", "NVIDIA Vera Rubin and Blackwell Set a New Standard for Agentic AI Performance per Watt", "NVIDIA Developer Blog", "https://developer.nvidia.com/blog/nvidia-vera-rubin-and-blackwell-set-a-new-standard-for-agentic-ai-performance-per-watt/", "官方博客"),
+    august26Source("vera-rubin-gb300-agentx", "SemiAnalysis InferenceX AgentX dashboard", "SemiAnalysis", "https://inferencex.semianalysis.com/inference?g_model=Kimi-K3&i_seq=agentic-traces&i_optimal=1", "第三方测量"),
+    august26Source("vera-rubin-agentx-aihot", "NVIDIA Vera Rubin NVL72 AgentX candidate", "AI HOT", "https://aihot.virxact.com/items/cmt7e0g7y232wro738qg82x67", "讲座整理"),
+  ],
+  breakthroughs: [
+    "把 AI 工厂硬件比较从固定 8K/1K 序列扩展到 AgentX 的长上下文、工具调用与动态并发轨迹，指标变为 tokens per provisioned megawatt。",
+    "在同一 160 tokens/s per user 交互目标上，Vera Rubin NVL72 相对 GB300 NVL72 的最高 30x throughput/MW 是当前可核验的一手系统级跃迁主张。",
+  ],
+  revisionNotes: [
+    "事件日期采用 NVIDIA Blog 与 Developer Blog 的发布时间 2026-08-24；AI HOT 只作为发现来源。",
+    "30x 是 NVIDIA 自测且 pending SemiAnalysis review，不能写成已由第三方独立确认的动态榜单结果。",
+    "本条按极致推理系统纪录入库，不把未披露的 Vera Rubin FLOPS、HBM 容量、机架 TDP 或完整 BOM 成本补齐。",
+  ],
+};
+
 export const historyData: TimelinePageData = {
   page: "history",
   kicker: "Observed / Verified",
@@ -3339,7 +3390,7 @@ export const historyData: TimelinePageData = {
       title: "极致性能",
       description: "严格区分单用户速度、在线 SLA 与批量吞吐",
       color: "amber",
-      events: [b200Mlperf, cerebras405, gptOssFast, cerebrasK26, openAiPriority, kimiK27Fast, deepseekV4H20Serving],
+      events: [b200Mlperf, cerebras405, gptOssFast, cerebrasK26, openAiPriority, kimiK27Fast, deepseekV4H20Serving, veraRubinNvl72AgentX],
     },
     {
       id: "inference-papers",

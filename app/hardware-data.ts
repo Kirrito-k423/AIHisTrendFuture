@@ -1,6 +1,7 @@
 import type { Fact, FactStatus, Source, TimelineEvent, TimelineLane } from "./types";
 
 const ACCESSED_AT = "2026-07-19";
+const CURRENT_ACCESSED_AT = "2026-08-26";
 
 export type HardwareVendorGroup = "NVIDIA" | "Huawei Ascend" | "其他厂商";
 
@@ -37,6 +38,10 @@ function source(id: string, title: string, publisher: string, url: string, type:
   return { id, title, publisher, url, type, accessedAt: ACCESSED_AT };
 }
 
+function currentSource(id: string, title: string, publisher: string, url: string, type: Source["type"] = "技术报告"): Source {
+  return { id, title, publisher, url, type, accessedAt: CURRENT_ACCESSED_AT };
+}
+
 function disclosed(value: string, sourceIds: string[], note?: string): HardwareMetric {
   return { value, status: "已披露", sourceIds, note };
 }
@@ -66,6 +71,11 @@ const mlu370 = source("mlu370-x8", "思元 370 MLU370-X8 智能加速卡", "寒�
 const cs3 = source("cerebras-cs3", "Cerebras CS-3 / Wafer-Scale Engine 3", "Cerebras", "https://www.cerebras.ai/system", "官方博客");
 const cs3Launch = source("cerebras-cs3-launch", "Cerebras Announces Third Generation Wafer Scale Engine", "Cerebras", "https://www.cerebras.ai/blog/cerebras-cs3", "官方博客");
 const mi300x = source("mi300x-product", "AMD Instinct MI300X Accelerator", "AMD", "https://www.amd.com/en/products/accelerators/instinct/mi300.html", "官方博客");
+const appleM5UltraLaunch = currentSource("apple-m5-ultra-launch", "Apple introduces M6 and M5 Ultra for a big leap in performance and AI compute", "Apple", "https://www.apple.com/newsroom/2026/08/apple-introduces-m6-and-m5-ultra-for-a-big-leap-in-performance-and-ai-compute/", "官方博客");
+const appleMacStudioLaunch = currentSource("apple-mac-studio-launch", "Apple introduces new Mac Studio with M5 Max and M5 Ultra", "Apple", "https://www.apple.com/newsroom/2026/08/apple-introduces-new-mac-studio-with-m5-max-and-m5-ultra/", "官方博客");
+const appleMacStudioSpecs = currentSource("apple-mac-studio-specs", "Mac Studio Technical Specifications", "Apple", "https://www.apple.com/mac-studio/specs/", "官方博客");
+const appleM5UltraAihot = currentSource("apple-m5-ultra-aihot", "Apple M6 and M5 Ultra AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmt8qee503kvpro73kzthenuu", "讲座整理");
+const appleMacStudioAihot = currentSource("apple-mac-studio-aihot", "Apple Mac Studio M5 Ultra AI HOT discovery", "AI HOT", "https://aihot.virxact.com/items/cmt8qee503kvnro73qp7543yv", "讲座整理");
 
 export const hardwareDevices: HardwareDevice[] = [
   {
@@ -153,6 +163,12 @@ export const hardwareDevices: HardwareDevice[] = [
     positioning: "以 192 GB HBM3 和高带宽面向超大模型训练与推理，是 NVIDIA 之外的主流 GPU 路线。",
     fp32: disclosed("163.4 TFLOPS", [mi300x.id]), fp16: disclosed("1,307.4 TFLOPS（稀疏 2,614.9）", [mi300x.id]), fp8: disclosed("2,614.9 TFLOPS（稀疏 5,229.8）", [mi300x.id]), fp4: unknown(), int4: unknown(), memory: disclosed("192 GB HBM3", [mi300x.id]), memoryBandwidth: disclosed("5.3 TB/s", [mi300x.id]), interconnect: disclosed("Infinity Fabric 1,024 GB/s（OAM）", [mi300x.id]), power: disclosed("750 W", [mi300x.id]), unitPrice: unknown("AMD / OEM 官方询价"), clusterScale: disclosed("MI300X Platform：8 GPU", [mi300x.id]), sources: [mi300x],
   },
+  {
+    id: "hw-apple-m5-ultra-mac-studio", date: "2026-08-25", name: "Apple M5 Ultra Mac Studio", vendor: "Apple", group: "其他厂商", form: "桌面 SoC / 工作站",
+    positioning: "以四 die M5 Ultra、512GB 统一内存和 Thunderbolt 5 RDMA 聚类支持把数百B级开放模型放到本地桌面侧运行；这是 on-device / small-cluster 推理边界，不等同数据中心训练卡。",
+    fp32: unknown("Apple 未公开 M5 Ultra 的 FP32 峰值算力"), fp16: unknown("Apple 未公开 M5 Ultra 的 FP16/BF16 峰值算力或 TOPS"), fp8: unknown("Apple 未披露 M5 Ultra 原生 FP8 AI 峰值"), fp4: unknown("Apple 未披露 M5 Ultra 原生 FP4 AI 峰值"), int4: unknown("Apple 未披露 M5 Ultra INT4 峰值"),
+    memory: disclosed("最高 512 GB unified memory", [appleM5UltraLaunch.id, appleMacStudioSpecs.id]), memoryBandwidth: disclosed("1.2 TB/s unified memory bandwidth", [appleM5UltraLaunch.id, appleMacStudioLaunch.id, appleMacStudioSpecs.id]), interconnect: disclosed("UltraFusion inter-die bandwidth >4.4 TB/s；Thunderbolt 5 up to 120 Gb/s，并支持 RDMA 聚类", [appleM5UltraLaunch.id, appleMacStudioLaunch.id, appleMacStudioSpecs.id]), power: unknown("Apple 未公开 M5 Ultra Mac Studio 满载功耗或 SoC TDP"), unitPrice: disclosed("Mac Studio with M5 Ultra starts at $5,499；512GB 配置价格未在新闻稿中统一披露", [appleMacStudioLaunch.id]), clusterScale: disclosed("单机最高 36-core CPU / 80-core GPU / 32-core Neural Engine；4 台 Mac Studio 集群 AI inference 最高约 3x 单机", [appleM5UltraLaunch.id, appleMacStudioLaunch.id, appleMacStudioSpecs.id]), sources: [appleM5UltraLaunch, appleMacStudioLaunch, appleMacStudioSpecs, appleM5UltraAihot, appleMacStudioAihot],
+  },
 ];
 
 const metricFields: Array<[string, keyof Pick<HardwareDevice, "fp32" | "fp16" | "fp8" | "fp4" | "int4" | "memory" | "memoryBandwidth" | "interconnect" | "power" | "unitPrice" | "clusterScale">]> = [
@@ -190,7 +206,7 @@ function toTimelineEvent(device: HardwareDevice): TimelineEvent {
 const groupMeta: Record<HardwareVendorGroup, { id: string; group: string; title: string; description: string; color: TimelineLane["color"] }> = {
   NVIDIA: { id: "hardware-nvidia", group: "训练硬件 / 01", title: "NVIDIA GPU / 集群", description: "A100、H100/H800/H20、B200 与 NVL72", color: "green" },
   "Huawei Ascend": { id: "hardware-ascend", group: "训练硬件 / 02", title: "Huawei Ascend / 超节点", description: "910B/910C、A3 384、950DT 与 Atlas 950", color: "amber" },
-  其他厂商: { id: "hardware-other", group: "训练硬件 / 03", title: "其他厂商 / 系统", description: "TPU7x、寒武纪、Cerebras 与 AMD", color: "violet" },
+  其他厂商: { id: "hardware-other", group: "训练硬件 / 03", title: "其他厂商 / 系统", description: "TPU7x、寒武纪、Cerebras、AMD 与 Apple Silicon", color: "violet" },
 };
 
 export const hardwareLanes: TimelineLane[] = (Object.keys(groupMeta) as HardwareVendorGroup[]).map((group) => ({

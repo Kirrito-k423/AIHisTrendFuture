@@ -474,17 +474,22 @@ test("history adds verified hardware lanes and comparable spec fields", async ()
   const comparisonSource = await readFile(new URL("../app/components/HardwareComparison.tsx", import.meta.url), "utf8");
   const historySource = await readFile(new URL("../app/data.ts", import.meta.url), "utf8");
 
-  assert.equal((hardwareSource.match(/^\s+id: "hw-/gm) ?? []).length, 16);
+  assert.equal((hardwareSource.match(/^\s+id: "hw-/gm) ?? []).length, 17);
   for (const expected of [
     "NVIDIA A100 80GB SXM", "NVIDIA H100 SXM", "NVIDIA H800 PCIe", "NVIDIA H20", "NVIDIA B200", "GB200 NVL72",
     "Ascend 910B", "Ascend 910C", "Ascend 950DT", "Atlas 900 A3 SuperPoD 384", "Atlas 950 · 1024 卡实机", "Atlas 950 SuperPoD 8192",
-    "Google TPU7x / Ironwood", "寒武纪 MLU370-X8", "Cerebras CS-3 / WSE-3", "AMD Instinct MI300X",
+    "Google TPU7x / Ironwood", "寒武纪 MLU370-X8", "Cerebras CS-3 / WSE-3", "AMD Instinct MI300X", "Apple M5 Ultra Mac Studio",
   ]) assert.match(hardwareSource, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   for (const field of ["FP32", "FP16 / BF16", "FP8", "FP4", "INT4", "显存 / 内存", "显存带宽", "互联带宽", "功耗", "单价", "集群 / 超节点"]) assert.match(comparisonSource, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(hardwareSource, /官方资料未发布 TPU v8/);
   assert.match(hardwareSource, /1024 卡物理集群/);
+  assert.match(hardwareSource, /512 GB unified memory/);
+  assert.match(hardwareSource, /Thunderbolt 5 up to 120 Gb\/s/);
   assert.match(hardwareSource, /unitPrice: unknown/);
   assert.match(historySource, /\.\.\.hardwareLanes/);
+  assert.match(historySource, /Vera Rubin NVL72 AgentX/);
+  assert.match(historySource, /30x throughput\/MW/);
+  assert.match(historySource, /pending SemiAnalysis review/);
 });
 
 test("timeline defaults compact and supports pan, Ctrl-wheel zoom, and sparse opt-in", async () => {
