@@ -224,8 +224,10 @@ const architectureOverrides: Record<string, string> = {
   "glm-5": "MoE + MLA / DSA + Shared MTP · Asynchronous Agent RL",
   "glm-52-max": "MoE + DSA + IndexShare",
   "glm-5-3": "GLM-5.2 base + post-training for coding / agents / cyber",
+  "glm-5-3-flash": "GLM-5 native multimodal + sparse/linear attention + mHC",
   "gemini-36-flash": "Gemini multimodal API · 1M context",
   "gemini-37-flash": "Gemini Flash API + coding / agent benchmark uplift",
+  "gemini-35-transcribe": "Gemini speech-to-text API + live transcription",
   "llama-4-maverick": "Multimodal MoE",
   "muse-glimmer-30b": "29.6B dense local agentic VLM + SGLang",
   "nemotron-3-5-lightning-30b-a3b": "Mamba-2 + MoE + Attention hybrid + MTP / DFlash / DSpark",
@@ -235,6 +237,7 @@ const architectureOverrides: Record<string, string> = {
   "qwen36-35b-a3b": "MoE + Gated DeltaNet / Full Attention",
   "qwen3-8-27b": "Dense native VLM + Gated DeltaNet / Attention + MTP",
   "qwen3-8-2-4t-a95b": "2.446T MoE + GQA + 512 experts",
+  "qwen3-8-flash-next": "Qwen4 preview + GDN/QSA + GR + n-gram embedding",
   "qwen-audio-30-tts-plus": "12.5 Hz speech tokenizer + LM/FM TTS pipeline",
   "dots3-note-prev": "Multimodal MoE + DSA/SWA + 512K",
   "nemotronlabs-voicechat-11b": "Hybrid Mamba/Transformer full-duplex speech + tool calling",
@@ -264,6 +267,7 @@ function normalizeModality(modality: string): ComparisonModel["modality"] {
   if (output === "image") return "T2I";
   if (output === "video") return "T2V";
   if (output.includes("+") || output.includes("audio")) return "Omni";
+  if (input.includes("audio")) return "Omni";
   if (input.includes("image") || input.includes("video")) return "VLM";
   return "LLM";
 }
@@ -300,13 +304,16 @@ const historyEventIdByCatalogId: Partial<Record<string, string>> = {
   "minimax-m3": "minimax-m3",
   "glm-52-max": "glm-5-2",
   "glm-5-3": "glm-5-3",
+  "glm-5-3-flash": "glm-5-3-flash",
   "kimi-k3": "kimi-k3",
   "ling-3-0-flash": "ling-3-0-flash",
   "grok-4-6": "grok-4-6",
   "nemotron-3-5-lightning-30b-a3b": "nemotron-3-5-lightning-30b-a3b",
   "gemini-36-flash": "gemini-3-6-flash",
   "gemini-37-flash": "gemini-3-7-flash",
+  "gemini-35-transcribe": "gemini-3-5-transcribe",
   "qwen3-8-27b": "qwen3-8-27b",
+  "qwen3-8-flash-next": "qwen3-8-flash-next",
   "claude-opus-5": "claude-opus-5",
   "mai-cyber-1-flash": "mai-cyber-1-flash",
   "flux-1-dev": "flux-1-dev",

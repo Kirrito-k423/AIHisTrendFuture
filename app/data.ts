@@ -23,6 +23,7 @@ const AUGUST_14_ACCESSED = "2026-08-14";
 const AUGUST_15_ACCESSED = "2026-08-15";
 const AUGUST_16_ACCESSED = "2026-08-16";
 const AUGUST_26_ACCESSED = "2026-08-26";
+const AUGUST_27_ACCESSED = "2026-08-27";
 
 function source(
   id: string,
@@ -212,6 +213,16 @@ function august26Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_26_ACCESSED };
+}
+
+function august27Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_27_ACCESSED };
 }
 
 function latestRunSource(
@@ -959,6 +970,62 @@ const qwen38A95b = modelEvent({
     "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmsqagyyz00yuroucf55e5fue；发现日期 2026-08-13，本条只保留 attribution，不把 AI HOT 或 IT 之家摘要作为技术事实。",
     "日期口径采用 Hugging Face API createdAt 2026-08-08T01:50:52Z；AI HOT selected item 发布时间为 2026-08-12T16:10:01Z，表示二次发现/传播。",
     "本条与 Qwen3.8-Max API 保持两条记录：Max 记录托管多模态 API，A95B 记录开放 text 基础权重。",
+  ],
+});
+
+const qwen38FlashNext = modelEvent({
+  id: "qwen3-8-flash-next",
+  date: "2026-08-26",
+  tier: "frontier",
+  title: "Qwen3.8-Flash-Next",
+  organization: "Alibaba / Qwen",
+  eyebrow: "当前前沿 / 开放权重 / Qwen4 架构预览",
+  summary:
+    "Qwen 开放 Qwen3.8-Flash-Next：官方将它定位为 Qwen4 架构早期预览，采用 Gated DeltaNet + Qwen Sparse Attention、Gated Residual、N-gram Embedding 和 Muon/AdamW 分工训练；HF 权重可核验约 180B safetensors 参数，模型卡披露 125B 主模型、51B n-gram embedding、4B MTP、6B 每 token 激活参数和 262K 原生上下文。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "MoE", "Open Weights", "Qwen4", "Gated DeltaNet", "QSA", "Gated Residual", "N-gram Embedding", "Muon", "262K"],
+  officialSourceIds: ["qwen38-flash-next-card", "qwen38-flash-next-config", "qwen38-flash-next-hf-api", "qwen38-flash-next-index", "qwen38-flash-next-repo", "qwen38-flash-next-report"],
+  aaSourceId: "qwen38-flash-next-card",
+  sources: [
+    august27Source("qwen38-flash-next-card", "Qwen/Qwen3.8-Flash-Next", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-Flash-Next", "模型卡"),
+    august27Source("qwen38-flash-next-config", "Qwen3.8-Flash-Next config.json", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/config.json", "模型卡"),
+    august27Source("qwen38-flash-next-hf-api", "Qwen3.8-Flash-Next Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/Qwen/Qwen3.8-Flash-Next", "模型卡"),
+    august27Source("qwen38-flash-next-index", "Qwen3.8-Flash-Next safetensors index", "Qwen", "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/model.safetensors.index.json", "模型卡"),
+    august27Source("qwen38-flash-next-repo", "QwenLM/Qwen3.8-Flash-Next", "Qwen", "https://github.com/QwenLM/Qwen3.8-Flash-Next", "代码仓"),
+    august27Source("qwen38-flash-next-report", "On the Design of Qwen3.8-Next Architecture", "Qwen Team", "https://github.com/QwenLM/Qwen3.8-Flash-Next/blob/main/tech_report.pdf", "技术报告"),
+    august27Source("qwen38-flash-next-aihot", "Qwen3.8-Flash-Next 开源候选", "AI HOT", "https://aihot.virxact.com/items/cmta2veap03nmrolwxllvp4ay", "讲座整理"),
+  ],
+  totalParameters: "模型卡披露 125B main model，加 51B n-gram embeddings 和 4B MTP；HF API safetensors total = 179,999,981,459 parameters",
+  activeParameters: "6B / token；模型卡同时说明另有 n-gram embedding lookup 和 1-layer MTP",
+  weightSize: "约 360.0 GB；model.safetensors.index.json metadata total_size = 359,999,963,128 bytes",
+  precision: "BF16；HF API safetensors parameters 几乎全部为 BF16，config text_config dtype 为 bfloat16",
+  architecture: "Causal Language Model with Vision Encoder；Qwen4 experimental / qwen4_exp 架构",
+  attention: "12 组重复的 3×Gated DeltaNet + 1×Qwen Sparse Attention，共 48 层；QSA 使用 compressed lightweight indexer 在 micro-block 粒度选择上下文，budget 512 blocks / 2048 tokens",
+  moe: "512 experts；每 token 10 routed experts + 1 shared expert，expert intermediate size 640",
+  otherArchitecture: "Gated Residual 将残差流扩展为 4 branches；N-gram Embedding 在第 2 层查表，base vocab 20,000,000 bigrams/trigrams；MTP 为 1 layer",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；公开卡未披露预训练 token 数",
+  dataDetails: "未知；官方没有披露数据来源、过滤口径、多模态样本规模或授权结构",
+  stages: "Pre-training & Post-training；训练 recipe 提到 Muon 与 AdamW 按权重类别分工、取消传统 batch-size warmup，但未公开完整超参数表",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "GDN + QSA、Gated Residual、N-gram Embedding、Muon/AdamW split、refitted scaling laws、direct target batch size；具体学习率、batch、优化器分组和 RL/偏好训练细节未完整披露",
+  lowPrecision: "训练低精度未知；权重发布为 BF16 safetensors",
+  infra: "Hugging Face、ModelScope、Transformers serve、SGLang、vLLM、TokenSpeed、llama.cpp、Unsloth 等路径公开；QwenCloud 的 Qwen3.8-Flash 是基于 Next 的生产版，默认 1M context 和内置工具不能回填到开源 Next 权重",
+  aaIndex: "未知；本轮未找到可稳定引用的 Artificial Analysis 独立页",
+  aaContext: "官方模型卡/README 给出同表 benchmark：DeepSWE 1.1 为 58.7、SWE-bench Pro 62.5、CoWorkBench 73.9、JobBench 55.7、LiveCodeBench v6 91.9、ClawEval-MM average 60.4；这是 Qwen 官方口径，不是第三方动态榜单",
+  aaSpeed: "未知",
+  score: "180B total · 6B active · 262K · QSA",
+  breakthroughs: [
+    "Qwen3.8-Flash-Next 把 Qwen4 的核心架构预览提前开源，并同时给出权重、config、技术报告和多框架部署入口。",
+    "模型卡将参数扩展拆成 125B 主模型、51B n-gram embedding 和 4B MTP，同时保持 6B 每 token 激活，直接体现“容量扩展与激活计算脱钩”的设计方向。",
+    "官方 benchmark 显示其相对 Qwen3.7-Plus 在 coding、office、agentic multimodal 等任务提升，但这些结果仍是官方口径；未发现独立 AA 模型页或可复验训练配置。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmta2veap03nmrolwxllvp4ay；发现日期 2026-08-26，本条仅保留 attribution。",
+    "日期口径采用 Qwen3.8-Flash-Next GitHub README News 中的 2026-08-26 release 日期；Qwen.ai 博客 URL 为 CSR 壳页，本轮事实以 Hugging Face、GitHub README、config 与技术报告入口为准。",
+    "生产 API 名称 Qwen3.8-Flash 与开源权重 Qwen3.8-Flash-Next 分开记录：1M 默认上下文、内置工具和生产特性只归属 QwenCloud API，不写成开源权重能力。",
   ],
 });
 
@@ -1714,6 +1781,59 @@ const gemini37Flash = modelEvent({
   ],
 });
 
+const gemini35Transcribe = modelEvent({
+  id: "gemini-3-5-transcribe",
+  date: "2026-08-26",
+  tier: "frontier",
+  title: "Gemini 3.5 Transcribe",
+  organization: "Google / Google DeepMind",
+  eyebrow: "Speech-to-Text / Gemini API / Real-time transcription",
+  summary:
+    "Google 发布 Gemini 3.5 Transcribe 语音转写模型，提供 `gemini-3.5-transcribe` 与 `gemini-3.5-transcribe-live` 两个 API 型号；官方披露它相对 Chirp 3 改善延迟与 WER，在 FLEURS 多语言口径下 streaming WER 5.50%、non-streaming WER 5.04%，并支持多说话人归属、词级时间戳、上下文感知转写和 Google 生态内高级听写。",
+  confidence: "中",
+  tags: ["Omni", "Audio", "Speech-to-Text", "Transcription", "Gemini API", "Streaming", "WER", "Google"],
+  officialSourceIds: ["gemini35-transcribe-blog", "gemini35-transcribe-api-docs", "gemini35-transcribe-model-docs"],
+  aaSourceId: "gemini35-transcribe-blog",
+  sources: [
+    august27Source("gemini35-transcribe-blog", "Intelligent transcription with Gemini 3.5 Transcribe", "Google", "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5-transcribe/", "官方博客"),
+    august27Source("gemini35-transcribe-api-docs", "Gemini API transcription docs", "Google AI for Developers", "https://ai.google.dev/gemini-api/docs/transcribe", "官方博客"),
+    august27Source("gemini35-transcribe-model-docs", "Gemini API model list", "Google AI for Developers", "https://ai.google.dev/gemini-api/docs/models/gemini-3.5-transcribe", "模型卡"),
+    august27Source("gemini35-transcribe-aihot", "Gemini 3.5 Transcribe 发布候选", "AI HOT", "https://aihot.virxact.com/items/cmtacq8vz0aedroj24bcix9go", "讲座整理"),
+  ],
+  totalParameters: "未知；Google 未披露 Gemini 3.5 Transcribe 参数规模",
+  activeParameters: "未知；Google 未披露稠密/MoE 或每 token/帧激活参数",
+  weightSize: "未知；闭源 API 模型，无公开权重",
+  precision: "未知；Google 未披露训练或推理精度",
+  architecture: "Gemini speech-to-text transcription model；API 型号为 `gemini-3.5-transcribe` 和 `gemini-3.5-transcribe-live`",
+  attention: "未知；官方未披露音频 encoder、decoder、上下文窗口或 KV/state layout",
+  moe: "未知；官方未披露稠密或 MoE 结构",
+  otherArchitecture: "支持 streaming / non-streaming transcription、多说话人归属、词级时间戳、自定义词汇、上下文感知听写和屏幕/聊天上下文增强的产品集成",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；Google 未披露训练音频小时数或语种分布",
+  dataDetails: "未知；官方只披露 FLEURS 多语言评测和产品能力，未披露训练数据来源、授权和过滤口径",
+  stages: "未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Context-aware speech transcription；具体 ASR 架构、CTC/RNNT/decoder 结构、后训练和延迟优化方法未披露",
+  lowPrecision: "未知",
+  infra: "Gemini API、Google AI Studio、Gemini Enterprise Agent Platform、Gboard、Google Antigravity、Gemini app 和 Chrome 路径公开；第三方集成包括 Agora、Fishjam、Stream 与 Vision Agents",
+  aaIndex: "不适用；语音转文本专项不进入 LLM Intelligence Index",
+  aaContext: "Google 博客称按 Artificial Analysis 测量 time to final transcription 改善 70%；Google 正文给出 FLEURS streaming WER 5.50%、non-streaming WER 5.04%，并说明相对 Chirp 3 改善。AI HOT 摘要中的 4.0%/2.6% WER 本轮未在可静态核验的一手页面复现，未写入事实字段",
+  aaSpeed: "未知；只披露相对 time-to-final-transcription 改善 70%，无绝对延迟口径",
+  score: "FLEURS WER 5.50 / 5.04",
+  breakthroughs: [
+    "Gemini 3.5 Transcribe 把 Gemini 系列单独拆出语音转文本 API，并同日提供实时与非实时两个模型 ID。",
+    "官方披露 FLEURS 多语言 WER 和相对 Chirp 3 的延迟/WER 改善，且功能覆盖 speaker attribution、word-level timestamps 和 context-aware transcription。",
+    "本条不把语音转写专项结果写成通用 LLM SOTA：参数、训练数据、硬件、绝对延迟和可复现实验细节均未披露。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmtacq8vz0aedroj24bcix9go；发现日期 2026-08-26，本条仅保留 attribution。",
+    "日期口径采用 Google Blog schema.org datePublished 2026-08-26T17:00:00+00:00；API model list 在 2026-08-27 访问时已包含 `gemini-3.5-transcribe` 与 `gemini-3.5-transcribe-live`。",
+    "Artificial Analysis 页面为动态渲染，本轮没有从其静态页面稳定取到 AI HOT 摘要中的平均 WER；因此只记录 Google 官方正文中可核验的 FLEURS 数值和相对延迟表述。",
+  ],
+});
+
 const minimaxMusic30 = modelEvent({
   id: "minimax-music-3-0",
   date: "2026-08-13",
@@ -1813,6 +1933,63 @@ const glm53 = modelEvent({
     "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmssir12d047oroffnpn5pcx1；发现日期 2026-08-14，本条仅保留 attribution。",
     "日期口径采用 Z.ai GLM-5.3 docs dateModified 2026-08-14T09:54:45.404Z 和 AI HOT selected item 2026-08-14T05:31:04Z；博客壳页面可访问但正文事实以 docs MDX 为准。",
     "官方文档称 #1 open-source model，但本轮未找到稳定 GLM-5.3 权重仓；开放状态在比较目录中记为 pending，避免把可用性写过头。",
+  ],
+});
+
+const glm53Flash = modelEvent({
+  id: "glm-5-3-flash",
+  date: "2026-08-26",
+  tier: "frontier",
+  title: "GLM-5.3-Flash",
+  organization: "Z.ai",
+  eyebrow: "当前前沿 / 开放权重 / 原生多模态 MoE",
+  summary:
+    "Z.ai 发布并开放 GLM-5.3-Flash：官方将其描述为 GLM-5 系列首个原生多模态模型，320B 总参数、18B 激活参数、1M 上下文，并采用 sparse + linear attention、Manifold-Constrained Hyper-Connections、30T-token 多模态预训练语料和面向国产 AI 芯片集群的推理栈；HF API 可核验约 321.3B 参数与 MIT 许可。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "MoE", "Open Weights", "MIT", "GLM", "Sparse Attention", "Linear Attention", "mHC", "1M", "FP8"],
+  officialSourceIds: ["glm53-flash-docs", "glm53-flash-blog", "glm53-flash-card", "glm53-flash-config", "glm53-flash-hf-api", "glm53-flash-index", "glm5-report"],
+  aaSourceId: "glm53-flash-docs",
+  sources: [
+    august27Source("glm53-flash-docs", "GLM-5.3-Flash", "Z.ai", "https://docs.z.ai/guides/vlm/glm-5.3-flash", "官方博客"),
+    august27Source("glm53-flash-blog", "GLM-5.3-Flash", "Z.ai", "https://z.ai/blog/glm-5.3-flash", "官方博客"),
+    august27Source("glm53-flash-card", "zai-org/GLM-5.3-Flash", "Z.ai", "https://huggingface.co/zai-org/GLM-5.3-Flash", "模型卡"),
+    august27Source("glm53-flash-config", "GLM-5.3-Flash config.json", "Z.ai", "https://huggingface.co/zai-org/GLM-5.3-Flash/blob/main/config.json", "模型卡"),
+    august27Source("glm53-flash-hf-api", "GLM-5.3-Flash Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/zai-org/GLM-5.3-Flash", "模型卡"),
+    august27Source("glm53-flash-index", "GLM-5.3-Flash safetensors index", "Z.ai", "https://huggingface.co/zai-org/GLM-5.3-Flash/blob/main/model.safetensors.index.json", "模型卡"),
+    august27Source("glm5-report", "GLM-5: from Vibe Coding to Agentic Engineering", "GLM-5 Team", "https://arxiv.org/abs/2602.15763", "技术报告"),
+    august27Source("glm53-flash-aihot", "GLM-5.3-Flash 开源候选", "AI HOT", "https://aihot.virxact.com/items/cmta7bh1k04u6roj2e4pt7bob", "讲座整理"),
+  ],
+  totalParameters: "官方披露 320B total parameters；HF API safetensors total = 321,323,031,390 parameters",
+  activeParameters: "18B / token；官方 docs、博客和模型卡一致披露",
+  weightSize: "约 328.3 GB；model.safetensors.index.json metadata total_size = 328,326,771,576 bytes",
+  precision: "混合发布权重：HF API 显示 F8_E4M3 314,396,639,232 parameters、BF16 6,926,096,640 parameters、F32 295,518 parameters；config text dtype 为 bfloat16",
+  architecture: "GLM-5.3-Flash / glm5_next 原生多模态 conditional generation model，包含 text_config 与 vision_config",
+  attention: "45 层 text stack：34 层 linear_attention + 11 层 deepseek_sparse_attention；IndexPool / index_kpool=4、index_topk=2048，用 sparse + linear attention 降低长上下文 attention compute 与 KV cache",
+  moe: "前 3 层 dense，之后 sparse MLP；288 routed experts + 1 shared expert，top-8，moe_intermediate_size 2048",
+  otherArchitecture: "Manifold-Constrained Hyper-Connections (mHC)；vision encoder depth 24、hidden size 1024、patch size 14；支持 image/video/file multimodal input",
+  hardware: "未知；官方只说明过去一周在大规模国产 AI 芯片集群服务，未披露芯片型号、单卡规格或集群规模",
+  hardwareCount: "未知；官方称 tens of thousands of domestically developed accelerators，但未给精确数量和拓扑",
+  dataScale: "30T-token multimodal pre-training corpus；官方未披露 tokenizer 口径、去重或模态占比",
+  dataDetails: "未知；官方未披露数据来源、授权结构、过滤口径、语种/模态比例或合成数据规模",
+  stages: "新训练 base model + multimodal pre-training + post-training；官方称架构和训练 recipe 围绕 capability 与 efficiency 重设计",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Sparse + linear attention、IndexPool、mHC、multimodal pre-training、visual coding data synthesis、environment-feedback RL、SGLang-based serving stack；完整 SFT/RL recipe 未公开",
+  lowPrecision: "公开权重以 FP8 为主并含 BF16/F32 参数；训练低精度细节未知。Serving stack 提到 W8A8 quantization、hybrid INT8/FP8/BF16 cache quantization",
+  infra: "支持 Z.ai API、GLM Coding Plan、Hugging Face、SGLang、vLLM、TokenSpeed 与 KTransformers；官方称生产服务运行于国产 AI 芯片集群，使用 EPD disaggregated architecture、ReplaySSM、Layer Split、TP for Linear Attention / LM head",
+  aaIndex: "官方 Z.ai docs/blog 引述 Artificial Analysis Intelligence Index v4.1.1：score 57，discounted $0.045 per task；本轮未找到可独立静态核验的 AA 模型页",
+  aaContext: "官方 benchmarks：DeepSWE v1.1 63.4 vs GLM-5.2 46.2，AutomationBench 48.8 vs 26.2，Z.ai Code Bench max effort 29.0 vs Claude Opus 4.8 29.5；官方还称相对 GLM-5.3 attention compute 3.01x、KV cache 4.44x 降低",
+  aaSpeed: "未知；官方没有披露 token/s 或 TTFT/TPOT 的可复验绝对值",
+  score: "320B-A18B · AA 57 · 1M",
+  breakthroughs: [
+    "GLM-5.3-Flash 与 2026-08-14 的 GLM-5.3 后训练事件不同：官方称它从新训练 base model 出发，并首次把 GLM-5 系列扩展到原生多模态。",
+    "HF 模型卡、config 和 API 元数据共同核验开放权重、MIT license、约 321.3B 参数、FP8/BF16 混合权重、45 层 hybrid sparse/linear attention 与 1M 上下文。",
+    "官方披露国产 AI 芯片集群上的大规模服务栈和 3x 端到端 serving improvement，但未给芯片型号、基线配置或绝对吞吐，因此只作为可用性/infra 线索，不写成可横向比较硬件纪录。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmta7bh1k04u6roj2e4pt7bob；发现日期 2026-08-26，本条仅保留 attribution。",
+    "日期口径采用 Z.ai docs dateModified 2026-08-26T15:12:35.206Z 与 AI HOT selected item 2026-08-26；Hugging Face 模型卡和 config 在 2026-08-27 访问。",
+    "官方声称 first open-source frontier model adopting hybrid sparse + linear attention；本条限定为 GLM/Z.ai 官方口径，不扩展为所有开放模型的全局首次结论。",
   ],
 });
 
@@ -3338,7 +3515,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, glm53, dots3Note],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note],
     },
     {
       id: "t2i-training",
