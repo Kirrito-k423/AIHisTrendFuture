@@ -6491,20 +6491,23 @@
     "modality": "Omni",
     "organization": "MiniMax",
     "release_date": "2026-07-31",
-    "release_date_basis": "采用 MiniMax 官方博客《MiniMax H3: An Open Model Breaking the Boundaries Between Tasks and Modalities》的发布时间口径；AI HOT 仅作为发现来源，不作为发布日期依据。",
-    "access": "当前为闭源托管视频/音视频生成模型。官方博客称计划在未来数日开放模型权重，受适用法律法规限制；截至 2026-08-01 本轮核验时未发现 Hugging Face 或官方仓库权重，因此不能写成已开放权重。",
-    "license": "专有闭源服务；权重许可证未知。官方仅声明计划开放权重，未披露未来许可证条款。",
+    "release_date_basis": "采用 MiniMax 官方博客《MiniMax H3: An Open Model Breaking the Boundaries Between Tasks and Modalities》的发布时间口径；Hugging Face LICENSE 标注 MiniMax H3 release date/License date 为 2026-08-02；AI HOT 仅作为发现来源，不作为发布日期依据。",
+    "access": "开放权重并提供托管 API / App。MiniMaxAI/MiniMax-H3 已在 Hugging Face 公开，包含 FL2VA 与 Ref2VA 两个 task-family checkpoint、Diffusers 格式和本地 768p 部署路径；H3-Context-IR 是托管预处理/编排系统，H3-Regenerate-2K 尚未开源，2K full workflow 仍依赖官方 API。",
+    "license": "MiniMax H3 Community License Agreement；Hugging Face 元数据标为 license: other / minimax-h3-community-license-agreement。许可证定义 Applicable Territory 为 worldwide excluding the EU, UK, Republic of Korea and USA；年收入超过 20M USD 的商业产品需另行授权，并包含 AUP 与模型改进限制。",
     "official_model_ids": [
-      "MiniMax H3"
+      "MiniMax H3",
+      "MiniMaxAI/MiniMax-H3",
+      "MiniMax-H3 Base FL2VA",
+      "MiniMax-H3 Base Ref2VA"
     ],
-    "parameter_total": "未知。官方博客没有披露参数量、层数、hidden size、专家数或激活参数。",
-    "parameter_active": "未知。官方没有披露 H3 是否为 MoE、专家路由或每 token 激活参数；不能从 H3-Omni Transformer 的命名反推 MoE。",
-    "weight_size": "未知且当前不可获得；截至 2026-08-01 未发现官方权重文件。",
-    "precision": "未知。官方未披露训练精度、推理精度、量化格式或低精度部署方式。",
-    "architecture": "官方描述为 general-purpose omni-modal generation model，可联合理解文本、图像、视频和音频上下文，并生成带原生立体声音频的视频。官方列出的核心技术包括 Contextual Omni Representation、H3-VAE、H3-Omni Transformer 和 In-Context Regeneration；完整技术报告仍待发布。",
-    "attention_or_sequence_design": "未知。官方只披露多模态上下文使序列长度方差增至约 3 倍，并采用分离 understanding 与 generation workload 的训练架构；没有公开注意力机制、位置编码、上下文长度或 KV cache 结构。",
-    "vae_or_tokenizer": "H3-VAE 是官方已披露核心组件。官方称其高压缩比带来约 4x effective sequence length gain，并支撑原生 2K 分辨率；但未披露 latent 维度、压缩率、码率、帧率、VAE 层数或重建指标。",
-    "text_encoder_or_conditioner": "官方称通过 full-modality understanding pipeline 生成/蒸馏多模态上下文描述，源材料推理约需 100K tokens，平均蒸馏到约 4K tokens；没有披露具体 LLM/VLM/ASR/TTS 编码器身份、参数量或训练数据。",
+    "parameter_total": "H3-Omni-Transformer / H3-Base 官方披露为 33B dense single-stream Transformer，其中约 13B 参数位于 AdaLN-related branches，推理-only 部署可预计算并缓存这部分调制输出。端到端系统另含 Qwen3-VL-32B H3-Encoder、VisualVAE、AudioVAE、托管 H3-Context-IR 与未开源 H3-Regenerate-2K；官方没有给出统一系统总参数。",
+    "parameter_active": "H3-Base 是 dense Transformer，不是 MoE；本地 H3-Base 生成路径中 Transformer 权重按层参与计算，但约 13B AdaLN-related branch 参数可在 inference-only 部署中预计算/缓存，不应写成 MoE active parameter。",
+    "weight_size": "Hugging Face API 于 2026-08-28 显示仓库 usedStorage/可见文件 size 合计约 498.5 GB，包含 FL2VA、Ref2VA、原始 checkpoint 与 Diffusers 格式等重复部署形态；单个 task family 的 transformer safetensors 约 66.3 GB，text_encoder safetensors 约 66.7 GB。完整运行下载体积取决于选择 FL2VA/Ref2VA、SGLang/vLLM/Diffusers 格式和是否使用托管 Context-IR/2K workflow。",
+    "precision": "公开 FL2VA 与 Ref2VA checkpoint 表格标注 Precision 为 BF16；Hugging Face 仓库为 safetensors。官方没有披露训练主权重、优化器状态、稀疏训练或服务端量化的完整精度口径。",
+    "architecture": "H3 是 general-purpose omni-modal generative system。公开本地 H3-Base 使用 Qwen3-VL-32B 的 H3-Encoder hidden states、H3-VisualVAE、H3-AudioVAE 与 33B dense single-stream H3-Omni-Transformer 联合预测视频和音频 latents；H3-Context-IR 负责把自由多模态输入整理成 Context Intermediate Representation，H3-Regenerate-2K 通过 in-context regeneration 把 768p 结果再生成到 2K。",
+    "attention_or_sequence_design": "H3-Omni-Transformer 使用三维 MM-RoPE 表达时间、高度、宽度位置关系；公开 config 显示 50 layers、hidden size 5376、56 attention heads、visual latent patch size 1×2×2。官方称最终训练阶段引入 native sparse attention 降低长序列成本，但初始开源 release 只提供 full attention inference，sparse attention 实现将后续发布。",
+    "vae_or_tokenizer": "H3-VisualVAE 是 temporally causal video autoencoder，空间压缩 16×、时间压缩 4×、24 latent channels（f16t4d24）；进入 Transformer 前再按 1×2×2 patchify，使有效空间下采样为 32×、时间下采样仍为 4×。H3-AudioVAE 独立处理左右声道，把 32 kHz stereo audio 压缩到 40 Hz latent token rate。Tokenizer / processor 来自仓库提供的 Qwen2TokenizerFast / Qwen3VLProcessor 配置。",
+    "text_encoder_or_conditioner": "本地公开路径使用 H3-Encoder，即 Qwen3-VL-32B 的完整预训练权重并取第 50 层 hidden states 输入 H3-Omni-Transformer；Context-IR 的官方多阶段托管工作流未开源。官方仍建议使用托管 API 或按 Prompting Guidance 自建 context-processing system。",
     "training_hardware": "未知。官方只说明设计早期考虑硬件兼容性，没有披露训练加速器型号。",
     "training_hardware_scale": "未知。未披露 GPU/加速器数量、节点数、互联、累计 accelerator-hours、训练 FLOPs、能耗或成本。",
     "training_data_scale": "未知。官方没有披露视频小时数、音频小时数、图像数、文本 token 数或样本量。",
@@ -6524,53 +6527,77 @@
       }
     ],
     "training_algorithms": "官方披露的机制层面包括 Contextual Omni Representation、H3-VAE、H3-Omni Transformer、In-Context Regeneration，以及 separating understanding and generation workloads 的训练架构；优化器、目标函数、采样策略、RLHF/偏好优化和蒸馏细节未知。",
-    "training_infra": "官方称针对 heterogeneous compute 在 per-sample 与 sample-level load balancing 之间联合平衡，端到端训练吞吐提升近 30%；没有披露训练框架、并行策略、通信库、checkpoint、容错、存储或具体硬件。",
-    "inference_hardware": "未知。官方没有披露托管推理使用的 GPU/加速器型号、卡数、显存或并行方式。",
-    "inference_performance": "官方给出价格性能主张：2K per-second price 低于 mainstream models 的三分之一，768p 低于 mainstream 720p 的一半；未给出可复核模型列表、地区、币种、硬件、排队时间或端到端延迟，因此只记录为官方价格口径，不转写成通用成本优势。",
+    "training_infra": "官方称针对 heterogeneous compute 在 per-sample 与 sample-level load balancing 之间联合平衡，端到端训练吞吐提升近 30%，并在最终训练阶段引入 native sparse attention；没有披露训练框架、并行策略、通信库、checkpoint、容错、存储、具体硬件或训练阶段规模。",
+    "inference_hardware": "本地公开路径可用 SGLang、vLLM、Diffusers 与 ComfyUI。SGLang cookbook 标注已验证 8×B200、4×H200、4×H100、MI300X/MI355X、2×RTX 5090 与 1×RTX 4090 24GB 等容量/拓扑；LMSYS/SGLang H200 benchmark 的主口径是 8× NVIDIA H200 141GB，SGLang SP/Ulysses degree 8，对照 Diffusers CP8。托管 API 的实际硬件未披露。",
+    "inference_performance": "LMSYS/SGLang 在 8×H200、MiniMax-H3、1344×768、24 FPS、50 denoising steps、5s/10s、SGLang v0.5.18 d90318b3e2、Measured 2026-08-18 的口径下报告：SGLang dense lossless 相对 Diffusers 快 1.85–1.95×；质量优先 Cache-DiT 单独最高 2.99×、mean SSIM 0.90–0.92；最快 SubBlock 0.80 + Cache-DiT stride 达 5.06×/5.72× T2VA 与 5.86×/6.24× FL2VA，但 T2VA mean SSIM 降至 0.76–0.78。官方原价格性能主张仍缺少可复核模型列表、地区、币种和排队时间。",
     "max_output_resolution": "最高 2K；官方称默认提供 2K，且 H3-VAE 与 in-context regeneration 支撑原生 2K。",
     "max_output_duration_seconds": 15,
-    "native_fps": "未知。官方未披露默认帧率或可选 FPS 档位。",
+    "native_fps": "24 FPS（公开模型卡 output specification 与 LMSYS/SGLang benchmark 口径）。",
     "aa_elo": null,
     "aa_elo_observed_at": null,
-    "generation_time_seconds": null,
-    "generation_time_context": "未知。未发现 Artificial Analysis 或官方指定硬件/分辨率/时长下的可比生成耗时；官方只给出价格口径和 2K/15 秒能力。",
+    "generation_time_seconds": 39.67,
+    "generation_time_context": "LMSYS/SGLang 2026-08-27 文章的 8×H200、1344×768、24 FPS、50 steps、5s T2VA generation-side median；SGLang dense lossless 为 39.67s，相同任务 Diffusers CP8 为 74.34s。该值排除 server startup、warmup、HTTP polling 和 MP4 download，不能与托管端到端 API 延迟直接比较。",
     "benchmark_scores": [
       {
         "benchmark": "MiniMax 官方能力声明",
-        "variant": "MiniMax H3",
-        "observed_at": "2026-08-01",
+        "variant": "MiniMax H3 initial hosted release",
+        "observed_at": "2026-08-28",
         "metrics": {
           "max_resolution": "2K",
           "max_duration_seconds": 15,
           "audio": "native stereo",
           "reported_effective_sequence_length_gain": "4x",
-          "reported_training_throughput_gain": "nearly 30%"
+          "reported_training_throughput_gain": "nearly 30%",
+          "open_weight_task_families": "FL2VA and Ref2VA H3-Base checkpoints"
         },
         "scope": "官方博客自报工程与能力指标；没有独立动态榜单或同口径基准，因此不写成 SOTA 排名。"
+      },
+      {
+        "benchmark": "LMSYS/SGLang MiniMax-H3 8×H200 benchmark",
+        "variant": "SGLang Diffusion v0.5.18 d90318b3e2 vs Diffusers",
+        "observed_at": "2026-08-18",
+        "metrics": {
+          "hardware": "8× NVIDIA H200 141GB",
+          "workload": "1344×768, 24 FPS, 50 denoising steps, 5s and 10s outputs",
+          "parallelism": "Diffusers CP8; SGLang SP/Ulysses degree 8",
+          "t2va_5s_diffusers_seconds": 74.34,
+          "t2va_5s_sglang_lossless_seconds": 39.67,
+          "lossless_speedup_range": "1.85–1.95x",
+          "quality_first_cachedit_speedup": "up to 2.99x at mean SSIM 0.90–0.92",
+          "fastest_t2va_speedup": "5.06x / 5.72x at mean SSIM 0.7584 / 0.7765",
+          "fastest_fl2va_speedup": "5.86x / 6.24x at mean SSIM 0.8498 / 0.9144"
+        },
+        "scope": "原始团队测量；速度相对匹配 Diffusers case，SSIM 相对匹配 SGLang lossless video。排除启动、warmup、HTTP polling 和 MP4 download；三条 prompt，不能外推为所有提示词、分辨率、硬件或托管 API SLA。"
       }
     ],
     "novelty_claims": [
       {
         "claim": "将文本、图像、视频和音频上下文统一为可用语言桥接的 omni-modal 生成任务，并直接生成带原生立体声音频的最高 2K/15 秒视频。",
-        "scope_boundary": "这是官方能力与产品发布声明；权重、技术报告和独立榜单尚未公开，不能把它扩展成开放权重 SOTA 或可复现实验结论。",
-        "evidence": "MiniMax 官方博客披露 H3 的输入/输出模态、2K/15 秒、native stereo、Contextual Omni Representation、H3-VAE、H3-Omni Transformer 与 In-Context Regeneration。",
+        "scope_boundary": "这是官方能力与产品发布声明；当前开放的是 H3-Base 两个 task-family checkpoint，本地公开路径不包含托管 Context-IR 或 H3-Regenerate-2K，因此不能把完整 2K 托管系统写成完全本地开源。",
+        "evidence": "MiniMax 官方博客与 Hugging Face 模型卡披露 H3 的输入/输出模态、2K/15 秒、native stereo、Contextual Omni Representation、H3-VAE、H3-Omni Transformer、In-Context Regeneration、FL2VA/Ref2VA checkpoint 与本地 768p 部署路径。",
         "confidence": "中高"
       },
       {
         "claim": "H3-VAE 通过更高压缩比带来约 4x effective sequence length gain，并由 in-context regeneration 支撑 2K 输出细节恢复。",
         "scope_boundary": "4x 与近 30% 吞吐提升均为官方自报工程指标；未披露硬件、基线模型、训练任务和误差区间，因此只作为机制线索和限制明确的官方结果。",
-        "evidence": "官方博客技术选择段落直接给出 H3-VAE、训练 workload 分离、近 30% 吞吐提升和 in-context regeneration 描述。",
+        "evidence": "官方博客技术选择段落直接给出 H3-VAE、训练 workload 分离、近 30% 吞吐提升和 in-context regeneration 描述；模型卡进一步披露 VisualVAE f16t4d24 与 AudioVAE 40 Hz latent token rate。",
+        "confidence": "中"
+      },
+      {
+        "claim": "SGLang Diffusion 在 8×H200 上为 MiniMax-H3 提供可复核的 lossless 与 lossy 加速边界：dense lossless 1.85–1.95×，Cache-DiT 最高 2.99×，SubBlock sparse attention + Cache-DiT stride 最高 6.24×但有 SSIM 损失。",
+        "scope_boundary": "这是 SGLang Diffusion / Cache-DiT / SubBlock sparse attention 的服务端工程测量，不是 MiniMax-H3 模型质量提升；速度和 SSIM只适用于文中硬件、分辨率、任务、版本、prompt 数和排除项。",
+        "evidence": "LMSYS/SGLang 文章给出 H200 硬件、SGLang 版本、并行度、测量日期、T2VA/FL2VA 表格、SSIM 计算口径与 cookbook 复现入口。",
         "confidence": "中"
       }
     ],
     "comparison_eligible": true,
     "history_eligible": true,
     "unknown_fields": [
-      "参数量、激活参数、层数、hidden size、专家数与 attention 具体结构",
-      "权重发布时间、权重许可证和实际开放仓库",
       "训练硬件、训练规模、训练 tokens/样本量、数据来源比例和训练时长",
-      "VAE latent 维度、压缩率、帧率、音频编码方式与重建指标",
-      "独立动态榜单 Elo、指定硬件下生成耗时、API 区域和具体价格表"
+      "托管 H3-Context-IR 内部模型、H3-Regenerate-2K 权重与完整 2K 本地复现路径",
+      "sparse attention 训练/推理实现的开源日期、kernel 细节和质量 ablation",
+      "官方 API 区域、排队时间、托管硬件和具体价格表",
+      "Artificial Analysis 或其他独立动态榜单上的 MiniMax-H3 质量分数"
     ],
     "sources": [
       {
@@ -6581,6 +6608,31 @@
       {
         "title": "MiniMax H3 AI HOT discovery",
         "url": "https://aihot.virxact.com/items/cms8rt1ml06j0roghw1n7a4bq",
+        "source_type": "discovery"
+      },
+      {
+        "title": "MiniMaxAI/MiniMax-H3 model card",
+        "url": "https://huggingface.co/MiniMaxAI/MiniMax-H3",
+        "source_type": "model_card"
+      },
+      {
+        "title": "MiniMax H3 Community License Agreement",
+        "url": "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE",
+        "source_type": "model_card"
+      },
+      {
+        "title": "MiniMax-H3 on 8×H200: 1.95× Lossless, Up to 6.24× at 0.76–0.91 SSIM",
+        "url": "https://www.lmsys.org/blog/2026-08-27-minimax-h3-h200",
+        "source_type": "official_blog"
+      },
+      {
+        "title": "SGLang MiniMax-H3 cookbook",
+        "url": "https://docs.sglang.ai/cookbook/diffusion/MiniMax/MiniMax-H3",
+        "source_type": "official_docs"
+      },
+      {
+        "title": "MiniMax-H3 8×H200 benchmark AI HOT discovery",
+        "url": "https://aihot.virxact.com/items/cmtbtrn8j0222ro2kb7opgppz",
         "source_type": "discovery"
       }
     ],

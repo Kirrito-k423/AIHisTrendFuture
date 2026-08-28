@@ -14,6 +14,7 @@ const LATEST_DEEPSPEED_ACCESS_DATE = "2026-08-11";
 const TODAY_DEEPSPEED_ACCESS_DATE = "2026-08-24";
 const CURRENT_FRONTIER_DEEPSPEED_ACCESS_DATE = "2026-08-25";
 const AUGUST_27_DEEPSPEED_ACCESS_DATE = "2026-08-27";
+const AUGUST_28_DEEPSPEED_ACCESS_DATE = "2026-08-28";
 
 interface DeepSpeedMethod {
   id: string;
@@ -41,6 +42,7 @@ interface DeepSpeedMethod {
   extraSources?: Source[];
   extraRevisionNotes?: string[];
   dateBasisNote?: string;
+  accessedAt?: string;
 }
 
 function source(
@@ -49,8 +51,9 @@ function source(
   publisher: string,
   url: string,
   type: Source["type"],
+  accessedAt = ACCESSED_AT,
 ): Source {
-  return { id, title, publisher, url, type, accessedAt: ACCESSED_AT };
+  return { id, title, publisher, url, type, accessedAt };
 }
 
 function currentDeepSpeedSource(
@@ -128,6 +131,21 @@ function august27DeepSpeedSource(
   };
 }
 
+function august28DeepSpeedSource(
+  id: string,
+  title: string,
+  url: string,
+): Source {
+  return {
+    id,
+    title,
+    publisher: "deepspeedai/DeepSpeed",
+    url,
+    type: "代码仓",
+    accessedAt: AUGUST_28_DEEPSPEED_ACCESS_DATE,
+  };
+}
+
 function disclosedFact(label: string, value: string, sourceIds: string[]): Fact {
   return { label, value, sourceIds, status: "已披露" };
 }
@@ -140,6 +158,7 @@ function deepSpeedEvent(input: DeepSpeedMethod): TimelineEvent {
       "DeepSpeed",
       `https://www.deepspeed.ai/tutorials/${input.tutorialSlug}/`,
       "官方博客",
+      input.accessedAt,
     ),
     source(
       `${input.id}-history`,
@@ -147,9 +166,10 @@ function deepSpeedEvent(input: DeepSpeedMethod): TimelineEvent {
       "deepspeedai/DeepSpeed",
       `https://github.com/deepspeedai/DeepSpeed/commits/master/docs/_tutorials/${input.tutorialFile}`,
       "代码仓",
+      input.accessedAt,
     ),
     ...(input.paper
-      ? [source(input.paper.id, input.paper.title, input.paper.publisher, input.paper.url, "论文")]
+      ? [source(input.paper.id, input.paper.title, input.paper.publisher, input.paper.url, "论文", input.accessedAt)]
       : []),
     ...(input.extraSources ?? []),
   ];
@@ -256,7 +276,7 @@ const mpsZeroSupport = deepSpeedEvent({
   computeMemory: "利用 Apple unified memory 和 MPS recommended working set；collective 需要 CPU staging copy。MPS 没有 fp64，ZeRO gradient norm 在该 backend 改用 fp32。ZeRO-Offload 不增加总 DRAM 容量，但可让 optimizer states 处于 Metal per-process GPU working-set budget 之外。",
   parallelism: "单 MPS device；ZeRO stage 0-3 可用。PyTorch MPS 每机暴露一个 device，单 Mac 多设备 data parallel 不可用，跨机器 gloo 未测试。",
   limitations: "ZeRO-Offload 依赖 C++ `DeepSpeedCPUAdam` JIT；Apple clang 无 OpenMP，未安装 Homebrew `libomp` 时 CPUAdam 单线程。无原生 MPS collective backend；无用户可见 stream，不能重叠通信与计算；bf16 需要 macOS 14 或更新版本；吞吐和大模型规模未披露。",
-  availability: "DeepSpeed `DS_ACCELERATOR=mps` 安装和 `deepspeed --num_gpus 1` 启动路径已写入 accelerator setup guide；ZeRO 0-3 with or without ZeRO-Offload、Metal FusedAdam 与 CPUAdam builder 已在官方主分支，尚未看到对应 release。",
+  availability: "DeepSpeed `DS_ACCELERATOR=mps` 安装和 `deepspeed --num_gpus 1` 启动路径已写入 accelerator setup guide；ZeRO 0-3 with or without ZeRO-Offload、Metal FusedAdam 与 CPUAdam builder 已在官方主分支，并已随 DeepSpeed v0.19.6 Patch Release 发布。",
   tags: ["Apple Silicon", "MPS", "ZeRO", "FusedAdam", "gloo"],
   dateBasisNote: "事件日期采用 Apple Silicon (MPS) 小节进入官方 accelerator setup guide 的 commit 日期；该教程文件更早已存在，网页底部 Updated 不作为发布日期。",
   extraSources: [
@@ -280,11 +300,65 @@ const mpsZeroSupport = deepSpeedEvent({
       "[Apple Silicon Support Phase 1] Add Metal FusedAdam kernel and CPU Adam build for Apple Silicon",
       "https://github.com/deepspeedai/DeepSpeed/pull/8300",
     ),
+    august28DeepSpeedSource(
+      "deepspeed-v0196-release-mps",
+      "DeepSpeed v0.19.6 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.6",
+    ),
   ],
   extraRevisionNotes: [
     "2026-08-23 官方 commit 64fcec6 修改 `accelerator/mps_accelerator.py`、`deepspeed/comm/torch.py`、ZeRO norm dtype、MPS op builder、accelerator setup guide 和测试；这是 Apple Silicon 可用性边界扩展，不是新的性能纪录。",
     "2026-08-26 官方 commit 715965e 为 Apple Silicon 增加 Metal FusedAdam shader、MPS CPUAdam builder 和 accelerator setup guide 修订；教程从 ZeRO-Offload 尚不可用改为 ZeRO 0-3 可 with or without ZeRO-Offload，但强调 unified memory 下 offload 不增加总内存容量。",
+    "2026-08-27 DeepSpeed v0.19.6 Patch Release 将 MPS ZeRO、MPS P2P staging、Metal FusedAdam 与 CPUAdam build 相关 PR 打包发布；本次只修订发布可获得性，不补写未披露的吞吐或模型规模。",
     "本条不把 ZeRO-Offload 论文收益外推到 Apple Silicon：官方没有披露 Mac 端吞吐、显存上限或端到端训练规模，只说明 GPU working-set budget 受限时 optimizer states 放在 CPU tensors 可能有帮助。",
+    "AI HOT 本轮没有提供该 DeepSpeed 变更；发现来源为 DeepSpeed 官方 GitHub 监控脚本。",
+  ],
+});
+
+const zeroCheckpointDtypeExport = deepSpeedEvent({
+  id: "tech-deepspeed-zero-checkpoint-dtype-export",
+  date: "2026-08-27",
+  title: "ZeRO Checkpoint Dtype Export",
+  tutorialSlug: "zero",
+  tutorialFile: "zero.md",
+  category: "并行方案",
+  family: "并行系统",
+  summary: "DeepSpeed v0.19.6 为 ZeRO-2/3 离线 checkpoint consolidation 增加 `zero_to_torch.py` 和 Python API，可直接导出 float32、float16 或 bfloat16 PyTorch weights，同时保持原有 `zero_to_fp32.py` 行为。",
+  situation: "ZeRO checkpoint 离线恢复长期默认导出 FP32 权重；当目标部署或继续处理只需要 FP16/BF16 时，导出文件体积、shard 规划和后续搬运成本会被 FP32 口径放大。",
+  target: "在不破坏既有 FP32 恢复脚本兼容性的前提下，让用户显式选择导出 dtype，并让 shard 规划与实际序列化使用同一目标精度。",
+  action: "新增 `deepspeed/utils/zero_to_torch.py` CLI，要求 `--dtype` 为 float32/float16/bfloat16；新增 `convert_zero_checkpoint_to_state_dict(...)` Python API；保存 DeepSpeed checkpoint 时同时复制 `zero_to_fp32.py` 与 `zero_to_torch.py`；转换时先重建 ZeRO master weights，再按目标 dtype 转换每个 output shard。",
+  result: "官方 commit 报告单元测试覆盖 dtype 校验、FP16/BF16 转换、shared tensor alias、checkpoint 文件和 CLI 参数；两张 RTX 4090 的 ZeRO-3 端到端验证中，BF16 输出 203,803 bytes、FP32 输出 405,019 bytes，BF16/FP32 为 50.32%，最大绝对误差 0.0002441，shared-weight alias 保留。",
+  mechanism: "ZeRO-2/3 checkpoint consolidation + target-dtype tensor materialization + dtype-aware shard planning + backward-compatible FP32 wrapper。",
+  bestFor: "训练后需要把 ZeRO checkpoint 转成 Hugging Face / PyTorch 权重，且目标推理、分发或下游处理采用 FP16/BF16 的大模型工作流。",
+  experiment: "官方 commit 92843ad 的代码、教程、单元测试和 PR validation；端到端样例为 world size 2、两张 RTX 4090、100,600 trainable parameters。它验证功能正确性与文件体积口径，不是大模型统一吞吐或训练性能 benchmark。",
+  computeMemory: "输出文件和 shard 规划可按 FP16/BF16 缩小；但教程明确 lower-precision export 仍先重建 FP32 master weights，因此峰值 CPU 内存仍大于 2× 最终 FP16/BF16 checkpoint 体积。",
+  parallelism: "面向 ZeRO-2/3 data-parallel checkpoint consolidation；保存脚本来自每次 DeepSpeed checkpoint，离线转换不需要 GPU 或原训练配置文件。",
+  limitations: "只支持 float32、float16、bfloat16 输出；不支持 INT8/FP8/量化权重导出。功能改变的是 checkpoint 导出 dtype 与文件体积，不改变训练收敛、模型质量或 ZeRO 运行时显存曲线。",
+  availability: "`zero_to_torch.py`、`convert_zero_checkpoint_to_state_dict(...)`、教程和代码文档已进入 deepspeedai/DeepSpeed commit 92843ad，并随 DeepSpeed v0.19.6 Patch Release 发布。",
+  tags: ["ZeRO", "Checkpoint", "BF16", "FP16", "Model Export"],
+  score: "BF16 output 50.32% of FP32 in official E2E validation",
+  accessedAt: AUGUST_28_DEEPSPEED_ACCESS_DATE,
+  dateBasisNote: "事件日期采用 DeepSpeed commit 92843ad 与 v0.19.6 Patch Release 的发布时间 2026-08-27；`zero.md` 教程文件早已存在，本条只记录该文件的实质修改，不使用官网站点级 Updated。",
+  extraSources: [
+    august28DeepSpeedSource(
+      "deepspeed-zero-dtype-export-commit",
+      "Add configurable dtype for ZeRO checkpoint export",
+      "https://github.com/deepspeedai/DeepSpeed/commit/92843ad706067f0ab551a06a079a8923dcde27b4",
+    ),
+    august28DeepSpeedSource(
+      "deepspeed-zero-dtype-export-pr",
+      "Add configurable dtype for ZeRO checkpoint export",
+      "https://github.com/deepspeedai/DeepSpeed/pull/8318",
+    ),
+    august28DeepSpeedSource(
+      "deepspeed-v0196-release-zero-dtype-export",
+      "DeepSpeed v0.19.6 Patch Release",
+      "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.6",
+    ),
+  ],
+  extraRevisionNotes: [
+    "10 分量表：影响力 2、证据强度 3、新颖性 1、仓库适配度 2，总分 8；满足证据强度至少 2 与总分至少 7 的入库门槛。",
+    "官方教程说明 lower-precision export 仍会先重建 FP32 master weights；因此本条只主张导出文件体积和 shard 规划的改善，不主张降低转换峰值内存到 2× FP16/BF16 文件体积以内。",
     "AI HOT 本轮没有提供该 DeepSpeed 变更；发现来源为 DeepSpeed 官方 GitHub 监控脚本。",
   ],
 });
@@ -942,9 +1016,9 @@ export const deepSpeedTechnologyLanes: TimelineLane[] = [
     id: "training-tech-deepspeed-memory",
     group: "DeepSpeed 专栏 / 01",
     title: "内存与并行编排",
-    description: "ZeRO-Offload、MPS ZeRO、ZeRO++、MixZ++ 与 AutoTP",
+    description: "ZeRO-Offload、MPS ZeRO、ZeRO checkpoint export、ZeRO++、MixZ++ 与 AutoTP",
     color: "amber",
-    events: [zeroOffload, mpsZeroSupport, zeroPlusPlus, mixZeroPlusPlus, autoTp],
+    events: [zeroOffload, mpsZeroSupport, zeroCheckpointDtypeExport, zeroPlusPlus, mixZeroPlusPlus, autoTp],
   },
   {
     id: "training-tech-deepspeed-communication",

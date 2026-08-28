@@ -3500,7 +3500,7 @@ export const historyData: TimelinePageData = {
   page: "history",
   kicker: "Observed / Verified",
   title: "AI 技术历史图谱",
-  intro: "默认进入训练技术图谱；横向按论文、开源发布日或官方教程 Git 首次提交/实质修改时间，纵向比较结构、算法、算子与并行，也可切换 NVIDIA、Huawei Ascend 与其他厂商硬件。DeepSpeed 的 22 个节点分为内存与并行、通信、存储异步、MoE 压缩、观测调优 5 条专栏泳道。每个节点按 STAR 展示动机、目标、实验流程和结果，并回链论文、官方博客、规格页或代码仓。",
+  intro: "默认进入训练技术图谱；横向按论文、开源发布日或官方教程 Git 首次提交/实质修改时间，纵向比较结构、算法、算子与并行，也可切换 NVIDIA、Huawei Ascend 与其他厂商硬件。DeepSpeed 的 23 个节点分为内存与并行、通信、存储异步、MoE 压缩、观测调优 5 条专栏泳道。每个节点按 STAR 展示动机、目标、实验流程和结果，并回链论文、官方博客、规格页或代码仓。",
   windowLabel: "2017—2026 / EVIDENCE SNAPSHOT",
   startDate: "2017-01-01",
   endDate: "2026-12-31",
