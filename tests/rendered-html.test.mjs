@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 51);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 52);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -81,6 +81,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const qwen3827b = modelEvent/);
   assert.match(source, /const qwen38A95b = modelEvent/);
   assert.match(source, /const qwen38FlashNext = modelEvent/);
+  assert.match(source, /const hy4Preview = modelEvent/);
   assert.match(source, /const alpamayo2Super = modelEvent/);
   assert.match(source, /const ling30Flash = modelEvent/);
   assert.match(source, /const grok46 = modelEvent/);
@@ -104,6 +105,9 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Qwen3\.8-27B/);
   assert.match(source, /Qwen3\.8-2\.4T-A95B/);
   assert.match(source, /Qwen3\.8-Flash-Next/);
+  assert.match(source, /Hy4 preview/);
+  assert.match(source, /Gated DSA/);
+  assert.match(source, /IndexCache/);
   assert.match(source, /NVIDIA Alpamayo 2 Super/);
   assert.match(source, /zeta zeros/);
   assert.match(source, /GPT-5\.6-Cyber/);

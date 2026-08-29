@@ -24,6 +24,7 @@ const AUGUST_15_ACCESSED = "2026-08-15";
 const AUGUST_16_ACCESSED = "2026-08-16";
 const AUGUST_26_ACCESSED = "2026-08-26";
 const AUGUST_27_ACCESSED = "2026-08-27";
+const AUGUST_29_ACCESSED = "2026-08-29";
 
 function source(
   id: string,
@@ -223,6 +224,16 @@ function august27Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_27_ACCESSED };
+}
+
+function august29Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_29_ACCESSED };
 }
 
 function latestRunSource(
@@ -1026,6 +1037,63 @@ const qwen38FlashNext = modelEvent({
     "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmta2veap03nmrolwxllvp4ay；发现日期 2026-08-26，本条仅保留 attribution。",
     "日期口径采用 Qwen3.8-Flash-Next GitHub README News 中的 2026-08-26 release 日期；Qwen.ai 博客 URL 为 CSR 壳页，本轮事实以 Hugging Face、GitHub README、config 与技术报告入口为准。",
     "生产 API 名称 Qwen3.8-Flash 与开源权重 Qwen3.8-Flash-Next 分开记录：1M 默认上下文、内置工具和生产特性只归属 QwenCloud API，不写成开源权重能力。",
+  ],
+});
+
+const hy4Preview = modelEvent({
+  id: "hy4-preview",
+  date: "2026-08-27",
+  tier: "frontier",
+  title: "Hy4 preview",
+  organization: "Tencent Hy Team",
+  eyebrow: "当前前沿 / 开放权重 / 770B MoE / 1M",
+  summary:
+    "腾讯混元开放 Hy4 preview 与 Hy4 preview-FP8：官方模型卡披露 770B 主干参数、49B 每 token 激活、78 层 MoE、1M 上下文、Gated DSA + IndexCache 与 iHC；HF 元数据可核验主仓约 779.96B safetensors 参数和约 1.56 TB 存储体积，许可证为 Apache-2.0。",
+  confidence: "高",
+  tags: ["LLM", "MoE", "Open Weights", "Apache-2.0", "Tencent", "Hy4", "Gated DSA", "IndexCache", "iHC", "MTP", "1M"],
+  officialSourceIds: ["hy4-card", "hy4-config", "hy4-hf-api", "hy4-repo", "hy4-fp8-api"],
+  aaSourceId: "hy4-card",
+  sources: [
+    august29Source("hy4-card", "tencent/Hy4-preview", "Tencent Hy Team", "https://huggingface.co/tencent/Hy4-preview", "模型卡"),
+    august29Source("hy4-config", "Hy4-preview config.json", "Tencent Hy Team", "https://huggingface.co/tencent/Hy4-preview/blob/main/config.json", "模型卡"),
+    august29Source("hy4-hf-api", "Hy4-preview Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/tencent/Hy4-preview", "模型卡"),
+    august29Source("hy4-repo", "Tencent-Hunyuan/Hy4-preview", "Tencent Hunyuan", "https://github.com/Tencent-Hunyuan/Hy4-preview", "代码仓"),
+    august29Source("hy4-fp8-api", "Hy4-preview-FP8 Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/tencent/Hy4-preview-FP8", "模型卡"),
+    august29Source("hy4-dsa-paper", "DeepSeek Sparse Attention", "DeepSeek-AI", "https://arxiv.org/abs/2512.02556", "论文"),
+    august29Source("hy4-indexcache-paper", "IndexCache: Accelerating Sparse Attention via Cross-Layer Index Reuse", "Z.ai", "https://arxiv.org/abs/2603.12201", "论文"),
+    august29Source("hy4-aihot", "腾讯混元发布 Hy4 preview 候选", "AI HOT", "https://aihot.virxact.com/items/cmtcjzlxy03f8rodbxqdotbhg", "讲座整理"),
+  ],
+  totalParameters: "770B backbone parameters；主干之外内置 1 层 MTP，10B total。HF API safetensors total = 779,960,992,733 parameters",
+  activeParameters: "49B / token backbone activated parameters；MTP 层另约 0.7B activated",
+  weightSize: "约 1,560.0 GB；HF API usedStorage = 1,560,008,337,568 bytes，主仓含 131 个 safetensors 分片",
+  precision: "主仓几乎全部为 BF16 safetensors，另含少量 F32；官方另发布 Hy4-preview-FP8，HF API 显示 F8_E4M3 / BF16 / U8 混合量化权重",
+  architecture: "78 层 HYV4ForCausalLM decoder；hidden size 6144，64 attention heads，8 KV heads，vocab 120,832，max_position_embeddings 1,048,576",
+  attention: "Gated DeepSeek Sparse Attention；Q compression 2048、KV compression 512、32 indexer heads、index head dim 128、indexer top-k 2048，并用 IndexCache 跨层复用稀疏索引",
+  moe: "第一层 dense FFN，其余 77 层为 MoE；每层 256 routed experts + 1 shared expert，每 token 激活 top-8 routed experts 和 shared expert",
+  otherArchitecture: "iHC (identity Hyper-Connections) 扩展为 4 residual streams；1 native MTP layer 支持 speculative decoding；官方给 vLLM/SGLang 部署 recipe",
+  hardware: "未知；官方未披露训练芯片、服务芯片或评测硬件",
+  hardwareCount: "未知；部署示例使用 tensor parallel size 8，但这是 serving recipe，不是训练规模",
+  dataScale: "未知；模型卡只说在 model size、context length 和 training data 三方面扩展，未披露 token 数",
+  dataDetails: "与腾讯内部软件工程、游戏开发、金融分析、安全专家等生产力数据共建；精确来源、授权结构、语种比例、去重和合成数据占比未知",
+  stages: "预训练 + 更大规模 post-training；具体 SFT、RL、工具调用、verifier、蒸馏和安全训练流程未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "Gated DSA、IndexCache、iHC、MoE routing、native MTP、生产力任务 post-training；优化器、RL 和数据配方未公开",
+  lowPrecision: "公开主权重为 BF16，另有 FP8 量化仓；训练低精度、FP8 校准方式和量化误差表未知",
+  infra: "Hugging Face、ModelScope、GitCode、CNB 和 GitHub 权重/代码入口公开；官方部署推荐 vLLM hy4-preview 镜像或 SGLang hy4-preview 镜像，FP8 serving 配合 TP=8、FLASHMLA_SPARSE 与 speculative decoding",
+  aaIndex: "未知；本轮未发现可稳定引用的 Artificial Analysis 独立 Hy4 页面",
+  aaContext: "官方自报 benchmark 以图片为主，正文可核验的盲测口径为 163 位腾讯内部专家、203 个工程任务：Hy4 preview 平均 2.99/4，略高于 GLM 5.3 2.92 和 Kimi K3 2.94；不是第三方动态榜单",
+  aaSpeed: "未知；官方没有披露 token/s、TTFT 或 TPOT 的可比较绝对值",
+  score: "770B-A49B · 1M · Apache-2.0",
+  breakthroughs: [
+    "Hy4 preview 把 770B/49B MoE 主干、1M 上下文、Gated DSA + IndexCache、iHC 和 native MTP 组合成 Apache-2.0 开放权重模型，具备当前开放前沿观察价值。",
+    "HF 模型卡、config、API 元数据和 GitHub 仓库共同核验开放状态、参数规模、专家拓扑、上下文长度、权重类型和部署入口；MTP 10B/0.7B 与 770B 主干口径保持分开。",
+    "限制条件明确：训练硬件、训练 token、完整 post-training recipe、第三方动态榜单和 benchmark 图片原始数据未公开；内部专家盲测不与 AA 或其它公开榜单混排。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmtcjzlxy03f8rodbxqdotbhg；发现日期 2026-08-28，本条只保留 attribution，不把 AI HOT 摘要作为技术事实。",
+    "日期口径采用 Hugging Face API createdAt 2026-08-27T08:52:40Z；GitHub 仓库 created_at 为 2026-08-27T09:27:34Z，AI HOT selected item 发布时间为 2026-08-28T06:03:48Z。",
+    "模型卡 benchmark 图片没有机器可读完整数字表；本条只记录正文直接披露的内部专家盲测数值和可由 API/config 核验的结构字段。",
   ],
 });
 
@@ -3515,7 +3583,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note],
     },
     {
       id: "t2i-training",
