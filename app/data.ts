@@ -25,6 +25,7 @@ const AUGUST_16_ACCESSED = "2026-08-16";
 const AUGUST_26_ACCESSED = "2026-08-26";
 const AUGUST_27_ACCESSED = "2026-08-27";
 const AUGUST_29_ACCESSED = "2026-08-29";
+const AUGUST_30_ACCESSED = "2026-08-30";
 
 function source(
   id: string,
@@ -234,6 +235,16 @@ function august29Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_29_ACCESSED };
+}
+
+function august30Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: AUGUST_30_ACCESSED };
 }
 
 function latestRunSource(
@@ -1960,23 +1971,29 @@ const glm53 = modelEvent({
   organization: "Z.ai",
   eyebrow: "当前前沿 / Coding & Agents / Post-training",
   summary:
-    "Z.ai 发布 GLM-5.3：官方文档称它与 GLM-5.2 使用同一 base model，提升来自 post-training；面向复杂软件工程和 Agent 任务，支持 1M 上下文、128K 最大输出，并在 Terminal-Bench 3.0、DeepSWE v1.1、Agents' Last Exam、GDPval-AA v2 与 CyberGym 等官方口径中给出相对 GLM-5.2 的提升。",
+    "Z.ai 发布 GLM-5.3：官方文档称它与 GLM-5.2 使用同一 base model，提升来自 post-training；2026-08 下旬又公开 GLM-5.3 HF 权重仓，HF API 可核验约 753.33B safetensors 参数、约 755.66GB 存储和以 FP8 为主体的权重形态。",
   confidence: "中",
-  tags: ["LLM", "MoE", "Coding", "Agentic", "Cybersecurity", "Post-training", "1M", "Z.ai"],
-  officialSourceIds: ["glm53-docs", "glm53-blog", "glm52-blog"],
+  tags: ["LLM", "MoE", "Coding", "Agentic", "Cybersecurity", "Post-training", "Open Weights", "FP8", "1M", "Z.ai"],
+  officialSourceIds: ["glm53-docs", "glm53-blog", "glm52-blog", "glm53-card", "glm53-config", "glm53-hf-api", "glm53-license"],
   sources: [
     august15Source("glm53-docs", "GLM-5.3", "Z.ai", "https://docs.z.ai/guides/llm/glm-5.3", "官方博客"),
     august15Source("glm53-blog", "GLM-5.3", "Z.ai", "https://z.ai/blog/glm-5.3", "官方博客"),
     august15Source("glm52-blog", "GLM-5.2", "Z.ai", "https://z.ai/blog/glm-5.2", "官方博客"),
+    august30Source("glm53-card", "zai-org/GLM-5.3", "Z.ai", "https://huggingface.co/zai-org/GLM-5.3", "模型卡"),
+    august30Source("glm53-config", "GLM-5.3 config.json", "Z.ai", "https://huggingface.co/zai-org/GLM-5.3/blob/main/config.json", "模型卡"),
+    august30Source("glm53-hf-api", "GLM-5.3 Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/zai-org/GLM-5.3", "模型卡"),
+    august30Source("glm53-license", "GLM-5.3 License", "Z.ai", "https://huggingface.co/zai-org/GLM-5.3/blob/main/LICENSE", "模型卡"),
     august15Source("glm53-aihot", "GLM-5.3 发布候选", "AI HOT", "https://aihot.virxact.com/items/cmssir12d047oroffnpn5pcx1", "讲座整理"),
+    august30Source("glm53-open-aihot", "GLM-5.3 开放权重候选", "AI HOT", "https://aihot.virxact.com/items/cmtd32q060c3vroq546ccqp7r", "讲座整理"),
+    august30Source("glm53-open-aihot-follow", "GLM-5.3 开放权重跟进候选", "AI HOT", "https://aihot.virxact.com/items/cmtdxtxi809gyro2m2zykqzli", "讲座整理"),
   ],
-  totalParameters: "与 GLM-5.2 使用同一 base model；GLM-5.2 官方披露为 753B 总参数。本轮未找到 GLM-5.3 独立权重或模型卡重新确认参数。",
-  activeParameters: "与 GLM-5.2 使用同一 base model；GLM-5.2 官方披露为 40B / token。本轮未找到 GLM-5.3 独立模型卡重新确认 active-parameter 口径。",
-  weightSize: "未知；官方文档称 GLM-5.3 API coming soon、已向 GLM Coding Plan 用户开放，本轮未找到可匿名访问的 GLM-5.3 权重仓或文件清单",
-  precision: "未知；官方未披露 GLM-5.3 post-training 或推理精度",
-  architecture: "沿用 GLM-5.2 base model 的闭源/未独立发布版本；官方把本轮提升归因于 post-training，而不是 base 架构改变",
-  attention: "未知；若沿用 GLM-5.2 base 则应继承其 DSA/IndexShare 等机制，但 GLM-5.3 文档没有逐项重新披露 attention、KV cache 或长上下文实现",
-  moe: "与 GLM-5.2 同 base model 的 MoE 口径；GLM-5.3 未独立披露专家数量、top-k 或 shared expert 细节",
+  totalParameters: "HF API safetensors total = 753,329,940,480 parameters；与 GLM-5.2 同 base model 的 753B 官方口径一致",
+  activeParameters: "与 GLM-5.2 使用同一 base model；GLM-5.2 官方披露为 40B / token。GLM-5.3 HF config 未直接给出 active-parameter 总和",
+  weightSize: "HF API usedStorage = 755,663,627,013 bytes，约 755.66 GB；文件清单包含 141 个 safetensors 分片",
+  precision: "HF API 显示 F8_E4M3 751,226,191,872 parameters、BF16 2,103,729,152 parameters、F32 19,456 parameters；config dtype 为 bfloat16，并带 FP8 quantization_config",
+  architecture: "GlmMoeDsaForCausalLM / glm_moe_dsa decoder-only MoE；官方仍称 GLM-5.3 与 GLM-5.2 使用同一 base model，能力提升来自 post-training",
+  attention: "HF config 披露 78 层、64 attention heads / 64 KV heads、q_lora_rank 2048、kv_lora_rank 512、index_topk 2048 与 shared/full indexer pattern；具体 DSA 训练收益仍以 GLM-5 报告和官方说明为边界",
+  moe: "HF config 披露 256 routed experts + 1 shared expert，top-8；前 3 层 dense，其余为 sparse MoE；GLM-5.2 官方仍是 40B/token 激活口径",
   otherArchitecture: "官方披露输入/输出均为 text，context length 1M，maximum output tokens 128K，支持 thinking mode、streaming、function calling、context caching、structured output 与 MCP",
   hardware: "未知",
   hardwareCount: "未知",
@@ -1986,8 +2003,8 @@ const glm53 = modelEvent({
   stageDurations: "未知",
   totalDuration: "未知",
   algorithms: "Post-training scaling through real-world expert workflows；具体 SFT/RL、verifier、agentic tool-use 或安全训练配方未知",
-  lowPrecision: "未知",
-  infra: "已向 GLM Coding Plan 用户开放；API coming soon。官方未披露服务并行、推理硬件、限流、价格或开放权重发布时间",
+  lowPrecision: "公开 HF 权重主体为 FP8 E4M3；训练低精度、后训练精度和校准细节未知",
+  infra: "HF 模型卡列出 SGLang、vLLM、TokenSpeed、Transformers、KTransformers、Unsloth 与 Ascend NPU 部署入口；未披露 Z.ai 在线服务并行、推理硬件、限流或价格",
   aaIndex: "未知；本轮未发现可稳定引用的 Artificial Analysis GLM-5.3 独立页",
   aaContext: "官方 benchmark 口径：Terminal-Bench 3.0 从 4.6 到 28.3，DeepSWE v1.1 从 46.2 到 66.9，Agents' Last Exam 从 23.8 到 28.5，GDPval-AA v2 为 1769；这些是 Z.ai 文档给出的同系列/官方口径，非第三方动态榜单快照",
   aaSpeed: "未知",
@@ -1995,12 +2012,13 @@ const glm53 = modelEvent({
   breakthroughs: [
     "GLM-5.3 明确把能力跃迁归因于 post-training，而非重新训练 base model，这为同一大模型基座上的工程/agent/cyber 后训练扩展提供了可追踪事件。",
     "官方披露 DeepSWE v1.1、Terminal-Bench 3.0、Agents' Last Exam、GDPval-AA v2 与 CyberGym 等任务指标相对 GLM-5.2 大幅提升，尤其 DeepSWE v1.1 达 66.9。",
-    "当前证据限制：未找到独立模型卡、开放权重、第三方动态榜单、训练数据或 post-training recipe；因此参数字段只标注同 GLM-5.2 base 的继承口径，不能写成 GLM-5.3 独立公开权重事实。",
+    "2026-08-30 复核时已找到独立 HF 权重仓、config、license 与 HF metadata，可把开放状态、参数规模、FP8 权重形态和部署入口从未知修订为已披露；post-training recipe、训练数据和硬件仍未知。",
   ],
   notes: [
     "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmssir12d047oroffnpn5pcx1；发现日期 2026-08-14，本条仅保留 attribution。",
-    "日期口径采用 Z.ai GLM-5.3 docs dateModified 2026-08-14T09:54:45.404Z 和 AI HOT selected item 2026-08-14T05:31:04Z；博客壳页面可访问但正文事实以 docs MDX 为准。",
-    "官方文档称 #1 open-source model，但本轮未找到稳定 GLM-5.3 权重仓；开放状态在比较目录中记为 pending，避免把可用性写过头。",
+    "Open-weight AI HOT discovery/canonical: https://aihot.virxact.com/items/cmtd32q060c3vroq546ccqp7r 与 https://aihot.virxact.com/items/cmtdxtxi809gyro2m2zykqzli；发现日期 2026-08-30，本条仅保留 attribution。",
+    "日期口径采用 Z.ai GLM-5.3 docs dateModified 2026-08-14T09:54:45.404Z 作为首发公开日；HF API createdAt 2026-08-25T06:42:50Z 和 lastModified 2026-08-29T09:51:13Z 只作为开放权重仓口径，不改写模型首发日。",
+    "许可证允许使用、复制、修改、分发、再许可与销售，但 Model-as-a-Service 业务且连续 12 个月合计营收超过 100 亿美元的被许可方须先通过 Z.AI 安全审查；因此不标为 MIT/Apache。",
   ],
 });
 

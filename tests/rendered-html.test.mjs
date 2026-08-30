@@ -121,6 +121,8 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Gemini 3\.5 Transcribe/);
   assert.match(source, /MiniMax Music 3\.0/);
   assert.match(source, /GLM-5\.3/);
+  assert.match(source, /GLM-5\.3 License/);
+  assert.match(source, /753,329,940,480 parameters/);
   assert.match(source, /GLM-5\.3-Flash/);
   assert.match(source, /dots3-note Preview/);
   assert.match(source, /LTX-2\.5/);
