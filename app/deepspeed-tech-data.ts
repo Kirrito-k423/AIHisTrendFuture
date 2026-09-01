@@ -15,6 +15,7 @@ const TODAY_DEEPSPEED_ACCESS_DATE = "2026-08-24";
 const CURRENT_FRONTIER_DEEPSPEED_ACCESS_DATE = "2026-08-25";
 const AUGUST_27_DEEPSPEED_ACCESS_DATE = "2026-08-27";
 const AUGUST_28_DEEPSPEED_ACCESS_DATE = "2026-08-28";
+const SEPTEMBER_01_DEEPSPEED_ACCESS_DATE = "2026-09-01";
 
 interface DeepSpeedMethod {
   id: string;
@@ -146,6 +147,21 @@ function august28DeepSpeedSource(
   };
 }
 
+function september1DeepSpeedSource(
+  id: string,
+  title: string,
+  url: string,
+): Source {
+  return {
+    id,
+    title,
+    publisher: "deepspeedai/DeepSpeed",
+    url,
+    type: "代码仓",
+    accessedAt: SEPTEMBER_01_DEEPSPEED_ACCESS_DATE,
+  };
+}
+
 function disclosedFact(label: string, value: string, sourceIds: string[]): Fact {
   return { label, value, sourceIds, status: "已披露" };
 }
@@ -240,14 +256,14 @@ const zeroOffload = deepSpeedEvent({
   situation: "ZeRO 分片仍受 GPU 总显存约束，尤其 Adam 的 FP32 状态与更新计算占用显著。",
   target: "用 CPU 内存扩展单机可训练模型规模，并尽量保持 GPU 计算吞吐。",
   action: "把 optimizer state 和 optimizer step 放到 CPU，使用 pinned memory、CPU Adam 与分区参数/梯度的数据移动连接 GPU 训练。",
-  result: "论文和教程证明单 GPU 也能训练十亿级以上模型；收益依赖 CPU、PCIe、NUMA 与计算通信重叠。",
-  mechanism: "GPU 计算 + CPU optimizer/offload + 分块传输和重叠。",
+  result: "论文和教程证明单 GPU 也能训练十亿级以上模型；2026-08-31 官方 commit 为 AArch64 SVE CPU 增加 FP32 DeepSpeedCPUAdam 向量化路径，在 1B/2B/4B 参数官方微基准中较 scalar CPU-Adam 为 1.30×/1.50×/1.55×。收益依赖 CPU、PCIe、NUMA、dtype 与计算通信重叠。",
+  mechanism: "GPU 计算 + CPU optimizer/offload + 分块传输和重叠；CPUAdam 在 x86 AVX2/AVX-512 与 AArch64 SVE 上有手写向量化路径。",
   bestFor: "GPU 显存不足、CPU 内存充足且 PCIe/NUMA 可调优的训练。",
-  experiment: "ZeRO-Offload 论文与 DeepSpeed 官方配置路径；不同硬件结果不可直接外推。",
-  computeMemory: "降低 GPU optimizer-state 占用，但把容量和带宽压力转移到 host RAM 与 PCIe。",
+  experiment: "ZeRO-Offload 论文、DeepSpeed 官方配置路径与 commit 020893e 的 AArch64 SVE CPUAdam microbenchmark；最新 SVE 表为 3 warmup steps、10 timed steps/trial、3 trials median、FP32 parameters/states。",
+  computeMemory: "降低 GPU optimizer-state 占用，但把容量和带宽压力转移到 host RAM、PCIe 与 CPU SIMD/内存带宽。",
   parallelism: "ZeRO data parallel，可与 TP/PP 组合。",
-  limitations: "CPU 算力、内存带宽和 PCIe 暴露会成为瓶颈；不是免费显存。",
-  availability: "DeepSpeed `zero_optimization.offload_optimizer` 配置可用。",
+  limitations: "CPU 算力、内存带宽和 PCIe 暴露会成为瓶颈；不是免费显存。AArch64 SVE 路径只覆盖 FP32 DeepSpeedCPUAdam，其他 dtype 和不支持 SVE 的 Arm CPU 仍走 scalar 实现；官方未披露端到端训练吞吐收益。",
+  availability: "DeepSpeed `zero_optimization.offload_optimizer` 配置可用；AArch64 SVE CPUAdam kernel 已进入 DeepSpeed commit 020893e，zero-offload 教程说明 SVE CPU 会自动使用 FP32 kernel。",
   tags: ["ZeRO-Offload", "CPU Offload", "Adam"],
   paper: {
     id: "zero-offload-paper",
@@ -255,6 +271,17 @@ const zeroOffload = deepSpeedEvent({
     publisher: "USENIX ATC",
     url: "https://arxiv.org/abs/2101.06840",
   },
+  extraSources: [
+    september1DeepSpeedSource(
+      "deepspeed-cpuadam-sve-commit",
+      "feat(cpu-adam): add ARM SVE update kernel",
+      "https://github.com/deepspeedai/DeepSpeed/commit/020893ef82e4af83ea12619d0fffa379da60f76a",
+    ),
+  ],
+  extraRevisionNotes: [
+    "2026-08-31 官方 commit 020893e 为 `DeepSpeedCPUAdam` 添加 vector-length-agnostic ARM SVE update kernel、AArch64/SVE build detection、strict state-update tests 和 zero-offload 教程说明；本次作为 ZeRO-Offload CPU optimizer 路径修订，不新增独立技术节点。",
+    "10 分量表：影响力 2、证据强度 3、新颖性 1、仓库适配度 2，总分 8；满足证据强度至少 2 与总分至少 7 的修订门槛。",
+  ],
 });
 
 const mpsZeroSupport = deepSpeedEvent({
@@ -265,18 +292,18 @@ const mpsZeroSupport = deepSpeedEvent({
   tutorialFile: "accelerator-setup-guide.md",
   category: "并行方案",
   family: "并行系统",
-  summary: "为 Apple Silicon 的 PyTorch MPS backend 增加 DeepSpeed 训练路径，官方教程标注单设备训练、ZeRO stage 0-3、fp32/fp16/bf16、Metal FusedAdam 与 ZeRO-Offload / DeepSpeedCPUAdam 可用。",
+  summary: "为 Apple Silicon 的 PyTorch MPS backend 增加 DeepSpeed 训练路径，官方教程标注单设备训练、ZeRO stage 0-3、fp32/fp16/bf16、Metal FusedAdam 与 ZeRO-Offload / DeepSpeedCPUAdam 可用；2026-08-31 起官方 CI 覆盖 MPS 单元测试并要求 torch>=2.5。",
   situation: "DeepSpeed 原有 MPS accelerator 路径不完整，gloo 无法直接对 MPS tensor 做 collective，ZeRO 梯度范数默认 fp64 也不适用于不支持 fp64 的 MPS。",
   target: "让 Apple Silicon Mac 可以作为 DeepSpeed 训练设备运行 ZeRO 0-3，并明确 macOS、dtype、collective、offload 和多设备边界。",
   action: "把 MPS communication backend 设为 gloo，并在 collective 前后通过 CPU staging 处理 MPS tensor；新增 MPS op builder、Metal FusedAdam shader 与 MPS CPUAdam builder；ZeRO norm 根据 accelerator fp64 支持在 fp64/fp32 间选择；教程补充安装、启动、offload 和限制。",
   result: "官方 commit 与测试把 MPS 识别、ZeRO stages 0-3、fp16/bf16、Metal FusedAdam、DeepSpeedCPUAdam / ZeRO-Offload 和 spawn 测试路径纳入仓库；教程说明已在 Apple M5 Max / macOS 26 上验证。没有披露端到端吞吐、显存上限或跨机器稳定性。",
   mechanism: "MPS accelerator adapter + gloo CPU-staged collectives + Metal FusedAdam + C++ DeepSpeedCPUAdam ZeRO-Offload + ZeRO fp32 norm fallback。",
   bestFor: "Apple Silicon 单机单设备上的 DeepSpeed 开发、功能验证和小规模本地训练。",
-  experiment: "官方 commit 64fcec6 / PR #8293 与 commit 715965e / PR #8300 的代码、教程和新增测试；硬件验证口径为 Apple M5 Max / macOS 26，性能需按具体 Mac、PyTorch 和模型重新测量。",
+  experiment: "官方 commit 64fcec6 / PR #8293、commit 715965e / PR #8300 与 commit ba3246d / PR #8335 的代码、教程、MPS CI workflow 和新增测试；硬件验证口径为 Apple M5 Max / macOS 26，性能需按具体 Mac、PyTorch 和模型重新测量。",
   computeMemory: "利用 Apple unified memory 和 MPS recommended working set；collective 需要 CPU staging copy。MPS 没有 fp64，ZeRO gradient norm 在该 backend 改用 fp32。ZeRO-Offload 不增加总 DRAM 容量，但可让 optimizer states 处于 Metal per-process GPU working-set budget 之外。",
   parallelism: "单 MPS device；ZeRO stage 0-3 可用。PyTorch MPS 每机暴露一个 device，单 Mac 多设备 data parallel 不可用，跨机器 gloo 未测试。",
-  limitations: "ZeRO-Offload 依赖 C++ `DeepSpeedCPUAdam` JIT；Apple clang 无 OpenMP，未安装 Homebrew `libomp` 时 CPUAdam 单线程。无原生 MPS collective backend；无用户可见 stream，不能重叠通信与计算；bf16 需要 macOS 14 或更新版本；吞吐和大模型规模未披露。",
-  availability: "DeepSpeed `DS_ACCELERATOR=mps` 安装和 `deepspeed --num_gpus 1` 启动路径已写入 accelerator setup guide；ZeRO 0-3 with or without ZeRO-Offload、Metal FusedAdam 与 CPUAdam builder 已在官方主分支，并已随 DeepSpeed v0.19.6 Patch Release 发布。",
+  limitations: "ZeRO-Offload 依赖 C++ `DeepSpeedCPUAdam` JIT；Apple clang 无 OpenMP，未安装 Homebrew `libomp` 时 CPUAdam 单线程。无原生 MPS collective backend；无用户可见 stream，不能重叠通信与计算；bf16 需要 macOS 14 或更新版本；MPS accelerator 现在要求 torch>=2.5，Metal fused Adam kernel 需要 torch 2.7+；吞吐和大模型规模未披露。",
+  availability: "DeepSpeed `DS_ACCELERATOR=mps` 安装和 `deepspeed --num_gpus 1` 启动路径已写入 accelerator setup guide；ZeRO 0-3 with or without ZeRO-Offload、Metal FusedAdam 与 CPUAdam builder 已在官方主分支，并已随 DeepSpeed v0.19.6 Patch Release 发布；MPS CI workflow 已在 macos-15 runner 上安装最新 PyTorch 并运行 accelerator、Adam、comm 和 config 单元测试。",
   tags: ["Apple Silicon", "MPS", "ZeRO", "FusedAdam", "gloo"],
   dateBasisNote: "事件日期采用 Apple Silicon (MPS) 小节进入官方 accelerator setup guide 的 commit 日期；该教程文件更早已存在，网页底部 Updated 不作为发布日期。",
   extraSources: [
@@ -305,11 +332,17 @@ const mpsZeroSupport = deepSpeedEvent({
       "DeepSpeed v0.19.6 Patch Release",
       "https://github.com/deepspeedai/DeepSpeed/releases/tag/v0.19.6",
     ),
+    september1DeepSpeedSource(
+      "deepspeed-mps-ci-torch-floor-commit",
+      "Add macOS (MPS) CI workflow and a torch floor check for the MPS accelerator",
+      "https://github.com/deepspeedai/DeepSpeed/commit/ba3246dee9ba674aa4b8bfff114b8f6eca7cfea4",
+    ),
   ],
   extraRevisionNotes: [
     "2026-08-23 官方 commit 64fcec6 修改 `accelerator/mps_accelerator.py`、`deepspeed/comm/torch.py`、ZeRO norm dtype、MPS op builder、accelerator setup guide 和测试；这是 Apple Silicon 可用性边界扩展，不是新的性能纪录。",
     "2026-08-26 官方 commit 715965e 为 Apple Silicon 增加 Metal FusedAdam shader、MPS CPUAdam builder 和 accelerator setup guide 修订；教程从 ZeRO-Offload 尚不可用改为 ZeRO 0-3 可 with or without ZeRO-Offload，但强调 unified memory 下 offload 不增加总内存容量。",
     "2026-08-27 DeepSpeed v0.19.6 Patch Release 将 MPS ZeRO、MPS P2P staging、Metal FusedAdam 与 CPUAdam build 相关 PR 打包发布；本次只修订发布可获得性，不补写未披露的吞吐或模型规模。",
+    "2026-08-31 官方 commit ba3246d 新增 `mps-torch-latest` macOS arm64 CI workflow，并在 MPS accelerator constructor 中对 `torch.mps.recommended_max_memory` 做 torch>=2.5 下限检查；教程安装说明同步从 torch>=2.4 修订为 torch>=2.5，且 torch 2.7+ 才启用 Metal fused Adam kernel。",
     "本条不把 ZeRO-Offload 论文收益外推到 Apple Silicon：官方没有披露 Mac 端吞吐、显存上限或端到端训练规模，只说明 GPU working-set budget 受限时 optimizer states 放在 CPU tensors 可能有帮助。",
     "AI HOT 本轮没有提供该 DeepSpeed 变更；发现来源为 DeepSpeed 官方 GitHub 监控脚本。",
   ],

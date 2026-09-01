@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 52);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 53);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -69,6 +69,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /const claudeOpus5 = modelEvent/);
   assert.match(source, /const maiCyber1Flash = modelEvent/);
   assert.match(source, /const deepseekV4Flash0731 = modelEvent/);
+  assert.match(source, /const deepseekV4FlashVisionExp = modelEvent/);
   assert.match(source, /const inklingSmall = modelEvent/);
   assert.match(source, /const openaiAstra = modelEvent/);
   assert.match(source, /Critical cyber capability level/);
@@ -177,6 +178,7 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /MAI-Cyber-1-Flash/);
   assert.match(source, /MiniMax‑M3/);
   assert.match(source, /DeepSeek V4 Flash 0731/);
+  assert.match(source, /DeepSeek V4 Flash Vision Exp/);
   assert.match(source, /Inkling Small/);
   assert.match(source, /Wan2\.2‑T2V‑A14B/);
   assert.match(source, /Qwen-Image/);
@@ -253,6 +255,7 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /Claude Opus 5/);
   assert.match(html, /MAI-Cyber-1-Flash/);
   assert.match(html, /DeepSeek V4 Flash 0731/);
+  assert.match(html, /DeepSeek V4 Flash Vision Exp/);
   assert.match(html, /OpenAI Astra \(internal\)/);
   assert.match(html, /Inkling Small/);
   assert.match(html, /GLM‑5\.3/);
@@ -480,6 +483,9 @@ test("history includes five source-backed DeepSpeed columns and all 23 requested
   assert.match(dataSource, /zero_to_torch\.py/);
   assert.match(dataSource, /DeepSpeed v0\.19\.6 Patch Release/);
   assert.match(dataSource, /BF16 output 50\.32% of FP32/);
+  assert.match(dataSource, /ARM SVE update kernel/);
+  assert.match(dataSource, /1\.30×\/1\.50×\/1\.55×/);
+  assert.match(dataSource, /torch>=2\.5/);
 
   const response = await render("/history");
   const html = await response.text();

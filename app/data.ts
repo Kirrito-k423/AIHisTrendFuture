@@ -26,6 +26,7 @@ const AUGUST_26_ACCESSED = "2026-08-26";
 const AUGUST_27_ACCESSED = "2026-08-27";
 const AUGUST_29_ACCESSED = "2026-08-29";
 const AUGUST_30_ACCESSED = "2026-08-30";
+const SEPTEMBER_01_ACCESSED = "2026-09-01";
 
 function source(
   id: string,
@@ -245,6 +246,16 @@ function august30Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: AUGUST_30_ACCESSED };
+}
+
+function september1Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: SEPTEMBER_01_ACCESSED };
 }
 
 function latestRunSource(
@@ -1702,6 +1713,73 @@ const deepseekV4Flash0731 = modelEvent({
     "DeepSeek 官方更新说明强调：模型结构、尺寸和 Preview 保持一致，仅重新后训练；本次只升级 Flash API，V4-Pro API 与 App/Web 端未变。",
     "DSBench-FullStack 与 DSBench-Hard 是 DeepSeek 内部测试集；公开基准中的 Code Agent 任务使用即将发布的 DeepSeek Harness minimal mode、max reasoning effort、temperature 1.0、top_p 0.95。",
     "284B/13B 来自 Artificial Analysis 参数口径；官方 HF README 未直接列数，因此与 HF safetensors typed tensor entries 并列说明，不混作同一字段。",
+  ],
+});
+
+const deepseekV4FlashVisionExp = modelEvent({
+  id: "deepseek-v4-flash-vision-exp",
+  date: "2026-08-31",
+  tier: "frontier",
+  title: "DeepSeek-V4-Flash-Vision-Exp",
+  organization: "DeepSeek",
+  eyebrow: "当前前沿 / 开放权重 / VLM / Agentic",
+  summary:
+    "DeepSeek 在 V4-Flash 家族上发布首个实验性多模态开放权重模型，加入 vision encoder 与 aligner 并继续训练；官方模型卡给出 text agent 与 multimodal agent 基准、prompt encoding、最小 PyTorch 推理和 48-shard HF 权重索引。",
+  confidence: "高",
+  tags: ["VLM", "MoE", "CSA", "HCA", "DSpark", "Vision", "Agentic", "1M", "MIT", "Open Weights"],
+  officialSourceIds: [
+    "dsv4-flash-vision-card",
+    "dsv4-flash-vision-config",
+    "dsv4-flash-vision-hf-api",
+    "dsv4-flash-vision-index",
+    "dsv4-flash-vision-deepswe",
+    "dsv4-flash-vision-terminal",
+    "dsv4-flash-vision-inference",
+  ],
+  sources: [
+    september1Source("dsv4-flash-vision-card", "deepseek-ai/DeepSeek-V4-Flash-Vision-Exp", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp", "模型卡"),
+    september1Source("dsv4-flash-vision-config", "DeepSeek-V4-Flash-Vision-Exp config.json", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/blob/main/config.json", "模型卡"),
+    september1Source("dsv4-flash-vision-hf-api", "DeepSeek-V4-Flash-Vision-Exp Hugging Face metadata", "Hugging Face", "https://huggingface.co/api/models/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp", "模型卡"),
+    september1Source("dsv4-flash-vision-index", "DeepSeek-V4-Flash-Vision-Exp safetensors index", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/blob/main/model.safetensors.index.json", "模型卡"),
+    september1Source("dsv4-flash-vision-deepswe", "DeepSeek-V4-Flash-Vision-Exp DeepSWE eval result", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/blob/main/.eval_results/deep-swe.yaml", "模型卡"),
+    september1Source("dsv4-flash-vision-terminal", "DeepSeek-V4-Flash-Vision-Exp Terminal Bench 2.1 eval result", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/blob/main/.eval_results/terminal-bench-2.1.yaml", "模型卡"),
+    september1Source("dsv4-flash-vision-inference", "DeepSeek-V4-Flash-Vision-Exp minimal inference", "DeepSeek", "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp/blob/main/inference/README.md", "模型卡"),
+    september1Source("dsv4-flash-vision-report", "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence", "DeepSeek-AI", "https://arxiv.org/abs/2606.19348", "技术报告"),
+    september1Source("dsv4-flash-vision-aihot", "DeepSeek-V4-Flash-Vision-Exp 模型已开源", "AI HOT", "https://aihot.virxact.com/items/cmth7tmq2067orodmh6g0sxie", "讲座整理"),
+  ],
+  totalParameters: "未知；模型卡只说明基于 DeepSeek-V4-Flash 架构加入视觉模块，未披露该 Vision-Exp checkpoint 的总参数",
+  activeParameters: "未知；官方未披露加入视觉模块后的每 token 激活参数口径",
+  weightSize: "约 167.811 GB；HF safetensors index metadata total_size = 167,811,372,792 bytes，48 个权重 shard",
+  precision: "HF 标签含 8-bit / FP8；config 标记 torch_dtype bfloat16、expert_dtype fp4、FP8 E4M3 dynamic activation 与 ue8m0 scale",
+  architecture: "43 层 DeepSeek-V4 causal LM 主干加入视觉模块；hidden 4,096、64 attention heads、1 KV head、最大位置 1,048,576；vision encoder 为 32 层、hidden 1,024、16 heads、patch size 14",
+  attention: "继承 DeepSeek-V4 家族 CSA/HCA 与 DFlash 路径；config 暴露 Q-LoRA/O-LoRA rank 1024、sliding window 128、compress ratios 和 DSpark target layers",
+  moe: "256 routed experts + 1 shared expert，top-6；视觉模块本身是 dense vision encoder + aligner，官方未给出视觉侧参数量",
+  otherArchitecture: "Vision encoder + aligner、OpenAI-style prompt encoding、图文 content blocks 与 `<image>path</image>` TXT 记法；最小推理覆盖 Vision + Aligner、DFlash、MoE、Hyper-Connections 和 DSpark forward path",
+  hardware: "未知；官方未披露训练或继续训练硬件",
+  hardwareCount: "未知",
+  dataScale: "未知；官方只说明 continued training 解锁视觉理解能力",
+  dataDetails: "未知；未披露视觉-文本数据规模、来源、过滤或任务比例",
+  stages: "DeepSeek-V4-Flash 架构基座 + 视觉模块 + continued training；SFT/RL/agentic post-training 细节未知",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "DeepSeek-V4 家族 MoE、DFlash、Hyper-Connections、DSpark 与视觉模块继续训练；具体多模态 RL 或 reward 配方未知",
+  lowPrecision: "专家权重 FP4，activation FP8 E4M3 dynamic；训练低精度策略未披露",
+  infra: "HF 仓库提供 tokenizer、prompt encoding reference、最小 PyTorch inference、checkpoint conversion 和 TXT/JSON 等价视觉 prompt 示例；生产 serving、并发和吞吐未披露",
+  aaIndex: "未知；未进入本轮 Artificial Analysis 动态榜单核验",
+  aaContext: "官方 config 最大位置 1,048,576；模型卡 text agent 评测使用 DeepSeek Harness minimal mode、max reasoning effort、temperature 1.0、top_p 0.95",
+  aaSpeed: "未知；官方未披露在线输出速度或端到端视觉推理吞吐",
+  score: "TB 83.9 · DeepSWE 59.3 · ApexBench 36.5",
+  breakthroughs: [
+    "DeepSeek-V4-Flash 家族首次公开多模态实验权重，模型卡明确加入 visual modules 与 continued training，并以 MIT 许可开放 HF 仓库。",
+    "官方给出多模态 agent 基准：ApexBench Pass@1 36.5、Agents' Last Exam 27.3、Chartography 64.3、ZeroBench Pass@5 35.0；其中 Agents' Last Exam 与 ZeroBench 在该表口径高于 Opus-4.8。",
+    "仓库不只发布模型卡，还包含 OpenAI-style prompt encoding、最小 PyTorch 推理、checkpoint conversion 和图文 prompt 等价测试路径，便于复核输入格式和基础推理边界。",
+  ],
+  notes: [
+    "10 分量表：影响力 2、证据强度 3、新颖性 2、仓库适配度 2，总分 9；满足证据强度至少 2 与总分至少 7 的入库门槛。",
+    "日期口径采用 Hugging Face metadata 的 lastModified 2026-08-31T12:23:00Z 与 AI HOT 发现日期；不把 2026-07-31 的文本版 Flash-0731 发布日混写为 Vision-Exp 发布日。",
+    "模型卡 benchmark 表中的 Opus-4.8 是 DeepSeek 给出的比较基线；本条只记录其官方评测表，不把不同 agent framework 或私有评测集合外推成通用 SOTA。",
+    "DeepSeek-V4 技术报告只用于解释家族 CSA/HCA/DSpark 背景；该报告没有披露 Vision-Exp 的视觉模块训练数据、训练硬件或完整参数量。",
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmth7tmq2067orodmh6g0sxie；发现日期 2026-09-01，本条仅用其保留发现 attribution。",
   ],
 });
 
@@ -3601,7 +3679,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note, deepseekV4FlashVisionExp],
     },
     {
       id: "t2i-training",
