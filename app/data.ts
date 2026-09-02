@@ -27,6 +27,7 @@ const AUGUST_27_ACCESSED = "2026-08-27";
 const AUGUST_29_ACCESSED = "2026-08-29";
 const AUGUST_30_ACCESSED = "2026-08-30";
 const SEPTEMBER_01_ACCESSED = "2026-09-01";
+const SEPTEMBER_02_ACCESSED = "2026-09-02";
 
 function source(
   id: string,
@@ -256,6 +257,16 @@ function september1Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: SEPTEMBER_01_ACCESSED };
+}
+
+function september2Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: SEPTEMBER_02_ACCESSED };
 }
 
 function latestRunSource(
@@ -2479,6 +2490,70 @@ const claudeOpus5 = modelEvent({
   ],
 });
 
+const claudeFable51 = modelEvent({
+  id: "claude-fable-5-1",
+  date: "2026-09-01",
+  tier: "frontier",
+  title: "Claude Fable 5.1",
+  organization: "Anthropic",
+  eyebrow: "当前前沿 / Fable tier / 1M Context",
+  summary:
+    "Anthropic 发布 Claude Fable 5.1 与 Claude Mythos 5.1：二者是同一底层模型但安全边界不同。Fable 5.1 面向通用编码、知识工作和长时程 agentic tasks，官方文档披露 1M context、128K max output、adaptive thinking always on、API 价格 $10/$50；AA 2026-09-02 动态页测得约 65.65 Intelligence，位于当日总榜前列。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Claude", "Fable", "1M", "Agentic", "Coding", "API"],
+  officialSourceIds: ["claude-fable51-launch", "claude-fable51-docs", "claude-fable51-system-card"],
+  aaSourceId: "claude-fable51-aa",
+  sources: [
+    september2Source("claude-fable51-launch", "Introducing Claude Fable 5.1 and Claude Mythos 5.1", "Anthropic", "https://www.anthropic.com/claude-fable-and-mythos-5-1", "官方博客"),
+    september2Source("claude-fable51-docs", "Claude Fable 5.1", "Anthropic", "https://platform.claude.com/docs/en/models/fable-5-1/overview", "官方博客"),
+    september2Source("claude-fable51-system-card", "Claude Fable 5.1 & Claude Mythos 5.1 System Card", "Anthropic", "https://www.anthropic.com/claude-fable-5-1-mythos-5-1-system-card", "技术报告"),
+    september2Source("claude-fable51-aa", "Claude Fable 5.1 (max with fallback)", "Artificial Analysis", "https://artificialanalysis.ai/models/claude-fable-5-1", "第三方测量"),
+    september2Source("claude-fable51-aihot-release", "Anthropic 发布 Claude Fable 5.1 与 Claude Mythos 5.1", "AI HOT", "https://aihot.virxact.com/items/cmtj04igz04xproel00pt2oju", "讲座整理"),
+    september2Source("claude-fable51-aihot-aa", "Claude Fable 5.1 登顶 Artificial Analysis 智能指数", "AI HOT", "https://aihot.virxact.com/items/cmtj484a00592roh9jjdf5xkd", "讲座整理"),
+    september2Source("claude-fable51-aihot-system-card", "Fable 5.1 系统卡披露安全发现", "AI HOT", "https://aihot.virxact.com/items/cmtj2y06p04bwroh9d8oszszo", "讲座整理"),
+  ],
+  totalParameters: "未知",
+  activeParameters: "未知",
+  weightSize: "未知；闭源 API 模型未发布权重",
+  precision: "未知；Anthropic 未披露训练或服务端推理精度",
+  architecture: "闭源 Claude 5.1 系列模型；文本和图像输入、文本输出，Claude API ID 为 claude-fable-5-1",
+  attention: "未知；官方只披露 1M token context 与 128K max output，未公开 attention、KV cache 或长上下文实现",
+  moe: "未知",
+  otherArchitecture: "Adaptive thinking always on；默认 effort 在 Claude Code 为 high，在 Claude Cowork 与 Claude.ai 为 medium；支持 Low/Medium/High/XHigh/Max effort 以调节性能和成本",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；开发者文档披露 reliable knowledge cutoff 与 training data cutoff 均为 2026-06",
+  dataDetails: "未知",
+  stages: "未知；官方只描述相对 Fable 5 的能力、价格、隐私和安全边界更新",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方披露 long-horizon agentic work、reasoning effort 与 fallback/safeguard 行为，不披露训练算法、RL 配方或蒸馏细节",
+  lowPrecision: "未知",
+  infra: "Claude API、Amazon Bedrock、Google Cloud、Microsoft Foundry 与 Claude Platform on AWS 可用；Anthropic docs 显示 Fallback API 为 beta。生产安全边界中，部分 cyber/biology safeguard 触发会回退到 Opus 4.8 或 Opus 5。",
+  aaIndex: "Artificial Analysis Intelligence Index v4.1.1：65.65（Claude Fable 5.1 Adaptive Reasoning, Max Effort, Default Fallback；观察日期 2026-09-02）",
+  aaContext: "1M token context；AA 页面显示 text+image input、text output。Anthropic 公告的官方 benchmark 还给出 Fable 5.1 max：Terminal-Bench-Science 52.6%、Terminal-Bench 55.8%、GDPval-AA v2 with tools 65.0%、OSWorld 2.0 60.9%、AutomationBench 73.4%；Mythos 5.1 在 Terminal-Bench max 为 60.9%，但属受控访问版本。",
+  aaSpeed: "AA 中位输出速度 66.23 output tokens/s；AA 页面同时显示 Intelligence Index 评测消耗约 140M output tokens、cost per Intelligence Index task $3.69",
+  score: "AA 65.65 · 1M context",
+  extraFacts: [
+    fact("模型版本关系", "Claude Fable 5.1 与 Claude Mythos 5.1 是同一底层模型；Fable 5.1 一般可用，Mythos 5.1 仅通过 Anthropic trusted access / Project Glasswing 等受控项目向合格组织开放。", ["claude-fable51-launch", "claude-fable51-docs"]),
+    fact("API 价格", "Input $10/MTok、Output $50/MTok、5m cache write $12.50/MTok、1h cache write $20/MTok、cache read $0.25/MTok；按仓库 7:2:1 cache/input/output 口径折算约 $7.18/MTok。", ["claude-fable51-docs"], "推导", "(7 * 0.25 + 2 * 10 + 1 * 50) / 10 = 7.175"),
+    fact("安全边界", "Fable 5.1 上 Anthropic 放宽了 vulnerability discovery，但不允许 exploit development；在部分 safeguard 触发场景，cybersecurity tasks 由 Opus 4.8 完成，biology tasks 由 Opus 5 完成。", ["claude-fable51-launch", "claude-fable51-system-card"]),
+    fact("发现来源", "AI HOT selected items cmtj04igz04xproel00pt2oju、cmtj484a00592roh9jjdf5xkd 与 cmtj2y06p04bwroh9d8oszszo；canonical 分别为 https://aihot.virxact.com/items/cmtj04igz04xproel00pt2oju、https://aihot.virxact.com/items/cmtj484a00592roh9jjdf5xkd、https://aihot.virxact.com/items/cmtj2y06p04bwroh9d8oszszo。", ["claude-fable51-aihot-release", "claude-fable51-aihot-aa", "claude-fable51-aihot-system-card"]),
+  ],
+  breakthroughs: [
+    "把 Anthropic Fable tier 推到 1M context、128K max output 与 AA 65.65 Intelligence 的组合位置，在 2026-09-02 动态榜单中高于 Claude Opus 5、GPT-5.6 Sol 和 Grok 4.6。",
+    "官方 benchmark 覆盖长时程编码、科学终端任务、OS 操作与知识工作：Fable 5.1 max 在 Terminal-Bench-Science 0.1 为 52.6%，Terminal-Bench 4.0 为 55.8%，AutomationBench 为 73.4%。",
+    "Mythos 5.1 提供同底座但更少 safeguard 的受控版本，说明能力与风险控制被拆成两个发布面；本节点只把 Mythos 数字作为同底座边界，不混入 Fable 一般可用能力。",
+  ],
+  notes: [
+    "AI HOT discovery: https://aihot.virxact.com/items/cmtj04igz04xproel00pt2oju、https://aihot.virxact.com/items/cmtj484a00592roh9jjdf5xkd、https://aihot.virxact.com/items/cmtj2y06p04bwroh9d8oszszo；attribution canonical 同 URL；发现日期 2026-09-02。",
+    "日期口径采用 Anthropic 发布页与开发者文档的 Released: September 1, 2026；AI HOT selected item 发布时间为 2026-09-01T00:00:00Z、2026-09-01T19:43:09Z 和 2026-09-01T20:12:46Z。",
+    "AA Intelligence、速度、成本和排名是动态测量；本条冻结为 2026-09-02 访问快照。AA Agentic Index 页面未在本轮抽取到可稳定数值，保持未知。",
+    "参数量、训练硬件、训练数据规模、训练精度、MoE/attention 结构和训练阶段均未公开，保持未知。",
+    "Fable 5.1 官方 benchmark 部分受 safeguard/fallback 影响；公告明确 safeguard 介入会降低或改变部分任务得分，因此不能把所有分数写成纯单模型无约束能力。",
+  ],
+});
+
 const maiCyber1Flash = modelEvent({
   id: "mai-cyber-1-flash",
   date: "2026-07-27",
@@ -3679,7 +3754,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note, deepseekV4FlashVisionExp],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note, deepseekV4FlashVisionExp, claudeFable51],
     },
     {
       id: "t2i-training",
