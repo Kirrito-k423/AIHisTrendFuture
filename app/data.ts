@@ -28,6 +28,7 @@ const AUGUST_29_ACCESSED = "2026-08-29";
 const AUGUST_30_ACCESSED = "2026-08-30";
 const SEPTEMBER_01_ACCESSED = "2026-09-01";
 const SEPTEMBER_02_ACCESSED = "2026-09-02";
+const SEPTEMBER_03_ACCESSED = "2026-09-03";
 
 function source(
   id: string,
@@ -267,6 +268,16 @@ function september2Source(
   type: Source["type"],
 ): Source {
   return { id, title, publisher, url, type, accessedAt: SEPTEMBER_02_ACCESSED };
+}
+
+function september3Source(
+  id: string,
+  title: string,
+  publisher: string,
+  url: string,
+  type: Source["type"],
+): Source {
+  return { id, title, publisher, url, type, accessedAt: SEPTEMBER_03_ACCESSED };
 }
 
 function latestRunSource(
@@ -863,16 +874,18 @@ const qwen38Max = modelEvent({
   organization: "Alibaba / Qwen",
   eyebrow: "当前前沿 / 2.4T MoE API / 多模态推理",
   summary:
-    "QwenCloud 上线 Qwen3.8-Max：官方模型页披露为 2.4T 参数 MoE，支持文本、图像、视频输入到文本输出，并面向长周期编码、专业任务与视觉理解；权重、技术报告、训练规格和第三方动态榜单分数尚未公开。",
+    "QwenCloud 上线 Qwen3.8-Max，并在 2026-09-02 提供 qwen3.8-max-0902 升级快照：官方页面披露 2.4T 参数 MoE、文本/图像/视频输入到文本输出、1M context、131K 最大输出、262K 最大 reasoning token、thinking mode 与工具生态；权重、技术报告、训练规格和独立 0902 动态榜单仍未公开。",
   confidence: "中",
-  tags: ["LLM", "VLM", "MoE", "QwenCloud", "Coding", "Agentic", "API", "2.4T"],
-  officialSourceIds: ["qwen38-model-page", "qwen38-blog-route"],
+  tags: ["LLM", "VLM", "MoE", "QwenCloud", "Coding", "Agentic", "API", "2.4T", "1M"],
+  officialSourceIds: ["qwen38-model-page", "qwen38-blog-route", "qwen38-max-0902"],
   aaSourceId: "qwen38-aa-leaderboard",
   sources: [
     currentDailySource("qwen38-model-page", "Qwen3.8-Max", "QwenCloud", "https://www.qwencloud.com/models/qwen3.8-max", "官方博客"),
     currentDailySource("qwen38-blog-route", "Qwen blog route for qwen3.8", "Qwen", "https://qwen.ai/blog?id=qwen3.8", "官方博客"),
     currentDailySource("qwen38-aa-leaderboard", "Artificial Analysis LLM leaderboard", "Artificial Analysis", "https://artificialanalysis.ai/leaderboards/models", "第三方测量"),
     currentDailySource("qwen38-aihot", "Qwen3.8-Max 发布候选", "AI HOT", "https://aihot.virxact.com/topics/cmsddp1e11bqcro2ei8qv2xqf", "讲座整理"),
+    september3Source("qwen38-max-0902", "Qwen3.8-Max-0902", "QwenCloud", "https://www.qwencloud.com/models/qwen3.8-max-0902", "官方博客"),
+    september3Source("qwen38-max-0902-aihot", "Qwen3.8-Max-0902 Code Arena 候选", "AI HOT", "https://aihot.virxact.com/items/cmtjimzgx083zrobvekm2zmje", "讲座整理"),
   ],
   totalParameters: "2.4T（QwenCloud 模型页披露为 2.4-trillion-parameter MoE）",
   activeParameters: "未知；官方未披露每 token 激活专家数或 active-parameter 口径",
@@ -881,7 +894,7 @@ const qwen38Max = modelEvent({
   architecture: "2.4T 参数 MoE API 模型；文本、图像、视频输入到文本输出；具体层数、专家数、hidden size、视觉编码器和 tokenizer 未披露",
   attention: "未知；官方未披露 attention、上下文长度、KV cache 或长视频处理机制",
   moe: "MoE；总参数 2.4T，激活参数、专家数量、top-k 和 shared expert 设计未知",
-  otherArchitecture: "官方强调 native visual understanding、long-horizon planning、closed feedback loops、10+ 天编码项目和法律/金融/设计等专业任务；未给 benchmark 明细",
+  otherArchitecture: "官方强调 native visual understanding、long-horizon planning、closed feedback loops、10+ 天编码项目和法律/金融/设计等专业任务；0902 快照进一步描述 coding、collaborative agent 和图表/文档/多模态感知增强，但未给可复核 benchmark 明细",
   hardware: "未知",
   hardwareCount: "未知",
   dataScale: "未知",
@@ -891,19 +904,22 @@ const qwen38Max = modelEvent({
   totalDuration: "未知",
   algorithms: "未知；官方未披露优化器、RL、蒸馏、agentic training 或 verifier 配方",
   lowPrecision: "未知",
-  infra: "QwenCloud Try AI 与 DashScope MultiModalConversation API 可用；模型 ID 为 qwen3.8-max；未披露服务并行、推理硬件、限流或价格的逐 token 口径",
-  aaIndex: "未知；2026-08-05 访问 Artificial Analysis 未找到 Qwen3.8-Max 专页或可比较动态榜单记录",
-  aaContext: "只能记录为官方 API 上线和 2.4T MoE 规格；不能把 AI HOT 标题或 QwenCloud 营销描述等同于 SOTA benchmark",
+  infra: "QwenCloud Try AI、OpenAI-compatible / DashScope API 与 Responses API 可用；模型 ID 为 qwen3.8-max，0902 快照 ID 为 qwen3.8-max-0902、alias qwen3.8-max-2026-09-02。0902 页面披露 input $2/MTok、output $6/MTok、implicit cache input $0.25/MTok、max input 991K、max output 131K、max reasoning 262K、TPM 1M、RPM 15K，并支持 code_interpreter、i2i_search、t2i_search、web_extractor、web_search 等内置工具。",
+  aaIndex: "未知；2026-09-03 访问 Artificial Analysis 未找到 qwen3.8-max-0902 独立页，可见页面仍归在 Qwen3.8 Max 族",
+  aaContext: "只能记录为官方 API 上线、2.4T MoE 规格和 0902 快照能力边界；不能把 AI HOT 的 Code Arena 标题或 QwenCloud 营销描述等同于 SOTA benchmark",
   aaSpeed: "未知",
   score: "2.4T MoE · API live",
   breakthroughs: [
     "QwenCloud 官方页面确认 qwen3.8-max 已可通过 Try AI / API Request 使用，并披露 2.4T MoE 总参数。",
+    "2026-09-02 的 qwen3.8-max-0902 是同一托管旗舰的升级快照，保留 1M context、thinking mode 与完整工具生态，并披露 131K 最大输出、262K 最大 reasoning token、TPM/RPM 和逐 token 价格。",
     "官方能力描述集中在长周期编码、专业工作和原生视觉理解，但没有公开同口径榜单、技术报告或开放权重。",
     "本条按闭源 API 旗舰入库：保留未知字段，等待模型卡、价格页、第三方测量或技术报告补齐。",
   ],
   notes: [
     "AI HOT discovery/canonical: https://aihot.virxact.com/topics/cmsddp1e11bqcro2ei8qv2xqf；本轮仅把 AI HOT 作为候选雷达，不用其摘要替代官方事实。",
+    "2026-09-03 revision discovery/canonical: https://aihot.virxact.com/items/cmtjimzgx083zrobvekm2zmje；本轮将其作为 Qwen3.8-Max 既有节点修订，不创建与 qwen3.8-max 竞争的主记录。",
     "日期口径采用 AI HOT 主题中 Qwen Blog Retrieval 候选最新时间 2026-08-04，并以 2026-08-05 QwenCloud 官方页面可访问作为核验；QwenCloud 静态 meta date 不是发布日。",
+    "0902 快照日期口径采用模型 alias qwen3.8-max-2026-09-02 与 AI HOT selected item 发布时间 2026-09-02T02:57:07Z；QwenCloud meta date 2026-03-17 不是快照发布日期。",
     "Qwen.ai 博客页面在本轮静态抓取中只暴露 /blog?id=qwen3.8 路由和首屏壳，未稳定暴露正文；技术事实来自 QwenCloud 模型页。",
   ],
 });
@@ -2554,6 +2570,173 @@ const claudeFable51 = modelEvent({
   ],
 });
 
+const gemini38Flash = modelEvent({
+  id: "gemini-3-8-flash",
+  date: "2026-09-02",
+  tier: "frontier",
+  title: "Gemini 3.8 Flash",
+  organization: "Google / Google DeepMind",
+  eyebrow: "当前前沿 / Flash API / Coding & Agents",
+  summary:
+    "Google 发布 Gemini 3.8 Flash：定位为最强 Flash workhorse，面向软件工程、agentic tasks 和专业多步推理；官方披露与 3.7 Flash 同 introductory price（$0.75/$3.75 每百万输入/输出 token），AA 2026-09-03 动态页测得 Intelligence 58.68、1M context 和约 302.05 output tokens/s。",
+  confidence: "高",
+  tags: ["LLM", "VLM", "Gemini", "Coding", "Agentic", "API", "1M", "Flash"],
+  officialSourceIds: ["gemini38-blog"],
+  aaSourceId: "gemini38-aa",
+  sources: [
+    september3Source("gemini38-blog", "Introducing Gemini 3.8 Flash and 3.8 Flash Cyber", "Google", "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/", "官方博客"),
+    september3Source("gemini38-aa", "Gemini 3.8 Flash (high)", "Artificial Analysis", "https://artificialanalysis.ai/models/gemini-3-8-flash", "第三方测量"),
+    september3Source("gemini38-aihot", "Google DeepMind 发布 Gemini 3.8 Flash 与 3.8 Flash Cyber 两款新模型", "AI HOT", "https://aihot.virxact.com/items/cmtkbdbti01n8roz5k5kt1g98", "讲座整理"),
+  ],
+  totalParameters: "未知；Google 未披露参数规模",
+  activeParameters: "未知；Google 未披露稠密/MoE 或 active-parameter 口径",
+  weightSize: "未知；闭源 API 模型，无公开权重",
+  precision: "未知；Google 未披露训练或推理精度",
+  architecture: "Gemini 系列闭源多模态 API 模型；官方定位为 most intelligent workhorse Flash model，面向 coding、agentic tasks 和 specialized-domain multi-step reasoning",
+  attention: "未知；官方未披露 attention、KV cache、long-context 或 tool-use 内部机制",
+  moe: "未知；官方未披露稠密/MoE 结构",
+  otherArchitecture: "官方称 3.8 Flash 相对 3.7 Flash 在软件工程、agentic tasks 与关键多步推理上提升；页面给出 DeepSWE v1.1、金融/法律代理、HLE-Verified 等评测展示，但多数数值位于图表或交互资源中，本条仅保留能稳定抽取的文字与 AA 动态指标。",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；官方未披露训练数据规模、模态比例、代码/代理数据来源或过滤口径",
+  dataDetails: "未知",
+  stages: "未知；官方未披露预训练、SFT、RL、tool-use 或 safety training 阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；未披露 coding/agentic training、tool-use RL、verifier 或 distillation 配方",
+  lowPrecision: "未知",
+  infra: "Gemini API / AI Studio / Google Antigravity 等 Google 开发者入口可用；introductory price 为 $0.75/1M input tokens 与 $3.75/1M output tokens，到 2026-12-31 截止，2027-01-01 起为 $1.50/$7.50",
+  aaIndex: "Artificial Analysis Intelligence Index v4.1.1：58.68（Gemini 3.8 Flash high；观察日期 2026-09-03）",
+  aaContext: "AA 页面显示 text+image+video input、text output、1M context；官方页面称 DeepSWE v1.1 上 3.8 Flash 以较低成本超过多数更大 frontier models，但未在可抽取正文中给出完整同表数值",
+  aaSpeed: "AA 中位输出速度 302.05 output tokens/s；AA 动态测量，观察日期 2026-09-03",
+  score: "AA 58.68 · 302 tok/s",
+  extraFacts: [
+    fact("API 价格", "Introductory price 为 input $0.75/MTok、output $3.75/MTok；2027-01-01 起为 input $1.50/MTok、output $7.50/MTok。", ["gemini38-blog"]),
+    fact("发现来源", "AI HOT selected item cmtkbdbti01n8roz5k5kt1g98；canonical 为 https://aihot.virxact.com/items/cmtkbdbti01n8roz5k5kt1g98。", ["gemini38-aihot"]),
+  ],
+  breakthroughs: [
+    "Google 在 3.7 Flash 后三周发布第三个 Flash 迭代，官方定位为当前最强 reasoning/coding Flash workhorse，且维持 3.7 Flash 的 introductory price。",
+    "AA 2026-09-03 动态测量给出 58.68 Intelligence 与约 302 output tokens/s，使其在高速度 Flash 价格带进入前沿候选。",
+    "参数、训练数据、训练硬件和完整官方 benchmark 表未公开；SOTA 判断限定在 Google 官方同系列定位与 AA 动态观察。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmtkbdbti01n8roz5k5kt1g98；发现日期 2026-09-03。",
+    "日期口径采用 Google Blog schema.org datePublished 2026-09-02T15:00:00Z；AI HOT selected item 发布时间为 2026-09-02T16:18:31Z。",
+    "AA Intelligence、速度、上下文和价格是动态页面观测；本条冻结为 2026-09-03 访问快照。",
+  ],
+});
+
+const gemini38FlashCyber = modelEvent({
+  id: "gemini-3-8-flash-cyber",
+  date: "2026-09-02",
+  tier: "frontier",
+  title: "Gemini 3.8 Flash Cyber",
+  organization: "Google / Google DeepMind",
+  eyebrow: "专业模型 / Cyber Defense / Trusted Access",
+  summary:
+    "Google 发布 Gemini 3.8 Flash Cyber：面向受信防御者的网络安全专用模型，官方披露在 CyberGym、自研真实漏洞发现、StaticBench、Chrome Security 和 Wiz 内部测试中改进漏洞发现与自动修复；StaticBench pass@1 为 47.2%，接近 leading frontier model 47.8%，但访问仅限 trusted defenders。",
+  confidence: "高",
+  tags: ["LLM", "Cybersecurity", "Gemini", "Vulnerability Discovery", "Patching", "Trusted Access", "API"],
+  officialSourceIds: ["gemini38-cyber-blog"],
+  sources: [
+    september3Source("gemini38-cyber-blog", "Introducing Gemini 3.8 Flash and 3.8 Flash Cyber", "Google", "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/", "官方博客"),
+    september3Source("gemini38-cyber-aihot", "Google DeepMind 发布 Gemini 3.8 Flash 与 3.8 Flash Cyber 两款新模型", "AI HOT", "https://aihot.virxact.com/items/cmtkbdbti01n8roz5k5kt1g98", "讲座整理"),
+  ],
+  totalParameters: "未知；Google 未披露参数规模",
+  activeParameters: "未知；Google 未披露稠密/MoE 或 active-parameter 口径",
+  weightSize: "未知；闭源 API 模型，无公开权重",
+  precision: "未知；Google 未披露训练或推理精度",
+  architecture: "Gemini 3.8 Flash 的网络安全专用变体；官方定位为 vulnerability detection 与 automated patching 模型，面向 trusted defenders",
+  attention: "未知；官方未披露 attention、context、KV cache 或安全代理内部结构",
+  moe: "未知；官方未披露稠密/MoE 结构",
+  otherArchitecture: "官方称该模型相对 3.5 Flash Cyber 和更大 frontier models 在 CyberGym 自主漏洞发现中更强，并加入更宽松但受限的 cybersecurity mitigations；受信访问边界用于让防御用例获得更完整的 cyber capabilities。",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；官方未披露漏洞语料、代码库、合成任务或过滤口径",
+  dataDetails: "未知",
+  stages: "未知；官方未披露 cyber-specialized training、RL、tool-use 或 patch-verification 阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；官方未披露具体漏洞发现、自动修复或安全缓解训练配方",
+  lowPrecision: "未知",
+  infra: "通过 Government Cybersecurity Program 等 trusted-defender 渠道申请访问；不是一般公开 API。Google 称已在 Chrome Security、Cloud Vulnerability Research 与合作方 Wiz 的防御流程中使用。",
+  aaIndex: "不适用；本轮未发现 Artificial Analysis 独立动态榜单页",
+  aaContext: "官方 StaticBench pass@1 为 47.2%，对比 leading frontier model 47.8%；Wiz 内部渗透测试 benchmark recall 高 7.5-9.7%，成本低 2.3-5.2x；Chrome Security 正确补丁数为最佳更大商用模型的 2.6x",
+  aaSpeed: "未知",
+  score: "StaticBench 47.2 · Chrome patches 2.6x",
+  extraFacts: [
+    fact("网络安全评测", "Gemini 3.8 Flash Cyber 在 StaticBench pass@1 为 47.2%，接近 leading frontier model 47.8%；Chrome Security 使用中产生的正确漏洞补丁数为最佳更大商用模型的 2.6 倍。", ["gemini38-cyber-blog"]),
+    fact("访问边界", "Gemini 3.8 Flash Cyber 只向 trusted defenders 开放，Google 称其 cybersecurity mitigations 更宽松，因此不作为一般公开模型记录。", ["gemini38-cyber-blog"]),
+    fact("发现来源", "AI HOT selected item cmtkbdbti01n8roz5k5kt1g98；canonical 为 https://aihot.virxact.com/items/cmtkbdbti01n8roz5k5kt1g98。", ["gemini38-cyber-aihot"]),
+  ],
+  breakthroughs: [
+    "Google 把 Cyber 模型从通用 Gemini 3.8 Flash 中拆出，明确以漏洞发现和自动修复为目标，并设置 trusted-defender 访问边界。",
+    "官方给出 StaticBench、Chrome Security、Wiz 内部测试和 Cloud Vulnerability Research 的防御工作流证据，显示能力不只是单一公开榜单分数。",
+    "评测大多来自 Google 或合作方内部口径，缺少完整基准集、复现实验和开放权重；因此结论限定为官方防御用专用模型突破。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmtkbdbti01n8roz5k5kt1g98；发现日期 2026-09-03。",
+    "日期口径采用 Google Blog schema.org datePublished 2026-09-02T15:00:00Z；Cyber 与通用 Flash 同页发布。",
+    "Google 页面包含图表资源；本条只记录正文可稳定抽取的 StaticBench 47.2%、Chrome 2.6x、Wiz recall / cost 区间与 trusted-defender 访问边界。",
+  ],
+});
+
+const museSpark13 = modelEvent({
+  id: "muse-spark-1-3",
+  date: "2026-09-02",
+  tier: "frontier",
+  title: "Muse Spark 1.3",
+  organization: "Meta",
+  eyebrow: "当前前沿 / Reasoning / 1M Context",
+  summary:
+    "Artificial Analysis 2026-09-03 动态页记录 Meta Muse Spark 1.3 max：文本、图像、视频输入到文本输出，1M context，Intelligence Index 62.09，位于 Claude Opus 5、GPT-5.6 Sol、Grok 4.6 与 Gemini 3.8 Flash 附近；Meta 官方正文未能稳定访问，参数、训练规格、API 入口和价格保持未知。",
+  confidence: "中",
+  tags: ["LLM", "VLM", "Meta", "Muse", "Reasoning", "1M", "AA"],
+  officialSourceIds: ["muse-spark13-aa"],
+  aaSourceId: "muse-spark13-aa",
+  sources: [
+    september3Source("muse-spark13-aa", "Muse Spark 1.3 (max)", "Artificial Analysis", "https://artificialanalysis.ai/models/muse-spark-1-3", "第三方测量"),
+    september3Source("muse-spark13-aihot-aa", "Meta 发布 Muse Spark 1.3，Intelligence Index 得 61-62 分逼近 Claude 与 GPT-5.6", "AI HOT", "https://aihot.virxact.com/items/cmtkme19o02plro5q94jsf94x", "讲座整理"),
+    september3Source("muse-spark13-aihot-release", "Meta 发布 Muse Spark 1.3，智能体与科学推理能力提升", "AI HOT", "https://aihot.virxact.com/items/cmtkkcguj04aurollf1lq9a9s", "讲座整理"),
+  ],
+  totalParameters: "未知；AA 页面明确 Meta 未披露模型大小或参数数量，本轮未获取到稳定 Meta 官方正文",
+  activeParameters: "未知；未披露稠密/MoE 或 active-parameter 口径",
+  weightSize: "未知；AA 页面标记为 proprietary，权重未公开",
+  precision: "未知；未披露训练或推理精度",
+  architecture: "闭源 Meta Muse Spark 1.3 reasoning model；AA 页面显示 text、image、video input 到 text output，具体层数、专家、tokenizer、视觉编码器和 reasoning 机制未知",
+  attention: "未知；AA 只记录 1M context，未披露 attention、KV cache 或 long-context 实现",
+  moe: "未知；Meta 未披露稠密/MoE 结构",
+  otherArchitecture: "AA 页面称该模型是 reasoning model，使用 extended thinking 处理复杂问题；该描述来自动态测量页，不等同于 Meta 官方技术报告。",
+  hardware: "未知",
+  hardwareCount: "未知",
+  dataScale: "未知；未披露训练数据规模、模态比例、代码/科学语料来源或过滤口径",
+  dataDetails: "未知",
+  stages: "未知；未披露预训练、SFT、RL、tool-use 或 reasoning 后训练阶段",
+  stageDurations: "未知",
+  totalDuration: "未知",
+  algorithms: "未知；未披露 extended thinking、agentic training、verifier 或 distillation 配方",
+  lowPrecision: "未知",
+  infra: "AA 页面未给出稳定 API provider；Meta 官方博客路径 /blog/muse-spark-1-3/ 本轮返回站点错误壳，不能据此写入 API 可用性",
+  aaIndex: "Artificial Analysis Intelligence Index v4.1.1：62.09（Muse Spark 1.3 max；观察日期 2026-09-03）",
+  aaContext: "AA 页面显示 1M context、text+image+video input、text output；Intelligence Index 评测生成约 120M tokens，显著高于同价位 reasoning models 中位数 72M",
+  aaSpeed: "未知；AA 页面未在本轮稳定抽取到 Muse Spark 1.3 max 的中位输出速度",
+  score: "AA 62.09 · 1M context",
+  extraFacts: [
+    fact("开放状态", "Muse Spark 1.3 max 是 proprietary model，模型权重未公开；Meta 未披露参数规模。", ["muse-spark13-aa"]),
+    fact("发现来源", "AI HOT selected items cmtkme19o02plro5q94jsf94x 与 cmtkkcguj04aurollf1lq9a9s；canonical 分别为 https://aihot.virxact.com/items/cmtkme19o02plro5q94jsf94x 与 https://aihot.virxact.com/items/cmtkkcguj04aurollf1lq9a9s。", ["muse-spark13-aihot-aa", "muse-spark13-aihot-release"]),
+  ],
+  breakthroughs: [
+    "AA 2026-09-03 动态测量把 Muse Spark 1.3 max 放在 62.09 Intelligence，与 Claude Opus 5、GPT-5.6 Sol、Grok 4.6 和 Gemini 3.8 Flash 同处前沿区间。",
+    "1M context 与 text/image/video input 使其适合纳入模型对比，但当前证据主要来自 AA 动态页，而不是 Meta 技术报告。",
+    "Meta 官方正文未稳定访问，参数、训练规格、服务入口、价格和速度保持未知；后续若官方页恢复，应回填并重新判定证据强度。",
+  ],
+  notes: [
+    "AI HOT discovery/canonical: https://aihot.virxact.com/items/cmtkme19o02plro5q94jsf94x 与 https://aihot.virxact.com/items/cmtkkcguj04aurollf1lq9a9s；发现日期 2026-09-03。",
+    "日期口径采用 AA 页面 FAQ 的 released on September 2, 2026；AI HOT selected item 发布时间分别为 2026-09-02T21:39:44Z 与 2026-09-02T20:37:12Z。",
+    "Meta 官方 /blog/muse-spark-1-3/ 本轮只返回 Meta AI Error 壳；本条不引用该页面正文，也不把 AI HOT 摘要写成技术事实。",
+  ],
+});
+
 const maiCyber1Flash = modelEvent({
   id: "mai-cyber-1-flash",
   date: "2026-07-27",
@@ -3754,7 +3937,7 @@ export const historyData: TimelinePageData = {
       title: "LLM / VLM 训练",
       description: "开放权重模型的结构、数据、算力与训练机制",
       color: "cyan",
-      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note, deepseekV4FlashVisionExp, claudeFable51],
+      events: [deepseekV3, qwen3, kimiK2, gptOss, kimiK25, glm5, minimaxM25, qwen35, qwen36, kimiK26, deepseekV4Pro, minimaxM3, glm52, kimiK3, gemini36Flash, claudeOpus5, maiCyber1Flash, inklingSmall, deepseekV4Flash0731, openaiAstra, qwen38Max, qwen3827b, qwen38A95b, qwen38FlashNext, hy4Preview, alpamayo2Super, ling30Flash, claudeZetaResearch, gpt56Cyber, museGlimmer, nemotron35Lightning, grok46, gemini37Flash, gemini35Transcribe, glm53, glm53Flash, dots3Note, deepseekV4FlashVisionExp, claudeFable51, gemini38Flash, gemini38FlashCyber, museSpark13],
     },
     {
       id: "t2i-training",

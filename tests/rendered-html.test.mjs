@@ -60,7 +60,7 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
     "utf8",
   );
 
-  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 54);
+  assert.equal((source.match(/modelEvent\(\{/g) ?? []).length, 57);
   assert.match(source, /const kimiK25 = modelEvent/);
   assert.match(source, /const glm5 = modelEvent/);
   assert.match(source, /const minimaxM25 = modelEvent/);
@@ -120,6 +120,9 @@ test("keeps the fixed research schema and explicit unknown values", async () => 
   assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /Grok 4\.6/);
   assert.match(source, /Gemini 3\.7 Flash/);
+  assert.match(source, /Gemini 3\.8 Flash/);
+  assert.match(source, /Gemini 3\.8 Flash Cyber/);
+  assert.match(source, /Muse Spark 1\.3/);
   assert.match(source, /Gemini 3\.5 Transcribe/);
   assert.match(source, /MiniMax Music 3\.0/);
   assert.match(source, /GLM-5\.3/);
@@ -175,6 +178,9 @@ test("comparison catalog covers ChatGPT through current Qwen and MiniMax", async
   assert.match(source, /Ling-3\.0-flash/);
   assert.match(source, /Qwen-Audio-3\.0-TTS/);
   assert.match(source, /Gemini 3\.6 Flash/);
+  assert.match(source, /Gemini 3\.8 Flash/);
+  assert.match(source, /Gemini 3\.8 Flash Cyber/);
+  assert.match(source, /Muse Spark 1\.3/);
   assert.match(source, /Claude Opus 5/);
   assert.match(source, /Claude Fable 5\.1/);
   assert.match(source, /MAI-Cyber-1-Flash/);
@@ -265,6 +271,9 @@ test("comparison page renders source-backed structured text fields side by side"
   assert.match(html, /GLM-5\.3-Flash/);
   assert.match(html, /Qwen3\.8-Flash-Next/);
   assert.match(html, /Gemini 3\.5 Transcribe/);
+  assert.match(html, /Gemini 3\.8 Flash/);
+  assert.match(html, /Gemini 3\.8 Flash Cyber/);
+  assert.match(html, /Muse Spark 1\.3/);
   assert.match(html, /Qwen3\.8-27B/);
   assert.match(html, /dots3-note Preview/);
   assert.match(html, /Ling-3\.0-flash/);
